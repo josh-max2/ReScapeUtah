@@ -35,7 +35,7 @@ export default function Footer() {
           <div>
             <Link to="/" className="footer-brand-logo">
               <LogoIcon />
-              ReScape
+              ReScapeUtah
             </Link>
             <p className="footer-tagline">
               AI-powered yard planning for Utah homeowners. Concepts, costs, and rebate guidance — before you hire anyone.
@@ -77,22 +77,13 @@ export default function Footer() {
         {/* Full legal disclaimer */}
         <div className="footer-legal">
           <p>
-            <strong>About This Service:</strong> ReScape is a digital planning and analysis service. We provide informational reports to help Utah homeowners plan yard projects. We are not licensed contractors, landscape architects, civil engineers, or financial advisors. Nothing in our reports constitutes professional contracting, engineering, architectural, financial, or legal advice. We do not perform any physical work, installation, construction, grading, planting, or landscaping.
-          </p>
-          <p>
-            All cost estimates, rebate projections, water savings estimates, water bill impact estimates, square footage calculations, and other numerical figures are <strong>planning estimates only</strong>. They are based on general market data, publicly available program information, and general Utah irrigation guidelines. Actual project costs may vary significantly. Always obtain multiple contractor quotes before committing to a project.
-          </p>
-          <p>
-            ReScape is not affiliated with Utah Water Savers, the Central Utah Water Conservancy District (CUWCD), or any water provider or municipality. We do not determine rebate eligibility. We do not submit Utah Water Savers applications on behalf of homeowners. Rebate eligibility, approval, and payment are determined solely by your water provider. Nothing on this site constitutes a guarantee that you will receive any rebate or that any specific rebate amount will be available to you.
-          </p>
-          <p>
-            Our reports are planning documents. They are not stamped engineering drawings and are not guaranteed to satisfy HOA requirements, municipal building permit requirements, or any other regulatory standard. You are responsible for confirming compliance with all applicable rules, codes, and restrictions before proceeding with any project.
+            ReScapeUtah is a digital planning and visualization service. We do not perform landscape installation, submit government applications, or guarantee rebate approval. We provide AI-powered design concepts, planning documents, cost estimates, and preparation guidance. All estimates are for planning purposes only. The homeowner is responsible for contractor selection, application submission through utahwatersavers.com, and project execution. Utah Water Savers rebate programs are administered by participating water conservancy districts. Eligibility and rates vary by city and provider. Program data sourced from utahwatersavers.com, JVWCD, CUWCD, WBWCD, and the Utah Division of Water Resources.
           </p>
         </div>
 
         <div className="footer-bottom">
           <p className="footer-bottom-left">
-            © {new Date().getFullYear()} ReScape. All rights reserved. &nbsp;·&nbsp; Not a landscape company. Digital planning service only. Utah only.
+            © {new Date().getFullYear()} ReScapeUtah. All rights reserved. &nbsp;·&nbsp; Not a landscape company. Digital planning service only. Utah only.
           </p>
           <div className="footer-bottom-right">
             <Link to="/privacy">Privacy</Link>

@@ -12,7 +12,7 @@ const GALLERY_ITEMS = [
   { id: 7,  label: 'Formal Garden',      sub: 'Structured beds, low-water hedges',   gradient: 'linear-gradient(135deg, #0a1a0a 0%, #14281a 50%, #0a1810 100%)' },
   { id: 8,  label: 'Cottage Style',      sub: 'Perennials + gravel paths',           gradient: 'linear-gradient(135deg, #1e1020 0%, #321a3a 50%, #1a0e1e 100%)' },
   { id: 9,  label: 'Rocky Mountain',     sub: 'Boulders, ornamental grasses, DG',   gradient: 'linear-gradient(135deg, #1a1410 0%, #2e2418 50%, #1a1810 100%)' },
-  { id: 10, label: 'Drip + Turf Mix',   sub: 'Partial turf, drip-irrigated border', gradient: 'linear-gradient(135deg, #0a1e14 0%, #14321e 50%, #0a1a14 100%)' },
+  { id: 10, label: 'Drip + Grass Mix',   sub: 'Partial grass, drip-irrigated border', gradient: 'linear-gradient(135deg, #0a1e14 0%, #14321e 50%, #0a1a14 100%)' },
   { id: 11, label: 'Front Yard Focus',   sub: 'Curb appeal + water savings',         gradient: 'linear-gradient(135deg, #1e1400 0%, #322400 50%, #201800 100%)' },
   { id: 12, label: 'Backyard Retreat',   sub: 'Low-water sanctuary + seating area',  gradient: 'linear-gradient(135deg, #100a1e 0%, #1e1432 50%, #0e0a1a 100%)' },
 ]
@@ -22,7 +22,7 @@ export default function GalleryPage() {
     <>
       <SEO
         title="Yard Design Gallery"
-        description="Browse ReScape yard design style directions — desert modern, xeriscape, native meadow, and more. All styles are drought-tolerant and Utah Water Savers eligible. Planning concepts only."
+        description="Browse ReScapeUtah yard design style directions — desert modern, xeriscape, native meadow, and more. All styles are drought-tolerant and Utah Water Savers eligible. Planning concepts only."
       />
 
       <div className="page-hero">
@@ -39,8 +39,13 @@ export default function GalleryPage() {
         <div className="container">
           <div style={{ padding: '14px 18px', background: 'rgba(32,217,192,.05)', border: '1px solid rgba(32,217,192,.15)', borderRadius: 'var(--r)', marginBottom: 36, fontSize: 13, color: 'var(--text-sec)', lineHeight: 1.6 }}>
             <strong style={{ color: 'var(--teal)' }}>Design direction placeholders.</strong>{' '}
-            These cards represent the style categories your ReScape report can explore. Your actual AI-generated concepts will be tailored to your specific yard dimensions, photos, terrain, and goals. Real report previews are shown in our{' '}
+            These cards represent the style categories your ReScapeUtah report can explore. Your actual AI-powered concepts will be tailored to your specific yard dimensions, photos, terrain, and goals. Real report previews are shown in our{' '}
             <Link to="/examples" style={{ color: 'var(--teal)' }}>Examples section</Link>.
+          </div>
+
+          <div style={{ padding: '12px 16px', background: 'rgba(249,115,22,.05)', border: '1px solid rgba(249,115,22,.15)', borderRadius: 'var(--r)', marginBottom: 28, fontSize: 13, color: 'var(--text-sec)', lineHeight: 1.6 }}>
+            <strong style={{ color: 'var(--orange)' }}>Your analysis includes concepts designed from YOUR yard's photos.</strong>{' '}
+            When you order, you upload photos of your actual yard. We create AI-powered concepts based on your real space — not stock images or generic templates.
           </div>
 
           <div className="gallery-grid">
@@ -70,7 +75,7 @@ export default function GalleryPage() {
         <div className="container">
           <h2 className="final-cta-title">Want concepts for your specific yard?</h2>
           <p className="final-cta-sub">
-            We create AI design concepts tailored to your square footage, terrain, and goals — not generic stock images.
+            We create AI-powered design concepts tailored to your square footage, terrain, and goals — not generic stock images.
           </p>
           <div className="final-cta-actions">
             <Link to="/contact" className="btn btn--orange btn--lg">Start My Analysis</Link>

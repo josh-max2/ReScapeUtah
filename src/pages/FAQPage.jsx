@@ -5,111 +5,91 @@ import FAQAccordion from '../components/FAQAccordion'
 const FAQ_GROUPS = [
   {
     id: 'about',
-    title: 'About ReScape',
+    title: 'About ReScapeUtah',
     items: [
       {
-        q: 'What exactly is ReScape?',
-        a: 'ReScape is a digital planning and analysis service for Utah homeowners. We deliver AI-generated yard design concepts, a CAD-style top-down plan, an itemized cost estimate, and Utah Water Savers rebate guidance — all in one downloadable report. We are not a landscaping company and do not perform installations of any kind.',
+        q: 'What is ReScapeUtah?',
+        a: 'ReScapeUtah is a digital planning and visualization service for Utah homeowners. We produce AI-powered design concepts, CAD-style yard blueprints, itemized cost estimates, and Utah Water Savers rebate preparation materials — all delivered as a downloadable PDF. We are not a landscaping company and do not perform installations of any kind.',
       },
       {
         q: 'Are you a landscaping company?',
-        a: 'No. ReScape is a digital service. We produce planning reports and analysis documents. We do not design-build, install, or manage landscaping projects. Our role is to give you the information and visuals you need to make better decisions before hiring a contractor.',
+        a: 'No. ReScapeUtah is a digital service. We produce design concepts, blueprints, and estimates. We do not perform any physical installation, landscape construction, or project management. Our role is to give you the information and visuals you need to make better decisions before hiring a contractor.',
       },
       {
-        q: 'Who is this service for?',
-        a: 'ReScape is designed for Utah homeowners who are considering replacing turf, planning a yard project, or exploring Utah Water Savers rebate eligibility — and who want to understand their options and see real numbers before committing to a landscaper or a project.',
+        q: 'What do I actually receive?',
+        a: 'Depending on your plan: up to 10–30 AI-powered design concepts exploring different styles, a CAD-style 2D blueprint of your yard with plant placement and dimensions, an itemized cost estimate with material and labor ranges, water savings projections, and Utah Water Savers rebate preparation guidance. All delivered as a downloadable PDF you can share with landscapers and your water provider.',
       },
       {
-        q: 'What do I receive when I order?',
-        a: 'Depending on your package: a set of AI-generated yard concept images, a top-down CAD-style plan, an itemized cost estimate, a water-saving projection, and/or Utah Water Savers rebate guidance. All deliverables are included in a downloadable PDF report.',
+        q: 'How do the AI-powered design concepts work?',
+        a: "Our design system generates multiple concept images based on your yard's actual photos, dimensions, terrain type, and the style preferences you specify. You review the concepts and select the direction you want to refine. Higher-tier plans include more concept variations and a refinement round.",
       },
     ],
   },
   {
-    id: 'delivery',
-    title: 'Delivery and Turnaround',
-    items: [
-      {
-        q: 'How long does it take to receive my analysis?',
-        a: 'Reports are delivered within up to 1 week from order submission and payment confirmation. Turnaround times are targets, not guarantees — complex yards or high-volume periods may take longer. We will communicate proactively if there is a delay.',
-      },
-      {
-        q: 'How is the report delivered?',
-        a: 'Your report is delivered as a downloadable PDF via email. The file is sized to be printable and shareable with contractors or water providers.',
-      },
-      {
-        q: 'Can I share the report with a contractor?',
-        a: 'Yes. The report PDF is formatted to be shareable. The top-down plan and cost breakdown are particularly useful for getting accurate contractor quotes and for comparing bids.',
-      },
-    ],
-  },
-  {
-    id: 'rebates',
-    title: 'Utah Water Savers and Rebates',
-    items: [
-      {
-        q: 'What is Utah Water Savers?',
-        a: 'Utah Water Savers is a state-promoted water conservation initiative where participating local water providers offer rebates to homeowners who replace water-intensive turf with water-efficient landscaping. The program is run at the local level — rates, requirements, and availability vary by water provider.',
-      },
-      {
-        q: 'Do you submit the Utah Water Savers application for me?',
-        a: 'No. Utah Water Savers applications are submitted directly by the homeowner to their water provider. Our Utah Water Savers Prep package helps you understand the process, prepares the documents and information you will likely need, and gets you organized — but you submit the application yourself, directly to your provider.',
-      },
-      {
-        q: 'How do I know if I qualify for a rebate?',
-        a: 'Eligibility depends on your specific water provider, their current program availability, and whether your project meets their requirements. The best way to confirm eligibility is to contact your water provider directly. Our rebate guidance helps you understand what your provider generally offers, but we cannot guarantee your eligibility.',
-      },
-      {
-        q: 'How accurate are the rebate estimates?',
-        a: 'Our rebate estimates are planning estimates based on publicly available Utah Water Savers rate information. Rates range from approximately $1.00–$3.00 per square foot depending on your provider and program. Actual rebate amounts depend on your provider\'s current program, funding availability, and your project meeting their eligibility requirements.',
-      },
-      {
-        q: 'What documents do I need for the Utah Water Savers application?',
-        a: 'Requirements vary by provider. Common requirements include: before-and-after photos of the turf area, a 2D design plan showing the proposed layout, proof of residence, and a completed application form from your provider. Some providers require an on-site inspection before the project begins. Our Utah Water Savers Prep package helps you organize and prepare these materials.',
-      },
-    ],
-  },
-  {
-    id: 'pricing',
-    title: 'Pricing and Orders',
-    items: [
-      {
-        q: 'What packages do you offer?',
-        a: 'We offer four packages: Visual Concept ($50) — AI yard concept images. Plan + Estimate ($150) — concepts + CAD plan + cost estimate. Utah Water Savers Prep ($300) — full plan + rebate guidance + document prep. White Glove ($500) — everything plus extended consultation and contractor referral support.',
-      },
-      {
-        q: 'Can I upgrade my package after ordering?',
-        a: 'Yes. If you order a lower-tier package and later want to upgrade, contact us and we can apply the amount you already paid toward the higher-tier package.',
-      },
-      {
-        q: 'Do you offer refunds?',
-        a: 'If you are not satisfied with your analysis, contact us within 7 days of delivery and we will work to make it right or issue a refund at our discretion.',
-      },
-      {
-        q: 'Is this a subscription?',
-        a: 'No. Every package is a one-time payment per report. There are no recurring charges or subscriptions.',
-      },
-    ],
-  },
-  {
-    id: 'report',
-    title: 'About the Report',
+    id: 'estimates',
+    title: 'Estimates & Costs',
     items: [
       {
         q: 'How accurate are the cost estimates?',
-        a: 'Our cost estimates are planning estimates based on general market pricing data for materials, plants, and labor in Utah. They are expressed as ranges and are designed to help you budget and plan — not to replace a contractor quote. Actual costs will vary depending on contractor, materials availability, and site conditions. Always get multiple contractor quotes before committing to a project.',
+        a: 'Our cost estimates are planning estimates based on general Utah market data for materials and labor. They are expressed as ranges and designed to help you budget and prepare for contractor conversations — not to replace those quotes. Actual costs depend on your contractor, material choices, and site conditions. Always get multiple contractor quotes before committing.',
       },
       {
-        q: 'Is the top-down plan usable for HOA applications or permits?',
-        a: 'Our plans are design and planning documents. They are not stamped engineering drawings and are not guaranteed to satisfy all HOA or municipal permit requirements. For official permit submissions, consult a licensed landscape architect or contractor. Our HOA Design Review Add-On can help adjust the design to align with common HOA restriction categories.',
+        q: 'What Utah rebates are available?',
+        a: 'Utah Water Savers programs are administered by local water conservancy districts. JVWCD cities (including West Jordan, South Jordan, Draper, Murray, and others in the Salt Lake metro) offer up to $3.00/sq ft for qualifying grass replacement. CUWCD cities (Provo, Orem, Lehi, and surrounding Utah County areas) typically offer $1.50–$3.00/sq ft. WBWCD cities (Ogden, Layton, Bountiful, and surrounding areas) offer approximately $2.50/sq ft. Rates and availability change — verify with your water provider before starting your project.',
+      },
+    ],
+  },
+  {
+    id: 'water-savers',
+    title: 'Utah Water Savers',
+    items: [
+      {
+        q: 'Do you submit my Utah Water Savers application?',
+        a: 'No. We help you prepare your materials and understand your provider\'s requirements. You submit your own application through utahwatersavers.com. We are not affiliated with Utah Water Savers or any government agency.',
       },
       {
-        q: 'What AI tools do you use?',
-        a: "We use AI-assisted design tools to generate yard concept images tailored to your yard's specifications, climate, and style preferences. The concept images are starting points for planning and visualization — they are not photorealistic renderings of the finished project.",
+        q: 'Will I definitely get approved for a rebate?',
+        a: 'No. Approval depends on your city, water provider, project compliance, and inspection results. We cannot guarantee approval. Our Water Savers Prep package helps you prepare the strongest possible application, but the decision rests entirely with your water provider.',
       },
       {
-        q: 'Does this service work outside of Utah?',
-        a: 'ReScape is designed specifically for Utah homeowners and the Utah Water Savers program. Our rebate guidance is calibrated to Utah water districts. We do not currently serve other states.',
+        q: 'What if I have an HOA or need a design revision?',
+        a: 'We offer a Design Revision add-on ($75) for any of the top three packages. This covers cases where you need your design updated — due to HOA feedback, contractor input, or a change in requirements. We revisit your plan with your new parameters and deliver a fresh concept set. White Glove customers receive one complimentary revision. Visit the Design Revision page or contact us to get started.',
+      },
+    ],
+  },
+  {
+    id: 'process',
+    title: 'The Process',
+    items: [
+      {
+        q: 'Can I convert just part of my yard?',
+        a: 'Absolutely. Most of our clients start with the front yard or a specific section. Our intake form lets you specify exactly which areas you\'re targeting. Your blueprint and cost estimate will reflect the scope you define.',
+      },
+      {
+        q: 'How long does the process take?',
+        a: 'From intake to delivery, the process takes up to 1 week. This covers concept generation, your selection, blueprint production, cost estimation, and rebate preparation where applicable. Turnaround times are targets, not guarantees.',
+      },
+      {
+        q: 'Can I share my plan with a contractor?',
+        a: 'Yes. Your PDF report is formatted specifically to be shareable with contractors. The blueprint and cost breakdown make it easy to get comparable quotes and spot outliers.',
+      },
+    ],
+  },
+  {
+    id: 'service',
+    title: 'Service & Mission',
+    items: [
+      {
+        q: 'Do you serve areas outside Utah?',
+        a: 'Not currently. ReScapeUtah is designed specifically for Utah homeowners and the Utah Water Savers program. Our rebate guidance is calibrated to Utah water districts. We plan to expand, but for now we are Utah-only.',
+      },
+      {
+        q: "What's the difference between the packages?",
+        a: "Visual Concept ($50): AI-powered design concepts only. Plan + Estimate ($150): concepts + CAD blueprint + cost estimate. Water Savers Prep ($300): full plan + rebate guidance + document prep. White Glove ($500): everything plus extended consultation, one complimentary design revision, and contractor referral assistance.",
+      },
+      {
+        q: 'How does this help the Great Salt Lake?',
+        a: "According to the Great Salt Lake Commissioner's 2024 Strategic Plan, 60% of Utah's residential water use goes toward outdoor irrigation. Every grass-to-landscape conversion reduces demand on the water systems that feed the Great Salt Lake watershed. It's one of the most direct things a Utah homeowner can do to help. Source: Great Salt Lake Commissioner's 2024 Strategic Plan; Utah Division of Water Resources.",
       },
     ],
   },
@@ -130,7 +110,7 @@ export default function FAQPage() {
     <>
       <SEO
         title="Frequently Asked Questions"
-        description="Answers to common questions about ReScape — our yard planning reports, Utah Water Savers rebate guidance, packages, turnaround, and how the process works."
+        description="Answers to common questions about ReScapeUtah — our yard planning reports, Utah Water Savers rebate guidance, packages, turnaround, and how the process works."
         jsonLd={FAQ_SCHEMA}
       />
 

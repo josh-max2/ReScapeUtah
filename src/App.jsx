@@ -15,6 +15,8 @@ import RebateInfoPage  from './pages/RebateInfoPage'
 import PrivacyPage     from './pages/PrivacyPage'
 import TermsPage       from './pages/TermsPage'
 import DisclaimerPage  from './pages/DisclaimerPage'
+import ReferralPage      from './pages/ReferralPage'
+import DesignRevisionPage from './pages/DesignRevisionPage'
 
 import './App.css'
 
@@ -27,6 +29,7 @@ function ScrollToTop() {
 function Layout() {
   return (
     <>
+      <div className="page-ambient" aria-hidden="true" />
       <ScrollToTop />
       <Navbar />
       <Routes>
@@ -41,7 +44,9 @@ function Layout() {
         <Route path="/rebate-info"  element={<RebateInfoPage />}  />
         <Route path="/privacy"      element={<PrivacyPage />}     />
         <Route path="/terms"        element={<TermsPage />}       />
-        <Route path="/disclaimer"   element={<DisclaimerPage />}  />
+        <Route path="/disclaimer"      element={<DisclaimerPage />}      />
+        <Route path="/referral"        element={<ReferralPage />}        />
+        <Route path="/design-revision" element={<DesignRevisionPage />}  />
       </Routes>
       <Footer />
     </>

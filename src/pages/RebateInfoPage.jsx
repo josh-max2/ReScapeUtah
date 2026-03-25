@@ -38,18 +38,18 @@ const DISTRICTS = [
     rate: 'Varies',
     rateNum: null,
     cities: ['Washington County', 'Cache Valley', 'Other Utah areas'],
-    notes: 'Many Utah water providers participate in water conservation programs. If your city is not listed, contact your water provider directly to ask about turf replacement rebate programs.',
+    notes: 'Many Utah water providers participate in water conservation programs. If your city is not listed, contact your water provider directly to ask about grass replacement rebate programs.',
   },
 ]
 
 const REQUIREMENTS_FAQ = [
   {
     q: 'Before-and-after photos',
-    a: 'Most providers require photos of the existing turf before you begin, and photos of the completed project. Document the entire area being replaced. Take photos from multiple angles.',
+    a: 'Most providers require photos of the existing grass before you begin, and photos of the completed project. Document the entire area being replaced. Take photos from multiple angles.',
   },
   {
     q: 'A 2D design plan',
-    a: 'Many providers require a design plan showing what will replace the turf. A top-down layout showing plant placement, hardscape, and irrigation zones is typically what is needed. ReScape provides this as part of the Plan + Estimate, Utah Water Savers Prep, and White Glove packages.',
+    a: 'Many providers require a design plan showing what will replace the grass. A top-down layout showing plant placement, hardscape, and irrigation zones is typically what is needed. ReScapeUtah provides this as part of the Plan + Estimate, Utah Water Savers Prep, and White Glove packages.',
   },
   {
     q: 'Living grass at the time of application',
@@ -86,7 +86,7 @@ export default function RebateInfoPage() {
     <>
       <SEO
         title="Utah Water Savers Rebate Info"
-        description="Everything Utah homeowners need to know about Utah Water Savers turf replacement rebates — rates by water district, eligibility requirements, and how to prepare your application."
+        description="Everything Utah homeowners need to know about Utah Water Savers grass replacement rebates — rates by water district, eligibility requirements, and how to prepare your application."
       />
 
       <div className="page-hero">
@@ -102,7 +102,7 @@ export default function RebateInfoPage() {
       {/* Disclaimer */}
       <div className="container--sm" style={{ paddingTop: 32 }}>
         <div style={{ padding: '14px 18px', background: 'rgba(249,115,22,.06)', border: '1px solid rgba(249,115,22,.18)', borderRadius: 'var(--r)', fontSize: 13, color: 'var(--text-sec)', lineHeight: 1.65 }}>
-          <strong style={{ color: 'var(--orange)' }}>ReScape is not affiliated with Utah Water Savers</strong> or any water provider. All rates and program information below are based on publicly available program information and are provided for planning purposes only. Rates, availability, and requirements can change. Always verify current program details directly with your water provider before starting your project or making financial decisions.
+          <strong style={{ color: 'var(--orange)' }}>ReScapeUtah is not affiliated with Utah Water Savers</strong> or any water provider. All rates and program information below are based on publicly available program information and are provided for planning purposes only. Rates, availability, and requirements can change. Always verify current program details directly with your water provider before starting your project or making financial decisions.
         </div>
       </div>
 

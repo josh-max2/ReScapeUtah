@@ -3,10 +3,11 @@ import { useSearchParams, Link } from 'react-router-dom'
 import SEO from '../components/SEO'
 
 const PACKAGES = [
-  { id: 'visual-concept',    label: 'Visual Concept',         price: '$50'  },
-  { id: 'plan-estimate',     label: 'Plan + Estimate',        price: '$150' },
-  { id: 'water-savers-prep', label: 'Utah Water Savers Prep', price: '$300' },
-  { id: 'white-glove',       label: 'White Glove',            price: '$500' },
+  { id: 'visual-concept',    label: 'Visual Concept',         price: '$49.99'  },
+  { id: 'plan-estimate',     label: 'Plan + Estimate',        price: '$149.99' },
+  { id: 'water-savers-prep', label: 'Utah Water Savers Prep', price: '$299.99' },
+  { id: 'white-glove',       label: 'White Glove',            price: '$499.99' },
+  { id: 'out-of-state',      label: 'Out-of-State Design',    price: '$299.99' },
 ]
 
 const UTAH_CITIES = [
@@ -52,6 +53,7 @@ function validate(fields) {
   if (!fields.address.trim()) errs.address = 'Street address is required.'
   if (!fields.package)        errs.package = 'Please select a package.'
   if (fields.photos.length === 0) errs.photos = 'Please upload at least one photo of your yard.'
+  if (!fields.agreedToTerms)  errs.agreedToTerms = 'You must agree to the Terms of Service to continue.'
   return errs
 }
 
@@ -59,23 +61,21 @@ export default function ContactPage() {
   const [params] = useSearchParams()
   const defaultPkg = params.get('package') || ''
   const photoInputRef = useRef(null)
-  const hoaInputRef   = useRef(null)
 
   const [fields, setFields] = useState({
-    name:         '',
-    email:        '',
-    phone:        '',
-    address:      '',
-    city:         '',
-    package:      PACKAGES.find(p => p.id === defaultPkg)?.id || '',
-    hoaAddon:     false,
+    name:          '',
+    email:         '',
+    phone:         '',
+    address:       '',
+    city:          '',
+    package:       PACKAGES.find(p => p.id === defaultPkg)?.id || '',
     grassCoverage: '',
-    terrain:      '',
-    sqft:         '',
-    goals:        '',
-    photos:       [],
-    hoaFiles:     [],
-    howHeard:     '',
+    terrain:       '',
+    sqft:          '',
+    goals:         '',
+    photos:        [],
+    howHeard:      '',
+    agreedToTerms: false,
   })
 
   const [errors,    setErrors]    = useState({})
@@ -95,7 +95,7 @@ export default function ContactPage() {
     if (Object.keys(errs).length) { setErrors(errs); return }
     setLoading(true)
     // TODO: wire to Formspree / Netlify Forms / backend endpoint
-    console.log('ReScape intake submission:', fields)
+    console.log('ReScapeUtah intake submission:', fields)
     await new Promise(r => setTimeout(r, 900))
     setLoading(false)
     setSubmitted(true)
@@ -127,7 +127,7 @@ export default function ContactPage() {
     <>
       <SEO
         title="Start Your Yard Analysis"
-        description="Fill out the short intake form to get your personalized ReScape yard analysis — AI yard concepts, CAD-style plan, cost estimate, and Utah Water Savers rebate guidance."
+        description="Fill out the short intake form to get your personalized ReScapeUtah yard analysis — AI yard concepts, CAD-style plan, cost estimate, and Utah Water Savers rebate guidance."
       />
 
       <div style={{ paddingTop: 'calc(var(--nav-h) + 64px)', paddingBottom: 96 }}>
@@ -148,7 +148,7 @@ export default function ContactPage() {
                   { icon: '📥', text: 'Delivered as a downloadable PDF — shareable with landscapers and water providers.' },
                   { icon: '🔒', text: 'Your information is never sold or shared. See our Privacy Policy.' },
                   { icon: '💬', text: "Questions before ordering? Email us — we're happy to help." },
-                  { icon: '↩️', text: 'Not satisfied? Contact us within 7 days for a resolution or refund.' },
+                  { icon: '📋', text: 'All sales are final. Contact us with any concerns — we want every report to be accurate and useful.' },
                 ].map((item, i) => (
                   <div key={i} className="contact-trust-item">
                     <span className="contact-trust-icon" aria-hidden="true">{item.icon}</span>
@@ -242,7 +242,7 @@ export default function ContactPage() {
 
                   {/* Square footage */}
                   <div className="form-group">
-                    <label className="form-label" htmlFor="sqft">Approximate turf area to replace (sq ft) <span className="form-opt">(optional)</span></label>
+                    <label className="form-label" htmlFor="sqft">Approximate grass area to replace (sq ft) <span className="form-opt">(optional)</span></label>
                     <input id="sqft" type="number" min={0} className="form-input" placeholder="e.g. 1200" value={fields.sqft} onChange={e => set('sqft', e.target.value)} />
                   </div>
 
@@ -283,37 +283,6 @@ export default function ContactPage() {
                     {errors.package && <span className="form-error" role="alert">{errors.package}</span>}
                   </div>
 
-                  {/* HOA Add-on */}
-                  <div className="form-group">
-                    <label className="form-checkbox-row">
-                      <input
-                        type="checkbox"
-                        checked={fields.hoaAddon}
-                        onChange={e => set('hoaAddon', e.target.checked)}
-                      />
-                      Add HOA Design Review (+$75) — for neighborhoods with design guidelines
-                    </label>
-                    {fields.hoaAddon && (
-                      <div className="form-conditional" style={{ marginTop: 12 }}>
-                        <label className="form-label" style={{ marginBottom: 6 }}>Upload HOA design guidelines <span className="form-opt">(optional, helps us tailor the design)</span></label>
-                        <div className="form-upload-area form-upload-area--sm" onClick={() => hoaInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && hoaInputRef.current?.click()}>
-                          <input
-                            ref={hoaInputRef}
-                            type="file"
-                            accept=".pdf,.doc,.docx,image/*"
-                            multiple
-                            style={{ display: 'none' }}
-                            onChange={e => set('hoaFiles', Array.from(e.target.files || []))}
-                          />
-                          {fields.hoaFiles.length === 0
-                            ? <span>Click to upload HOA guidelines (PDF, images)</span>
-                            : <span>{fields.hoaFiles.length} file{fields.hoaFiles.length !== 1 ? 's' : ''} selected ✓</span>
-                          }
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
                   {/* Conditional: Utah city for WS Prep / White Glove */}
                   {showCityDropdown && (
                     <div className="form-group form-conditional">
@@ -334,6 +303,24 @@ export default function ContactPage() {
                       <option value="">Select (optional)</option>
                       {HOW_HEARD.map(h => <option key={h} value={h}>{h}</option>)}
                     </select>
+                  </div>
+
+                  {/* Terms agreement */}
+                  <div className="form-group">
+                    <label className="form-checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={fields.agreedToTerms}
+                        onChange={e => set('agreedToTerms', e.target.checked)}
+                        aria-required="true"
+                      />
+                      <span>
+                        I have read and agree to the{' '}
+                        <Link to="/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)' }}>Terms of Service</Link>.
+                        I understand that <strong>all sales are final</strong> — no refunds.
+                      </span>
+                    </label>
+                    {errors.agreedToTerms && <span className="form-error" role="alert">{errors.agreedToTerms}</span>}
                   </div>
 
                   <div className="form-submit-section">

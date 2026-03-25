@@ -6,27 +6,28 @@ import CalculatorWidget from '../components/CalculatorWidget'
 
 const HOME_SCHEMA = {
   '@context': 'https://schema.org',
-  '@type': 'Service',
-  name: 'ReScape',
-  description: 'AI-generated yard concepts, CAD-style plans, cost estimates, and Utah Water Savers rebate guidance for Utah homeowners.',
+  '@type': 'LocalBusiness',
+  name: 'ReScapeUtah',
+  description: 'AI-powered yard planning for Utah homeowners. Design concepts, CAD blueprints, cost estimates, and Utah Water Savers rebate guidance.',
   serviceType: 'Yard Planning and Analysis',
   areaServed: { '@type': 'State', name: 'Utah' },
+  url: 'https://rescapeutah.com',
   offers: [
-    { '@type': 'Offer', name: 'Visual Concept',         price: '50',  priceCurrency: 'USD' },
-    { '@type': 'Offer', name: 'Plan + Estimate',        price: '150', priceCurrency: 'USD' },
+    { '@type': 'Offer', name: 'Visual Concept', price: '50', priceCurrency: 'USD' },
+    { '@type': 'Offer', name: 'Plan + Estimate', price: '150', priceCurrency: 'USD' },
     { '@type': 'Offer', name: 'Utah Water Savers Prep', price: '300', priceCurrency: 'USD' },
-    { '@type': 'Offer', name: 'White Glove',            price: '500', priceCurrency: 'USD' },
+    { '@type': 'Offer', name: 'White Glove', price: '500', priceCurrency: 'USD' },
   ],
 }
 
 const HOME_FAQS = [
   {
-    q: 'What exactly is ReScape?',
-    a: 'ReScape is a digital planning service for Utah homeowners. We deliver AI-generated yard design concepts, a CAD-style top-down plan, a cost estimate, and Utah Water Savers rebate guidance — all in a single downloadable report. We are not a landscaping company and do not perform any installations.',
+    q: 'What is ReScapeUtah?',
+    a: 'ReScapeUtah is a digital planning and visualization service for Utah homeowners. We produce AI-powered design concepts, CAD-style yard blueprints, itemized cost estimates, and Utah Water Savers rebate preparation materials — all delivered as a downloadable PDF. We are not a landscaping company and do not perform any physical installation.',
   },
   {
     q: 'Do you submit the Utah Water Savers application for me?',
-    a: 'No. Utah Water Savers applications are submitted directly by the homeowner to their water provider. Our Utah Water Savers Prep package helps you understand the process and organize the materials you will likely need — but you submit the application yourself.',
+    a: 'No. Utah Water Savers applications are submitted directly by the homeowner to their water provider through utahwatersavers.com. Our Utah Water Savers Prep package helps you understand the process and organize the materials you will likely need — but you submit the application yourself.',
   },
   {
     q: 'How accurate are your cost estimates?',
@@ -34,40 +35,117 @@ const HOME_FAQS = [
   },
   {
     q: 'What Utah Water Savers rebates might I qualify for?',
-    a: 'Rebate availability and rates vary by water provider. Some Utah programs offer up to $3 per square foot for qualifying turf replacement. Eligibility depends on your specific provider, program availability, and meeting inspection requirements. Our report helps you understand what your provider generally offers — but we do not guarantee eligibility or rebate amounts.',
+    a: 'Rebate availability and rates vary by water provider. Some Utah programs offer up to $3 per square foot for qualifying grass replacement. Eligibility depends on your specific provider, program availability, and meeting inspection requirements. Our report helps you understand what your provider generally offers — but we do not guarantee eligibility or rebate amounts.',
   },
   {
     q: 'Who is this service for?',
-    a: 'ReScape is designed for Utah homeowners who want to replace turf, plan a yard project, or explore whether they qualify for Utah Water Savers rebates — before spending money on a landscaper. If you want to understand your options and see real numbers, this service is for you.',
+    a: 'ReScapeUtah is designed for Utah homeowners who want to replace grass, plan a yard project, or explore whether they qualify for Utah Water Savers rebates — before spending money on a landscaper. If you want to understand your options and see real numbers, this service is for you.',
   },
 ]
 
 const PROCESS_STEPS = [
   {
     n: '1',
-    title: 'Tell Us About Your Yard',
-    desc: 'Fill out a short intake form with your square footage, current turf situation, goals, and Utah water provider. Upload photos of your yard so we can build an accurate plan.',
+    title: 'Fill Out the Intake Form',
+    summary: 'Tell us about your yard, your goals, and upload photos.',
+    detail: "Our intake form collects your yard square footage, grass coverage, terrain type, multiple yard photos, and a description of what you want — along with your street address and email. For Utah Water Savers Prep plans, select your Utah city so we can match your provider's rebate rates.",
   },
   {
     n: '2',
-    title: 'We Build Your Analysis',
-    desc: 'Our team generates your AI concepts, top-down plan, and personalized cost and rebate estimate. Turnaround is up to 1 week from order submission.',
+    title: 'Choose Your Design Direction',
+    summary: 'We produce AI-powered concept images — you pick your favorite.',
+    detail: "Our design system generates multiple concept images based on your yard's actual dimensions, photos, and preferences. You review the options and select which direction to refine. Visual Concept customers receive their concepts here. Plan + Estimate and above proceed to the blueprint phase.",
   },
   {
     n: '3',
-    title: 'Review Your Report',
-    desc: 'Download your full report PDF. Review your design concepts, your plan, and your rebate eligibility preparation materials.',
+    title: 'Receive Your Blueprint & Estimates',
+    summary: 'We refine your chosen concept into a CAD blueprint with itemized costs.',
+    detail: "Your selected concept becomes a detailed 2D top-down plan showing plant placement, hardscape, materials, and dimensions. Paired with an itemized cost estimate and, for Water Savers plans, rebate preparation guidance aligned with your provider's requirements.",
   },
   {
     n: '4',
     title: 'Move Forward Confidently',
-    desc: 'Share your plan with landscapers, prepare for your Utah Water Savers application, or simply know your numbers before spending a dollar.',
+    summary: 'Share your plan with landscapers, apply for rebates, or just know your numbers.',
+    detail: 'Use your blueprint to get contractor bids. Use your rebate preparation materials to guide your Utah Water Savers application (submitted by you through utahwatersavers.com). White Glove customers receive a vetted contractor referral in their area.',
+  },
+]
+
+const PKG_PREVIEW = [
+  {
+    id: 'visual-concept',
+    name: 'Visual Concept',
+    price: 49.99, was: 89,
+    tagline: 'Explore ideas before committing to a full plan.',
+    features: ['Up to 10 AI-powered design concepts', 'Multiple design directions & styles', 'Downloadable PDF'],
+    cta: 'Get Started', featured: false, premium: false,
+  },
+  {
+    id: 'plan-estimate',
+    name: 'Plan + Estimate',
+    price: 149.99, was: 249,
+    tagline: 'Everything you need to plan and get accurate contractor quotes.',
+    features: ['Everything in Visual Concept', 'CAD-style top-down 2D blueprint', 'Itemized cost estimate + water-saving projection'],
+    cta: 'Get Started', featured: false, premium: false,
+  },
+  {
+    id: 'water-savers-prep',
+    name: 'Water Savers Prep',
+    price: 299.99, was: 499,
+    tagline: 'For homeowners pursuing Utah Water Savers rebates.',
+    features: ['Everything in Plan + Estimate', 'Rebate eligibility guidance for your provider', 'Document prep assistance + priority support', 'Utah properties only'],
+    cta: 'Get Started', featured: true, premium: false,
+  },
+  {
+    id: 'white-glove',
+    name: 'White Glove',
+    price: 499.99, was: 799,
+    tagline: 'Full-service planning with maximum support.',
+    features: ['Everything in Water Savers Prep', 'Extended design consultation', 'One complimentary design revision included', 'Contractor referral support', 'Utah properties only'],
+    cta: 'Get Started', featured: false, premium: true,
+  },
+]
+
+const WHY_ITEMS = [
+  {
+    icon: '💧',
+    title: 'Save Water, Save Utah',
+    body: "According to the Great Salt Lake Commissioner's 2024 Strategic Plan, 60% of Utah's residential water use goes toward outdoor irrigation. Converting your lawn to water-efficient landscaping can reduce outdoor water use by 50–75%. Every gallon saved strengthens Utah's water future — and helps preserve the Great Salt Lake.",
+    source: "Great Salt Lake Commissioner's 2024 Strategic Plan; Utah Division of Water Resources",
+  },
+  {
+    icon: '💵',
+    title: 'Lower Your Water Bill',
+    body: "The average Utah household spends over $1,200 per year watering a quarter-acre lawn. Water-efficient landscaping dramatically reduces irrigation costs. Use our free calculator for a personalized estimate based on your yard size and provider.",
+    source: 'Granger-Hunter Improvement District usage estimates',
+  },
+  {
+    icon: '🏡',
+    title: "Increase Your Home's Value",
+    body: "Water-efficient landscaping is increasingly valued by buyers in Utah's real estate market. Properties with professionally designed, low-maintenance yards stand out — especially in communities where water conservation is becoming the norm.",
+    source: null,
+  },
+  {
+    icon: '🏆',
+    title: 'LEED & Sustainability Scoring',
+    body: "Water-efficient landscaping contributes to LEED certification under the Water Efficiency credit category. LEED awards up to 5 points for reducing potable water used in irrigation — a 50% reduction earns 1 point, 75% earns 3 points, eliminating potable irrigation entirely earns all 5. LEED has four levels: Certified (40–49 pts), Silver (50–59), Gold (60–79), Platinum (80+). Primarily used for commercial properties, but the principles apply to any sustainability planning.",
+    source: 'U.S. Green Building Council (USGBC)',
+  },
+  {
+    icon: '🌱',
+    title: 'Reduce Maintenance',
+    body: 'No mowing, less weeding, fewer chemicals. Water-efficient yards require a fraction of the maintenance time and cost compared to traditional lawns. More weekends, less work.',
+    source: null,
+  },
+  {
+    icon: '🤝',
+    title: 'Improve Your Neighborhood',
+    body: 'When one home on the block converts, neighbors notice. Water-efficient landscaping raises the visual standard of the entire street and can encourage community-wide adoption. A more sustainable neighborhood is a more valuable one.',
+    source: null,
   },
 ]
 
 function ProcessAccordion() {
   const [open, setOpen] = useState(null)
-
   return (
     <div className="process-accordion">
       {PROCESS_STEPS.map((step) => {
@@ -81,13 +159,44 @@ function ProcessAccordion() {
             >
               <span className="process-step-num">{step.n}</span>
               <span className="process-step-title">{step.title}</span>
-              <span className="process-step-chevron" aria-hidden="true">
-                {isOpen ? '−' : '+'}
-              </span>
+              <span className="process-step-chevron" aria-hidden="true">{isOpen ? '−' : '+'}</span>
             </button>
             {isOpen && (
               <div className="process-step-body">
-                <p>{step.desc}</p>
+                <p style={{ color: 'var(--text-sec)', marginBottom: 8 }}>{step.summary}</p>
+                <p>{step.detail}</p>
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function WhyAccordion() {
+  const [open, setOpen] = useState(null)
+  return (
+    <div className="why-accordion">
+      {WHY_ITEMS.map((item, i) => {
+        const isOpen = open === i
+        return (
+          <div key={i} className={`why-acc-item${isOpen ? ' why-acc-item--open' : ''}`}>
+            <button
+              className="why-acc-header"
+              onClick={() => setOpen(isOpen ? null : i)}
+              aria-expanded={isOpen}
+            >
+              <span className="why-acc-icon" aria-hidden="true">{item.icon}</span>
+              <span className="why-acc-title">{item.title}</span>
+              <span className="why-acc-chevron" aria-hidden="true">{isOpen ? '−' : '+'}</span>
+            </button>
+            {isOpen && (
+              <div className="why-acc-body">
+                <p>{item.body}</p>
+                {item.source && (
+                  <p className="why-acc-source">Source: {item.source}</p>
+                )}
               </div>
             )}
           </div>
@@ -102,7 +211,7 @@ export default function Home() {
     <>
       <SEO
         title="Yard Plans, Costs & Utah Water Savers Guidance"
-        description="AI-generated yard concepts, a CAD-style plan, and a personalized cost and Utah Water Savers rebate estimate — up to 1 week turnaround. Built for Utah homeowners."
+        description="AI-powered yard concepts, a CAD-style plan, and a personalized cost and Utah Water Savers rebate estimate. Built for Utah homeowners."
         jsonLd={HOME_SCHEMA}
       />
 
@@ -112,9 +221,20 @@ export default function Home() {
         <div className="container hero-grid">
 
           <div className="hero-content">
-            <div className="hero-eyebrow">
-              <span className="badge badge--teal">Utah Homeowners</span>
-              <span className="badge badge--green">Up to 1 Week Turnaround</span>
+            <div className="hero-nav-pills">
+              <button
+                className="hero-pill"
+                onClick={() => document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                💧 Free Rebate Calculator
+              </button>
+              <Link to="/pricing" className="hero-pill">📦 See Plans</Link>
+              <button
+                className="hero-pill"
+                onClick={() => document.getElementById('why-convert')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                🌿 See All Incentives
+              </button>
             </div>
 
             <h1 className="hero-title">
@@ -123,44 +243,45 @@ export default function Home() {
             </h1>
 
             <p className="hero-subtitle">
-              ReScape delivers AI design concepts, a CAD-style yard plan, and a personalized cost and Utah Water Savers rebate estimate. One report. One decision.
+              ReScapeUtah delivers AI-powered design concepts, a CAD-style yard blueprint, and a personalized cost and Utah Water Savers rebate estimate. One report. One decision.
             </p>
 
             <ul className="hero-list">
-              <li>AI-generated design concepts across multiple styles</li>
-              <li>CAD-style top-down 2D yard plan</li>
+              <li>AI-powered design concepts across multiple styles</li>
+              <li>CAD-style top-down 2D yard blueprint</li>
               <li>Itemized cost estimate with material + labor ranges</li>
               <li>Utah Water Savers rebate eligibility guidance</li>
-              <li>HOA design review add-on available</li>
+              <li>Works with HOAs — include your guidelines, we design around them</li>
             </ul>
-
-            <div className="hero-trust" aria-label="Trust signals">
-              <span className="trust-pill">Digital planning service</span>
-              <span className="trust-divider" aria-hidden="true">·</span>
-              <span className="trust-pill">Not a landscape company</span>
-              <span className="trust-divider" aria-hidden="true">·</span>
-              <span className="trust-pill">Utah only</span>
-            </div>
 
             <div className="hero-actions">
               <Link to="/contact" className="btn btn--orange btn--lg">
-                Get Your Yard Analysis
+                Start Your Analysis
               </Link>
-              <Link to="/pricing" className="btn btn--ghost btn--lg">
-                See Pricing
-              </Link>
+              <button
+                className="btn btn--teal btn--lg"
+                onClick={() => document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                See What You Could Save
+              </button>
+              <button
+                className="btn btn--ghost btn--lg"
+                onClick={() => document.getElementById('sample-report')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                View Sample Report
+              </button>
             </div>
           </div>
 
           {/* Product mockup */}
-          <div className="hero-mockup" aria-label="Sample ReScape report preview" role="img">
+          <div className="hero-mockup" aria-label="Sample ReScapeUtah report preview" role="img">
             <div className="mockup-bar">
               <div className="mockup-dots">
                 <span className="mockup-dot r" aria-hidden="true" />
                 <span className="mockup-dot y" aria-hidden="true" />
                 <span className="mockup-dot g" aria-hidden="true" />
               </div>
-              <span className="mockup-filename">ReScape_Report_Sample.pdf</span>
+              <span className="mockup-filename">ReScapeUtah_Report_Sample.pdf</span>
               <span className="mockup-ready">
                 <span className="mockup-ready-dot" aria-hidden="true" />
                 Ready
@@ -208,44 +329,36 @@ export default function Home() {
         <div className="container">
           <div className="section-header">
             <span className="eyebrow">What's Included</span>
-            <h2 className="section-title">Every report. Every plan level.</h2>
+            <h2 className="section-title">Three deliverables. One decision-ready report.</h2>
             <p className="section-desc">
-              Each ReScape report gives you everything you need to plan intelligently — without committing to a contractor first.
+              Deliverables vary by plan —{' '}
+              <Link to="/pricing" style={{ color: 'var(--teal)' }}>see full pricing for details</Link>.
             </p>
           </div>
-
           <div className="deliverables-grid">
             <div className="deliverable-card">
-              <span className="plan-badge">Visual Concept+</span>
-              <div className="deliverable-icon" aria-hidden="true">🎨</div>
-              <h3 className="deliverable-title">AI Design Concepts</h3>
-              <p className="deliverable-desc">
-                Up to 10 AI-generated yard visuals across multiple design directions — drought-tolerant, desert-modern, native plant, and more. A visual starting point before you hire anyone.
-              </p>
+              <span className="plan-badge">All plans</span>
+              <div className="deliverable-icon">🎨</div>
+              <h3 className="deliverable-title">AI-Powered Design Concepts</h3>
+              <p className="deliverable-desc">Up to 10–30 design concepts (varies by plan) exploring drought-tolerant, desert-modern, native plant, and other directions — all based on your yard's actual photos and dimensions.</p>
             </div>
             <div className="deliverable-card">
-              <span className="plan-badge">Plan + Estimate+</span>
-              <div className="deliverable-icon" aria-hidden="true">📐</div>
-              <h3 className="deliverable-title">CAD-Style Top-Down Plan</h3>
-              <p className="deliverable-desc">
-                A detailed 2D blueprint view of your yard layout — plants, hardscape, dimensions, and irrigation zones. Shareable with landscapers and usable for Utah Water Savers applications.
-              </p>
+              <span className="plan-badge">Plan + Estimate · Water Savers Prep · White Glove</span>
+              <div className="deliverable-icon">📐</div>
+              <h3 className="deliverable-title">CAD-Style Top-Down Blueprint</h3>
+              <p className="deliverable-desc">After you select your preferred concept, we produce a detailed 2D blueprint — plant placement, hardscape zones, dimensions, and material callouts. Ready to share with landscapers or use for rebate applications.</p>
             </div>
             <div className="deliverable-card">
-              <span className="plan-badge">Plan + Estimate+</span>
-              <div className="deliverable-icon" aria-hidden="true">💰</div>
+              <span className="plan-badge">Plan + Estimate · Water Savers Prep · White Glove</span>
+              <div className="deliverable-icon">💰</div>
               <h3 className="deliverable-title">Cost + Rebate Estimate</h3>
-              <p className="deliverable-desc">
-                An itemized project cost estimate with material and labor ranges, a water-saving projection, and Utah Water Savers rebate guidance based on your provider and square footage.
-              </p>
+              <p className="deliverable-desc">Itemized cost estimates for materials, plants, and approximate labor. Includes water-saving projections and Utah Water Savers rebate guidance based on your provider and square footage. All figures are planning estimates.</p>
             </div>
             <div className="deliverable-card">
-              <span className="plan-badge plan-badge--teal">Add-On</span>
-              <div className="deliverable-icon" aria-hidden="true">🏘️</div>
-              <h3 className="deliverable-title">HOA Design Review</h3>
-              <p className="deliverable-desc">
-                We review your plan against common HOA landscaping restriction categories and adjust concepts accordingly. Does not guarantee HOA board approval.
-              </p>
+              <span className="plan-badge plan-badge--orange">Add-on · Available for any plan</span>
+              <div className="deliverable-icon">🔄</div>
+              <h3 className="deliverable-title">Design Revision</h3>
+              <p className="deliverable-desc">Need to update your design after contractor feedback or changed requirements? We revisit your plan with fresh parameters and deliver an updated concept set. White Glove includes one complimentary revision.</p>
             </div>
           </div>
         </div>
@@ -256,21 +369,23 @@ export default function Home() {
         <div className="container">
           <div className="section-header">
             <span className="eyebrow">The Process</span>
-            <h2 className="section-title">From idea to plan in up to 1 week</h2>
+            <h2 className="section-title">From idea to plan</h2>
             <p className="section-desc">No design experience needed. No landscaper required upfront.</p>
           </div>
 
           <ProcessAccordion />
 
           <p className="step-note">
-            Utah Water Savers applications are submitted by the homeowner directly to their water provider. We help you prepare — we do not submit on your behalf.{' '}
+            Utah Water Savers applications are submitted by the homeowner directly to their water provider through{' '}
+            <a href="https://utahwatersavers.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)' }}>utahwatersavers.com</a>.
+            We help you prepare — we do not submit on your behalf.{' '}
             <Link to="/how-it-works" style={{ color: 'var(--teal)' }}>Learn more about the process →</Link>
           </p>
         </div>
       </section>
 
       {/* ── CALCULATOR ─────────────────────── */}
-      <section className="section section--dark" id="calculator">
+      <section className="section section--dark" id="calculator-section">
         <div className="container">
           <div className="section-header">
             <span className="eyebrow">Free Estimate Tool</span>
@@ -289,109 +404,48 @@ export default function Home() {
           <div className="section-header">
             <span className="eyebrow">Pricing</span>
             <h2 className="section-title">Four packages. One-time payment.</h2>
-            <p className="section-desc">No subscriptions. No installations. A report you keep and use. Utah only.</p>
+            <p className="section-desc">No subscriptions. No installations. A report you keep and use.</p>
           </div>
 
           <div className="packages-grid packages-grid--4">
-            {/* Package 1 */}
-            <div className="pkg-card">
-              <div className="pkg-header">
-                <div className="pkg-name">Visual Concept</div>
+            {PKG_PREVIEW.map(pkg => (
+              <div key={pkg.id} className={`pkg-card${pkg.featured ? ' pkg-card--featured' : ''}${pkg.premium ? ' pkg-card--premium' : ''}`}>
+                <div className="pkg-header">
+                  <div className="pkg-name">{pkg.name}</div>
+                  {pkg.featured && <span className="pkg-popular">Most Popular</span>}
+                  {pkg.premium  && <span className="pkg-premium">Premium</span>}
+                </div>
+                <div className="pkg-price-row">
+                  <span className="pkg-price-was">${pkg.was}</span>
+                  <div className="pkg-price" style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
+                    <span className="pkg-price-sign">$</span>
+                    <span className="pkg-price-amount">{pkg.price.toFixed(2)}</span>
+                    <span className="pkg-price-period">one-time</span>
+                  </div>
+                </div>
+                <div><span className="pkg-launch-tag">Launch pricing</span></div>
+                <p className="pkg-tagline">{pkg.tagline}</p>
+                <ul className="check-list pkg-features">
+                  {pkg.features.map(f => <li key={f}>{f}</li>)}
+                </ul>
+                <Link
+                  to={`/contact?package=${pkg.id}`}
+                  className={`btn btn--full${pkg.featured ? ' btn--orange' : pkg.premium ? ' btn--outline' : ' btn--ghost'}`}
+                >
+                  {pkg.cta}
+                </Link>
               </div>
-              <div className="pkg-price">
-                <span className="pkg-price-sign">$</span>
-                <span className="pkg-price-amount">50</span>
-                <span className="pkg-price-period">one-time</span>
-              </div>
-              <p className="pkg-tagline">Explore ideas before committing to a full plan.</p>
-              <ul className="check-list pkg-features">
-                <li>10 AI-generated yard concept images</li>
-                <li>Multiple design directions</li>
-                <li>PDF delivery, up to 1 week</li>
-              </ul>
-              <Link to="/contact?package=visual-concept" className="btn btn--ghost btn--full">
-                Get Started
-              </Link>
-            </div>
-
-            {/* Package 2 */}
-            <div className="pkg-card">
-              <div className="pkg-header">
-                <div className="pkg-name">Plan + Estimate</div>
-              </div>
-              <div className="pkg-price">
-                <span className="pkg-price-sign">$</span>
-                <span className="pkg-price-amount">150</span>
-                <span className="pkg-price-period">one-time</span>
-              </div>
-              <p className="pkg-tagline">Everything you need to plan and get contractor quotes.</p>
-              <ul className="check-list pkg-features">
-                <li>Everything in Visual Concept</li>
-                <li>CAD-style top-down 2D plan</li>
-                <li>Itemized cost estimate + water-saving projection</li>
-              </ul>
-              <Link to="/contact?package=plan-estimate" className="btn btn--ghost btn--full">
-                Get Started
-              </Link>
-            </div>
-
-            {/* Package 3 — Featured */}
-            <div className="pkg-card pkg-card--featured">
-              <div className="pkg-header">
-                <div className="pkg-name">Water Savers Prep</div>
-                <span className="pkg-popular">Most Popular</span>
-              </div>
-              <div className="pkg-price">
-                <span className="pkg-price-sign">$</span>
-                <span className="pkg-price-amount">300</span>
-                <span className="pkg-price-period">one-time</span>
-              </div>
-              <p className="pkg-tagline">For homeowners pursuing Utah Water Savers rebates.</p>
-              <ul className="check-list pkg-features">
-                <li>Everything in Plan + Estimate</li>
-                <li>Rebate eligibility guidance for your provider</li>
-                <li>Document prep assistance + priority support</li>
-              </ul>
-              <p className="pkg-legal-note">
-                We help you prepare materials. You submit your own application directly to your provider. No guarantee of approval.
-              </p>
-              <Link to="/contact?package=water-savers-prep" className="btn btn--orange btn--full">
-                Get Started
-              </Link>
-            </div>
-
-            {/* Package 4 — Premium */}
-            <div className="pkg-card pkg-card--premium">
-              <div className="pkg-header">
-                <div className="pkg-name">White Glove</div>
-                <span className="pkg-premium">Premium</span>
-              </div>
-              <div className="pkg-price">
-                <span className="pkg-price-sign">$</span>
-                <span className="pkg-price-amount">500</span>
-                <span className="pkg-price-period">one-time</span>
-              </div>
-              <p className="pkg-tagline">Full-service planning with maximum support and detail.</p>
-              <ul className="check-list pkg-features">
-                <li>Everything in Water Savers Prep</li>
-                <li>Extended design consultation</li>
-                <li>Contractor referral support</li>
-                <li>Priority turnaround + dedicated support</li>
-              </ul>
-              <Link to="/contact?package=white-glove" className="btn btn--outline btn--full">
-                Get Started
-              </Link>
-            </div>
+            ))}
           </div>
 
-          {/* HOA Strip */}
+          {/* Design Revision Add-on Strip */}
           <div className="hoa-strip">
-            <div className="hoa-strip-icon" aria-hidden="true">🏘️</div>
+            <div className="hoa-strip-icon" aria-hidden="true">🔄</div>
             <div className="hoa-strip-body">
-              <div className="hoa-strip-title">HOA Design Review Add-On — +$75</div>
+              <div className="hoa-strip-title">Design Revision Add-On</div>
               <div className="hoa-strip-desc">
-                Live in a community with HOA or architectural design guidelines? We review your plan against common landscaping restriction categories and adjust concepts accordingly.{' '}
-                <em style={{ color: 'var(--text-muted)', fontSize: 12 }}>Does not guarantee HOA board approval.</em>
+                Need your design updated after contractor feedback, HOA review, or a change in requirements? We revisit your plan with your new input and deliver a fresh concept set.{' '}
+                <em style={{ color: 'var(--text-muted)', fontSize: 12 }}>White Glove includes one complimentary revision.</em>
               </div>
             </div>
           </div>
@@ -404,47 +458,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── UTAH WATER SAVERS FACTS ────────── */}
-      <section className="section section--dark" id="rebate-facts">
-        <div className="container">
-          <div className="section-header">
-            <span className="eyebrow">Utah Water Savers</span>
-            <h2 className="section-title">What the rebate program actually pays</h2>
-            <p className="section-desc">
-              Rates vary by water district. Here's what we typically see across Utah providers.
-            </p>
-          </div>
-
-          <div className="ws-rates-grid">
-            <div className="ws-rate-card">
-              <div className="ws-rate-district">JVWCD</div>
-              <div className="ws-rate-cities">Jordan Valley Water Conservancy District</div>
-              <div className="ws-rate-amount">Up to $3.00<span>/sq ft</span></div>
-              <div className="ws-rate-cities-list">Salt Lake City, West Jordan, South Jordan, Draper, Herriman, Riverton, and more</div>
-            </div>
-            <div className="ws-rate-card">
-              <div className="ws-rate-district">CUWCD</div>
-              <div className="ws-rate-cities">Central Utah Water Conservancy District</div>
-              <div className="ws-rate-amount">~$1.75–$2.75<span>/sq ft</span></div>
-              <div className="ws-rate-cities-list">Provo, Orem, Lehi, American Fork, Spanish Fork, Springville, and more</div>
-            </div>
-            <div className="ws-rate-card">
-              <div className="ws-rate-district">WBWCD</div>
-              <div className="ws-rate-cities">Weber Basin Water Conservancy District</div>
-              <div className="ws-rate-amount">~$2.50<span>/sq ft</span></div>
-              <div className="ws-rate-cities-list">Ogden, Layton, Clearfield, Roy, Kaysville, Bountiful, and more</div>
-            </div>
-          </div>
-
-          <div className="ws-disclaimer">
-            Rates are planning estimates based on publicly available program information. Verify current rates and eligibility directly with your water provider. ReScape is not affiliated with Utah Water Savers or any water district.{' '}
-            <Link to="/rebate-info" style={{ color: 'var(--teal)' }}>Full rebate info →</Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── EXAMPLE ANALYSIS BLOCK ─────────── */}
-      <section className="section" id="example-block">
+      {/* ── SAMPLE REPORT ──────────────────── */}
+      <section className="section section--dark" id="sample-report">
         <div className="container">
           <div className="example-block">
             <div className="example-block-content">
@@ -452,24 +467,27 @@ export default function Home() {
                 <span className="eyebrow">What to Expect</span>
                 <h2 className="section-title">See what a real report looks like</h2>
                 <p className="section-desc">
-                  Your report is a complete planning document — not a brochure. Here's what's inside every full analysis.
+                  Your report is a complete planning document — not a brochure. Here's what's inside a full analysis.
                 </p>
               </div>
-              <div className="example-list">
+              <div className="report-feature-list">
                 {[
-                  { icon: '🎨', text: 'Up to 10 AI concept images showing different design directions for your yard' },
-                  { icon: '📐', text: 'A top-down CAD-style 2D plan with plant placement, hardscape, and layout dimensions' },
-                  { icon: '📋', text: 'Itemized cost estimate with material and labor ranges — not vague ballparks' },
-                  { icon: '💧', text: 'Water-saving projection compared to your current turf' },
-                  { icon: '🌿', text: 'Utah Water Savers rebate guidance tailored to your provider (Prep package and above)' },
+                  { icon: '🎨', label: 'AI-Powered Design Concepts', desc: 'Up to 10 concept images showing different design directions for your yard' },
+                  { icon: '📐', label: 'CAD-Style Top-Down Plan', desc: 'Plant placement, hardscape, layout dimensions — ready to share with contractors' },
+                  { icon: '📋', label: 'Itemized Cost Estimate', desc: 'Material and labor ranges — not vague ballparks' },
+                  { icon: '💧', label: 'Water-Saving Projection', desc: 'Estimated annual gallons saved compared to your current grass area' },
+                  { icon: '🌿', label: 'Rebate Guidance', desc: 'Utah Water Savers eligibility tailored to your provider (Prep package and above)' },
                 ].map((item, i) => (
-                  <div key={i} className="example-list-item">
-                    <span className="example-list-item-icon" aria-hidden="true">{item.icon}</span>
-                    <span>{item.text}</span>
+                  <div key={i} className="report-feature-item">
+                    <div className="report-feature-icon" aria-hidden="true">{item.icon}</div>
+                    <div className="report-feature-text">
+                      <div className="report-feature-label">{item.label}</div>
+                      <div className="report-feature-desc">{item.desc}</div>
+                    </div>
                   </div>
                 ))}
               </div>
-              <Link to="/examples" className="btn btn--outline">
+              <Link to="/examples" className="btn btn--outline" style={{ marginTop: 8 }}>
                 View sample reports →
               </Link>
             </div>
@@ -515,6 +533,32 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── WHY CONVERT YOUR YARD ──────────── */}
+      <section className="section" id="why-convert">
+        <div className="container">
+          <div className="section-header">
+            <span className="eyebrow">Why Convert</span>
+            <h2 className="section-title">Why convert your yard?</h2>
+            <p className="section-desc">The case for replacing grass covers water, money, your home's value, and Utah's future. Expand each topic to learn more.</p>
+          </div>
+
+          <WhyAccordion />
+
+          <div className="why-cta-row">
+            <div className="why-cta-text">
+              <div className="why-cta-title">See how much you could save</div>
+              <div className="why-cta-desc">Use our free calculator — enter your grass area and Utah city to get a personalized rebate and water savings estimate.</div>
+            </div>
+            <button
+              className="btn btn--teal btn--lg"
+              onClick={() => document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              Try the Calculator
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* ── FAQ ────────────────────────────── */}
       <section className="section section--dark" id="faq-preview">
         <div className="container--xs">
@@ -533,46 +577,28 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── ABOUT THIS SERVICE ─────────────── */}
-      <section className="section" id="about-service">
-        <div className="container--xs">
-          <div className="about-service">
-            <h2 className="about-service-title">About This Service</h2>
-            <p>
-              ReScape is a <strong>digital planning and analysis service</strong>. We provide informational reports to help Utah homeowners plan yard projects. We are not licensed contractors, landscape architects, civil engineers, or financial advisors. Nothing in our reports constitutes professional contracting, engineering, architectural, financial, or legal advice.
-            </p>
-            <p>
-              We are not affiliated with Utah Water Savers, CUWCD, or any water provider. All cost estimates, rebate projections, and water savings figures are <strong>planning estimates only</strong>. Verify all program details directly with your water provider before making financial decisions.
-            </p>
-            <div className="about-service-links">
-              <Link to="/disclaimer">Full Disclaimer</Link>
-              <Link to="/terms">Terms of Service</Link>
-              <Link to="/privacy">Privacy Policy</Link>
-            </div>
-          </div>
+      {/* ── PRE-FOOTER DISCLAIMER ──────────── */}
+      <div className="pre-footer-disclaimer">
+        <div className="container">
+          <p>
+            ReScapeUtah is a digital planning and visualization service. We do not perform landscape installation, submit government applications, or guarantee rebate approval. We provide AI-powered design concepts, planning documents, cost estimates, and preparation guidance. All estimates are for planning purposes only. The homeowner is responsible for contractor selection, application submission through{' '}
+            <a href="https://utahwatersavers.com" target="_blank" rel="noopener noreferrer">utahwatersavers.com</a>
+            , and project execution. Utah Water Savers rebate programs are administered by participating water conservancy districts. Eligibility and rates vary by city and provider.
+          </p>
         </div>
-      </section>
+      </div>
 
       {/* ── FINAL CTA ──────────────────────── */}
       <div className="final-cta">
         <div className="container">
-          <h2 className="final-cta-title">
-            Stop guessing. Start planning.
-          </h2>
-          <p className="final-cta-sub">
-            Get your yard designed, costed, and rebate-ready — all in one report. Know the numbers before you spend a dollar.
-          </p>
+          <h2 className="final-cta-title">Stop guessing. Start planning.</h2>
+          <p className="final-cta-sub">Get your yard designed, costed, and rebate-ready — all in one report.</p>
           <div className="final-cta-actions">
-            <Link to="/contact" className="btn btn--orange btn--lg">
-              Get Your Yard Analysis
-            </Link>
-            <Link to="/pricing" className="btn btn--ghost btn--lg">
-              See Pricing
-            </Link>
+            <Link to="/contact" className="btn btn--orange btn--lg">Start Your Analysis</Link>
+            <Link to="/pricing" className="btn btn--teal btn--lg">See Pricing</Link>
+            <button className="btn btn--ghost btn--lg" onClick={() => document.getElementById('calculator')?.scrollIntoView({behavior:'smooth'})}>Try the Calculator</button>
           </div>
-          <p className="final-cta-note">
-            No installation. No subscription. A digital report you keep. Utah only.
-          </p>
+          <p className="final-cta-note">One-time payment. No subscription. No installation.</p>
         </div>
       </div>
     </>

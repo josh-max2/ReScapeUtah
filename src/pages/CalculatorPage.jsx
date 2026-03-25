@@ -51,7 +51,7 @@ export default function CalculatorPage() {
             <div className="calc-info-card">
               <h3>What is Utah Water Savers?</h3>
               <p>
-                Utah Water Savers is a state-promoted conservation initiative where participating water providers offer rebates to homeowners who replace water-intensive turf with water-efficient landscaping. The program is administered locally — rates and rules vary by provider, not statewide.
+                Utah Water Savers is a state-promoted conservation initiative where participating water providers offer rebates to homeowners who replace water-intensive grass with water-efficient landscaping. The program is administered locally — rates and rules vary by provider, not statewide.
               </p>
             </div>
             <div className="calc-info-card">
@@ -63,7 +63,7 @@ export default function CalculatorPage() {
             <div className="calc-info-card">
               <h3>What providers typically require</h3>
               <p>
-                Many providers require before-and-after photos, a 2D design plan, and an on-site inspection. Some programs require the grass to be living and maintained at the time of application. A detailed plan — like one from ReScape — is often part of a complete application.
+                Many providers require before-and-after photos, a 2D design plan, and an on-site inspection. Some programs require the grass to be living and maintained at the time of application. A detailed plan — like one from ReScapeUtah — is often part of a complete application.
               </p>
             </div>
           </div>

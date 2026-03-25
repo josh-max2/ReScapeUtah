@@ -38,9 +38,9 @@ export default function Navbar() {
     <>
       <nav className={`navbar${scrolled ? ' scrolled' : ''}`} role="navigation" aria-label="Main navigation">
         <div className="container nav-inner">
-          <Link to="/" className="nav-logo" onClick={close} aria-label="ReScape home">
+          <Link to="/" className="nav-logo" onClick={close} aria-label="ReScapeUtah home">
             <LogoIcon />
-            ReScape
+            ReScapeUtah
           </Link>
 
           <ul className="nav-links" role="list">
@@ -56,7 +56,7 @@ export default function Navbar() {
             ))}
           </ul>
 
-          <Link to="/contact" className="btn btn--orange nav-cta" aria-label="Get started">
+          <Link to="/pricing" className="btn btn--orange nav-cta" aria-label="See plans and pricing">
             Get Started
           </Link>
 
@@ -88,7 +88,7 @@ export default function Navbar() {
           </NavLink>
         ))}
         <div className="drawer-cta">
-          <Link to="/contact" className="btn btn--orange btn--full btn--lg" onClick={close}>
+          <Link to="/pricing" className="btn btn--orange btn--full btn--lg" onClick={close}>
             Get Started
           </Link>
         </div>

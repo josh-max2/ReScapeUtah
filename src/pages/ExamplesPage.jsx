@@ -22,11 +22,11 @@ const EXAMPLES = [
     sqft: 2200,
     package: 'Plan + Estimate',
     costs: [
-      { item: 'Synthetic Turf (partial)',        range: '$3,500–$6,000' },
       { item: 'Decomposed Granite & Boulders',   range: '$1,400–$2,800' },
+      { item: 'Native Plants & Groundcover',     range: '$1,200–$2,400' },
       { item: 'Drip Irrigation & Upgrade',       range: '$1,200–$2,200' },
       { item: 'Labor & Installation (est.)',     range: '$2,400–$4,400' },
-      { item: 'Total Estimated Range',           range: '$8,500–$15,400' },
+      { item: 'Total Estimated Range',           range: '$6,200–$11,800' },
     ],
     rebate: { rate: 3.00, amount: 6600, note: '2,200 sq ft × $3.00/sq ft — example only' },
   },
@@ -108,7 +108,7 @@ export default function ExamplesPage() {
     <>
       <SEO
         title="Sample Yard Analysis Reports"
-        description="See what a ReScape report looks like — AI concept images, CAD-style top-down plans, itemized cost estimates, and Utah Water Savers rebate guidance. Sample reports for illustration only."
+        description="See what a ReScapeUtah report looks like — AI-powered concept images, CAD-style top-down plans, itemized cost estimates, and Utah Water Savers rebate guidance. Sample reports for illustration only."
       />
 
       <div className="page-hero">
@@ -116,7 +116,7 @@ export default function ExamplesPage() {
           <span className="eyebrow">Examples</span>
           <h1 className="page-hero-title">See what's inside a report</h1>
           <p className="page-hero-sub">
-            Sample reports below show the structure and depth of a real ReScape analysis. All properties, names, addresses, and figures are fictional examples for illustration only.
+            Sample reports below show the structure and depth of a real ReScapeUtah analysis. All properties, names, addresses, and figures are fictional examples for illustration only.
           </p>
         </div>
       </div>

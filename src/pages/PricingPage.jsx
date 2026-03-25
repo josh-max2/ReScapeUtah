@@ -12,8 +12,8 @@ const PRICING_FAQS = [
     a: 'Reports are delivered within up to 1 week from order submission. Turnaround times are targets, not guarantees — complex yards or high-demand periods may take longer. We will communicate if your order will be delayed.',
   },
   {
-    q: 'Do you offer refunds?',
-    a: 'If you are not satisfied with your analysis, contact us within 7 days of delivery and we will work to make it right or issue a refund at our discretion.',
+    q: 'What is your refund policy?',
+    a: 'All sales are final. If you have concerns about the quality or completeness of your report, contact us and we will work to address them. Our goal is to deliver a useful, accurate planning document — if something is missing or incorrect, we want to know.',
   },
   {
     q: 'Is this a subscription?',
@@ -29,7 +29,7 @@ const PRICING_FAQS = [
   },
   {
     q: 'Does this service work outside of Utah?',
-    a: 'ReScape is designed specifically for Utah homeowners and the Utah Water Savers program. Our rebate guidance is calibrated to Utah water districts. We do not currently serve other states.',
+    a: 'ReScapeUtah is designed specifically for Utah homeowners and the Utah Water Savers program. Our rebate guidance is calibrated to Utah water districts. We do not currently serve other states.',
   },
 ]
 
@@ -37,10 +37,11 @@ const PACKAGES = [
   {
     id: 'visual-concept',
     name: 'Visual Concept',
-    price: 50,
+    price: 49.99,
+    was: 89,
     tagline: 'Explore ideas before committing to a full plan.',
     features: [
-      '10 AI-generated yard concept images',
+      '10 AI-powered yard concept images',
       'Multiple design directions and styles',
       'PDF delivery',
       'Up to 1 week turnaround',
@@ -51,11 +52,12 @@ const PACKAGES = [
   {
     id: 'plan-estimate',
     name: 'Plan + Estimate',
-    price: 150,
+    price: 149.99,
+    was: 249,
     tagline: 'Everything you need to plan your project and get accurate contractor quotes.',
     features: [
       'Everything in Visual Concept',
-      'CAD-style top-down 2D plan',
+      'CAD-style top-down 2D blueprint',
       'Itemized cost estimate (materials + labor ranges)',
       'Water-saving projection (planning estimate)',
       'PDF delivery',
@@ -67,7 +69,8 @@ const PACKAGES = [
   {
     id: 'water-savers-prep',
     name: 'Utah Water Savers Prep',
-    price: 300,
+    price: 299.99,
+    was: 499,
     tagline: 'For homeowners pursuing Utah Water Savers rebates who want expert guidance.',
     features: [
       'Everything in Plan + Estimate',
@@ -76,6 +79,7 @@ const PACKAGES = [
       'Priority support',
       'PDF delivery',
       'Up to 1 week turnaround',
+      'Utah properties only',
     ],
     featured: true,
     premium: false,
@@ -84,37 +88,73 @@ const PACKAGES = [
   {
     id: 'white-glove',
     name: 'White Glove',
-    price: 500,
+    price: 499.99,
+    was: 799,
     tagline: 'Full-service planning with maximum support, detail, and contractor referral assistance.',
     features: [
       'Everything in Utah Water Savers Prep',
       'Extended design consultation session',
+      'One complimentary design revision included',
       'Contractor referral support (Utah licensed contractors)',
       'Priority turnaround',
       'Dedicated email support throughout the process',
       'PDF delivery',
+      'Utah properties only',
     ],
     featured: false,
     premium: true,
   },
 ]
 
+const SPECIALTY_PRODUCTS = [
+  {
+    id: 'out-of-state',
+    name: 'Out-of-State Design',
+    price: 299.99,
+    was: 449,
+    tagline: 'Concept images and a CAD-style blueprint for any property — no rebate guidance.',
+    features: [
+      '10 AI-powered yard concept images',
+      'CAD-style top-down 2D blueprint',
+      'PDF delivery',
+      'Up to 1 week turnaround',
+      'Available nationwide — not Utah-specific',
+    ],
+    note: 'Does not include Utah Water Savers rebate guidance or cost estimates. For rebate guidance, Utah residents should choose the Utah Water Savers Prep package.',
+  },
+  {
+    id: 'design-revision',
+    name: 'Design Revision',
+    price: 74.99,
+    was: null,
+    tagline: 'Revisit your existing design with updated requirements.',
+    features: [
+      'Fresh concept set based on new requirements',
+      'Updated CAD blueprint (if original included one)',
+      'Accepts contractor feedback, HOA input, or preference changes',
+      'PDF delivery',
+      'Up to 1 week turnaround',
+    ],
+    note: 'For existing ReScapeUtah customers only. White Glove includes one complimentary revision — no purchase required.',
+  },
+]
+
 // Comparison table rows: [label, vc, pe, wsp, wg]
 const COMPARISON = [
-  ['AI design concepts (up to 10)',     '✓', '✓', '✓', '✓'],
-  ['CAD-style top-down 2D plan',        '—', '✓', '✓', '✓'],
-  ['Itemized cost estimate',            '—', '✓', '✓', '✓'],
-  ['Water-saving projection',           '—', '✓', '✓', '✓'],
-  ['Utah Water Savers rebate guidance', '—', '—', '✓', '✓'],
-  ['Application document prep',         '—', '—', '✓', '✓'],
-  ['Priority support',                  '—', '—', '✓', '✓'],
-  ['Extended design consultation',      '—', '—', '—', '✓'],
-  ['Contractor referral support',        '—', '—', '—', '✓'],
-  ['Dedicated support contact',          '—', '—', '—', '✓'],
-  ['HOA review add-on available',       '✓', '✓', '✓', '✓'],
-  ['PDF delivery',                      '✓', '✓', '✓', '✓'],
-  ['Turnaround',                    'Up to 1 wk', 'Up to 1 wk', 'Up to 1 wk', 'Priority'],
-  ['Price',                             '$50', '$150', '$300', '$500'],
+  ['AI-powered design concepts (up to 10)', '✓', '✓', '✓', '✓'],
+  ['CAD-style top-down 2D blueprint',       '—', '✓', '✓', '✓'],
+  ['Itemized cost estimate',               '—', '✓', '✓', '✓'],
+  ['Water-saving projection',              '—', '✓', '✓', '✓'],
+  ['Utah Water Savers rebate guidance',    '—', '—', '✓', '✓'],
+  ['Application document prep',            '—', '—', '✓', '✓'],
+  ['Priority support',                     '—', '—', '✓', '✓'],
+  ['Extended design consultation',         '—', '—', '—', '✓'],
+  ['Design revision included',             '—', '—', '—', '✓'],
+  ['Contractor referral support',          '—', '—', '—', '✓'],
+  ['Dedicated support contact',            '—', '—', '—', '✓'],
+  ['PDF delivery',                         '✓', '✓', '✓', '✓'],
+  ['Turnaround',                       'Up to 1 wk', 'Up to 1 wk', 'Up to 1 wk', 'Priority'],
+  ['Price',                            '$49.99', '$149.99', '$299.99', '$499.99'],
 ]
 
 export default function PricingPage() {
@@ -122,7 +162,7 @@ export default function PricingPage() {
     <>
       <SEO
         title="Pricing — Yard Analysis Packages"
-        description="Simple, transparent pricing for ReScape. One-time payment. No subscriptions. Choose from Visual Concept ($50), Plan + Estimate ($150), Utah Water Savers Prep ($300), or White Glove ($500). Utah only."
+        description="Simple, transparent pricing for ReScapeUtah. One-time payment. No subscriptions. Choose from Visual Concept ($50), Plan + Estimate ($150), Utah Water Savers Prep ($300), or White Glove ($500). Utah only."
       />
 
       <div className="page-hero" style={{ paddingTop: 'calc(var(--nav-h) + 64px)' }}>
@@ -148,11 +188,15 @@ export default function PricingPage() {
                     {pkg.premium  && <span className="pc-badge pc-badge--premium">Premium</span>}
                   </div>
                   <p className="pc-tagline">{pkg.tagline}</p>
-                  <div className="pc-price">
-                    <span className="pc-price-sign">$</span>
-                    <span className="pc-price-amount">{pkg.price}</span>
-                    <span className="pc-price-period">one-time</span>
+                  <div className="pkg-price-row">
+                    {pkg.was && <span className="pkg-price-was">${pkg.was}</span>}
+                    <div className="pc-price">
+                      <span className="pc-price-sign">$</span>
+                      <span className="pc-price-amount">{pkg.price.toFixed(2)}</span>
+                      <span className="pc-price-period">one-time</span>
+                    </div>
                   </div>
+                  <div><span className="pkg-launch-tag">Launch pricing</span></div>
                 </div>
 
                 <div className="pc-includes">
@@ -178,28 +222,38 @@ export default function PricingPage() {
             ))}
           </div>
 
-          {/* HOA Add-on */}
-          <div className="hoa-card">
-            <div className="hoa-card-icon" aria-hidden="true">🏘️</div>
-            <div className="hoa-card-body">
-              <h3 className="hoa-card-title">HOA Design Review Add-On</h3>
-              <p className="hoa-card-desc">
-                For homeowners in HOA communities or neighborhoods with architectural design guidelines. We review your plan against common landscaping restriction categories and adjust design concepts to align with typical restriction types.
-              </p>
-              <p className="hoa-card-note">
-                HOA rules vary by community. This review helps you prepare — it does not guarantee HOA board approval.
-              </p>
-            </div>
-            <div className="hoa-card-right">
-              <div className="hoa-card-price">+$75</div>
-              <div className="hoa-card-period">add-on</div>
-              <Link
-                to="/contact?package=hoa-addon"
-                className="btn btn--outline btn--sm"
-                style={{ marginTop: 10 }}
-              >
-                Add This
-              </Link>
+          {/* Specialty Products */}
+          <div style={{ marginTop: 40 }}>
+            <h2 style={{ textAlign: 'center', fontSize: 18, fontWeight: 700, marginBottom: 8, color: 'var(--text-sec)' }}>
+              Specialty Products
+            </h2>
+            <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-muted)', marginBottom: 24 }}>
+              Not in Utah, or need to revisit an existing design?
+            </p>
+            <div className="specialty-products-grid">
+              {SPECIALTY_PRODUCTS.map(sp => (
+                <div key={sp.id} className="specialty-product-card">
+                  <div className="specialty-product-header">
+                    <div className="specialty-product-name">{sp.name}</div>
+                    <div className="specialty-product-price">
+                      {sp.was && <span className="pkg-price-was">${sp.was}</span>}
+                      <span className="specialty-product-amount">${sp.price.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  <p className="specialty-product-tagline">{sp.tagline}</p>
+                  <ul className="check-list" style={{ marginBottom: 12 }}>
+                    {sp.features.map(f => <li key={f}>{f}</li>)}
+                  </ul>
+                  {sp.note && <p className="specialty-product-note">{sp.note}</p>}
+                  <Link
+                    to={sp.id === 'design-revision' ? '/design-revision' : `/contact?package=${sp.id}`}
+                    className="btn btn--outline btn--sm"
+                    style={{ marginTop: 12 }}
+                  >
+                    {sp.id === 'design-revision' ? 'Request Revision' : 'Get Started'}
+                  </Link>
+                </div>
+              ))}
             </div>
           </div>
 

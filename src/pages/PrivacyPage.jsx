@@ -5,7 +5,7 @@ export default function PrivacyPage() {
     <>
       <SEO
         title="Privacy Policy"
-        description="ReScape privacy policy — how we collect, use, and protect your personal information."
+        description="ReScapeUtah privacy policy — how we collect, use, and protect your personal information."
       />
       <div className="legal-page">
         <div className="container">
@@ -26,9 +26,9 @@ export default function PrivacyPage() {
             <h2>2. How We Use Your Information</h2>
             <p>We use your information to:</p>
             <ul>
-              <li>Process your order and deliver your ReScape report</li>
+              <li>Process your order and deliver your ReScapeUtah report</li>
               <li>Communicate with you about your order, questions, or project</li>
-              <li>Improve our service and understand how customers find and use ReScape</li>
+              <li>Improve our service and understand how customers find and use ReScapeUtah</li>
             </ul>
 
             <h2>3. Information Sharing</h2>
