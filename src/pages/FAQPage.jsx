@@ -53,7 +53,7 @@ const FAQ_GROUPS = [
       },
       {
         q: 'What if I have an HOA or need a design revision?',
-        a: 'We offer a Design Revision add-on ($75) for any of the top three packages. This covers cases where you need your design updated — due to HOA feedback, contractor input, or a change in requirements. We revisit your plan with your new parameters and deliver a fresh concept set. White Glove customers receive one complimentary revision. Visit the Design Revision page or contact us to get started.',
+        a: 'Design Revision ($74.99) is available for Utah Water Savers Prep and White Glove customers only. It updates your existing compliance-aligned CAD blueprint to incorporate contractor feedback, HOA input you provide to us, or changed requirements. It does not include new concept images. White Glove customers receive one complimentary revision — contact us before ordering. For Visual Concept or Plan + Estimate customers who need changes, contact us about upgrading to a higher package.',
       },
     ],
   },
@@ -81,11 +81,11 @@ const FAQ_GROUPS = [
     items: [
       {
         q: 'Do you serve areas outside Utah?',
-        a: 'Not currently. ReScapeUtah is designed specifically for Utah homeowners and the Utah Water Savers program. Our rebate guidance is calibrated to Utah water districts. We plan to expand, but for now we are Utah-only.',
+        a: 'Rescaped currently serves Utah homeowners. If you are outside Utah, contact us and we can discuss custom pricing based on your location, yard size, and local regulations. We do not currently offer Utah Water Savers rebate preparation for properties outside Utah.',
       },
       {
         q: "What's the difference between the packages?",
-        a: "Visual Concept ($50): AI-powered design concepts only. Plan + Estimate ($150): concepts + CAD blueprint + cost estimate. Water Savers Prep ($300): full plan + rebate guidance + document prep. White Glove ($500): everything plus extended consultation, one complimentary design revision, and contractor referral assistance.",
+        a: "Visual Concept ($49.99): AI-powered design concepts only — up to 10 concepts. Plan + Estimate ($149.99): concepts + CAD-style blueprint + cost estimate. This is a design-focused blueprint; it is not specifically formatted or verified for Utah Water Savers compliance. Water Savers Prep ($299.99): compliance-aligned blueprint + rebate eligibility guidance + document prep — designed to align with Utah Water Savers program requirements (Utah properties only). White Glove ($499.99): everything in Water Savers Prep plus extended consultation, one complimentary design revision, contractor referral support, and HOA design support (Utah properties only).",
       },
       {
         q: 'How does this help the Great Salt Lake?',

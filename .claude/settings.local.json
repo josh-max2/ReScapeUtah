@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(npm run:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(grep -rn \"$75\\\\|\\\\$0\\\\b\\\\|all sales are final\\\\|no refund\\\\|Fresh concept set\\\\|how did you hear\\\\|HOA.*$75\\\\|$75.*HOA\" --include=\"*.jsx\" .)"
     ]
   }
 }

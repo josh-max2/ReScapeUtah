@@ -72,7 +72,7 @@ export default function DesignRevisionPage() {
     <>
       <SEO
         title="Design Revision — Update Your Yard Plan"
-        description="Already have a ReScapeUtah report? Update your yard design to reflect contractor feedback, HOA requirements, or changed project goals — up to 10 revised concepts for $75."
+        description="Already have a Utah Water Savers Prep or White Glove report? Update your compliance-aligned CAD blueprint to reflect contractor feedback, HOA input, or changed requirements."
       />
 
       {/* Page hero */}
@@ -81,7 +81,7 @@ export default function DesignRevisionPage() {
           <span className="eyebrow">Design Revision</span>
           <h1 className="page-hero-title">Update your design with new requirements</h1>
           <p className="page-hero-sub">
-            Already have a ReScapeUtah report? If your contractor, HOA, or new project requirements call for changes, we'll revisit your design and produce an updated concept set — no need to start over.
+            For Utah Water Savers Prep and White Glove customers only. If your contractor feedback, the HOA guidelines you provided us, or new project requirements call for changes, we'll update your compliance-aligned CAD blueprint — no need to start over.
           </p>
         </div>
       </div>
@@ -95,10 +95,10 @@ export default function DesignRevisionPage() {
               <div style={{ fontSize: 22, marginBottom: 10 }}>📋</div>
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>What's included</div>
               <ul style={{ fontSize: 14, color: 'var(--text-sec)', lineHeight: 1.75, paddingLeft: 18, margin: 0 }}>
-                <li>Updated concept set based on new requirements</li>
-                <li>Up to 10 revised concepts</li>
-                <li>Delivery within 1 week</li>
-                <li>Delivered as a shareable PDF</li>
+                <li>Updated CAD blueprint based on your feedback</li>
+                <li>Incorporates contractor feedback, HOA input, or requirement changes</li>
+                <li>PDF delivery</li>
+                <li>Up to 1 week turnaround</li>
               </ul>
             </div>
 
@@ -106,7 +106,7 @@ export default function DesignRevisionPage() {
               <div style={{ fontSize: 22, marginBottom: 10 }}>👤</div>
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Who it's for</div>
               <p style={{ fontSize: 14, color: 'var(--text-sec)', lineHeight: 1.75, margin: 0 }}>
-                Customers who have already received their initial ReScapeUtah report and need changes based on contractor feedback, HOA review, or updated project goals.
+                Utah Water Savers Prep and White Glove customers who have received their initial report and need their compliance-aligned CAD blueprint updated based on contractor feedback, HOA input, or changed requirements.
               </p>
             </div>
 
@@ -129,8 +129,8 @@ export default function DesignRevisionPage() {
         <div className="container--sm">
 
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <div style={{ fontSize: 36, fontWeight: 900, color: 'var(--orange)', lineHeight: 1 }}>$75</div>
-            <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>One-time add-on · All sales are final</div>
+            <div style={{ fontSize: 36, fontWeight: 900, color: 'var(--orange)', lineHeight: 1 }}>$74.99</div>
+            <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>One-time · Utah Water Savers Prep and White Glove customers only</div>
           </div>
 
           <div className="contact-form-card">
@@ -249,7 +249,7 @@ export default function DesignRevisionPage() {
                     style={{ marginTop: 2, flexShrink: 0 }}
                   />
                   <span>
-                    I understand the Design Revision service is $75 and all sales are final. White Glove customers should contact us before ordering as your revision may be included.
+                    I confirm I am a Utah Water Savers Prep or White Glove customer and I understand this service updates my existing CAD blueprint — it does not include new concept images. White Glove customers: your revision may already be included — <Link to="/contact" style={{ color: 'var(--teal)' }}>contact us</Link> before ordering.
                     <span className="form-req"> *</span>
                   </span>
                 </label>
@@ -263,7 +263,7 @@ export default function DesignRevisionPage() {
                   disabled={loading}
                   aria-busy={loading}
                 >
-                  {loading ? 'Submitting…' : 'Submit Revision Request — $75'}
+                  {loading ? 'Submitting…' : 'Submit Revision Request — $74.99'}
                 </button>
                 <p className="form-privacy-note">
                   Your information is never sold or shared.{' '}
