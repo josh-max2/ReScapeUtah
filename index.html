@@ -1298,7 +1298,7 @@
       try {
         // Trigger a fresh TT account snapshot, then re-fetch data.
         await Promise.resolve(); // best-effort
-        const res = await fetch('./data.json');
+        const res = await fetch('./data.json?v=' + Date.now());
         const data = await res.json();
         if (data.error) {
           document.getElementById('hero-greeting').innerHTML =
@@ -1348,7 +1348,7 @@
     // Initial load (no pull, just fetch)
     async function initial() {
       try {
-        const res = await fetch('./data.json');
+        const res = await fetch('./data.json?v=' + Date.now());
         const data = await res.json();
         if (data.error) {
           document.getElementById('hero-greeting').innerHTML =
@@ -1399,7 +1399,7 @@
         document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const range = btn.dataset.range;
-        const res = await fetch(`./data_${range}.json`);
+        const res = await fetch(`./data_${range}.json?v=${Date.now()}`);
         const data = await res.json();
         if (!data.error) renderChart(data.trend_chart, data.policy_overlays);
       });
