@@ -1,16 +1,1269 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ReScapeUtah — Utah Yard Plans, Costs &amp; Rebate Guidance</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="3600">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>datamaker · Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root {
+      --bg:#faf6ec; --bg-tint:#f4eedf; --surface:#fff;
+      --border:#ece4d0; --border-strong:#d8cdb1; --divider:#f0e9d8;
+      --ink:#1a1612; --ink-soft:#524d44; --ink-muted:#7d7568; --ink-faint:#aaa292;
+      --gold:#c8964a; --gold-soft:#e8c97f; --gold-bg:#faecd2;
+      --green:#2d8659; --green-bg:#dff0e6;
+      --red:#b54232; --red-bg:#f8e1dc;
+      --blue:#3970b8; --blue-bg:#e0ecf7;
+      --plum:#7a4892; --plum-bg:#efe3f2;
+    }
+    body {
+      font-family:'Inter',system-ui,sans-serif;
+      background:var(--bg); color:var(--ink); line-height:1.5;
+      padding:32px 20px 64px; min-height:100vh;
+      -webkit-font-smoothing:antialiased;
+    }
+    .container{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:36px}
+    h1{font-family:'Instrument Serif',Georgia,serif;font-size:36px;font-weight:400;letter-spacing:-.01em;line-height:1.1}
+    h1 em{color:var(--gold);font-style:italic}
+    h2{font-size:11px;font-weight:500;color:var(--ink-soft);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+    h2::before{content:'';width:16px;height:1px;background:var(--gold)}
+    .stat-num{font-family:'JetBrains Mono',monospace;font-feature-settings:'tnum'}
+    .muted{color:var(--ink-muted);font-size:12px}
+    .up{color:var(--green)} .down{color:var(--red)} .accent{color:var(--gold)}
+    .card{background:var(--surface);border:.5px solid var(--border);border-radius:14px;box-shadow:0 1px 2px rgba(80,65,30,.03),0 0 0 .5px rgba(80,65,30,.04);transition:border-color .15s}
+    .card:hover{border-color:var(--border-strong)}
+    header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;padding-bottom:28px;border-bottom:.5px solid var(--border)}
+    .title-block .meta{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-muted);margin-top:6px;flex-wrap:wrap}
+    .live-dot{display:inline-block;width:6px;height:6px;background:var(--green);border-radius:50%;box-shadow:0 0 0 0 rgba(45,134,89,.4);animation:pulse 2.5s infinite}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(45,134,89,.4)}50%{box-shadow:0 0 0 6px rgba(45,134,89,0)}}
+    .meta-divider{color:var(--ink-faint)}
+    .header-actions{display:flex;gap:8px;align-items:center}
+    .btn{padding:9px 16px;background:var(--surface);border:.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-soft);cursor:pointer;transition:all .15s}
+    .btn:hover{border-color:var(--border-strong);background:var(--bg-tint);color:var(--ink)}
+    .btn-primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+    .btn-primary:hover{background:var(--ink-soft);color:var(--bg)}
+    .btn-primary:disabled{opacity:.6;cursor:wait}
+
+    /* KPIs */
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+    .kpi-card{padding:18px;display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden}
+    .kpi-label{font-size:11px;font-weight:500;letter-spacing:.08em;color:var(--ink-muted);text-transform:uppercase}
+    .kpi-value{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:500;letter-spacing:-.02em;color:var(--ink);margin-top:4px}
+    .kpi-delta{font-size:12px;font-weight:500;display:flex;align-items:center;gap:4px;margin-top:2px}
+    .kpi-spark{position:absolute;right:14px;bottom:14px;opacity:.85}
+
+    /* Insights */
+    .insight-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
+    .insight-card{padding:18px;display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden}
+    .insight-card::before{content:'';position:absolute;left:0;top:18px;bottom:18px;width:2px;border-radius:0 2px 2px 0;background:currentColor;opacity:.6}
+    .insight-card.outlier::before{background:var(--gold)}
+    .insight-card.milestone::before{background:var(--blue)}
+    .insight-card.streak::before{background:var(--green)}
+    .insight-card.watch::before{background:var(--red)}
+    .insight-card.trend::before{background:var(--plum)}
+    .insight-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .badge{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;border-radius:5px;display:inline-flex;align-items:center;gap:6px}
+    .badge-outlier{background:var(--gold-bg);color:#7a5a1a}
+    .badge-milestone{background:var(--blue-bg);color:#1d4a7c}
+    .badge-streak{background:var(--green-bg);color:#1d6b46}
+    .badge-watch{background:var(--red-bg);color:#913221}
+    .badge-trend{background:var(--plum-bg);color:#5a2880}
+    .insight-time{font-size:10px;color:var(--ink-faint);font-family:'JetBrains Mono',monospace;letter-spacing:.06em}
+    .insight-text{font-size:13.5px;color:var(--ink);line-height:1.55}
+    .insight-text strong{font-weight:500;color:var(--ink)}
+    .insight-num{font-family:'JetBrains Mono',monospace;font-weight:500}
+
+    /* Monetization */
+    .mon-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px}
+    .mon-card{padding:18px}
+    .mon-card.delisted{opacity:.65;background:repeating-linear-gradient(45deg,var(--surface),var(--surface) 8px,var(--bg-tint) 8px,var(--bg-tint) 9px)}
+    .mon-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+    .mon-handle{font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:8px}
+    .mon-dot{width:9px;height:9px;border-radius:50%}
+    .mon-rank{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);letter-spacing:.06em}
+    .mon-eta{margin-top:4px;font-size:13px;color:var(--ink-soft);font-weight:500;display:flex;align-items:center;gap:8px}
+    .mon-eta-num{font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--ink);font-weight:500}
+    .mon-freshness{margin-top:6px;font-size:11px;color:var(--ink-muted);font-style:italic;cursor:help}
+    .mon-blocked{margin-top:10px;padding:8px 10px;background:var(--red-bg);color:#913221;font-size:11.5px;border-radius:6px;line-height:1.45}
+    .mon-row{margin-top:12px}
+    .mon-row-label{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+    .mon-row-num{font-family:'JetBrains Mono',monospace;color:var(--ink);font-weight:500;text-transform:none;letter-spacing:0}
+    .mon-bar{height:5px;background:var(--bg-tint);border-radius:3px;position:relative;overflow:hidden}
+    .mon-bar-fill{height:100%;border-radius:3px;transition:width .3s}
+    /* Per-bar metric tile strip */
+    .mon-stat-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:9px;padding-top:8px;border-top:.5px dashed var(--divider)}
+    .mon-stat{display:flex;flex-direction:column;gap:2px}
+    .mon-stat-label{font-size:9.5px;font-weight:500;letter-spacing:.07em;color:var(--ink-muted);text-transform:uppercase}
+    .mon-stat-value{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;color:var(--ink);letter-spacing:-.01em}
+    .mon-stat-sub{font-size:10.5px;color:var(--ink-faint);font-family:'JetBrains Mono',monospace}
+    .mon-stat-empty{font-size:11px;color:var(--ink-faint);font-style:italic}
+
+    /* Scenario tiles ("what would it take to hit 10K in N mo") */
+    .mon-scenario{margin-top:14px;padding-top:14px;border-top:.5px solid var(--divider)}
+    .mon-scenario-title{font-size:9.5px;font-weight:500;letter-spacing:.08em;color:var(--ink-muted);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+    .mon-scenario-title::after{content:'';flex:1;height:1px;background:var(--divider)}
+    .mon-scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .mon-scenario-tile{display:flex;flex-direction:column;gap:3px;padding:10px 12px;background:var(--bg-tint);border-radius:6px;border:.5px solid var(--border)}
+    .mon-scenario-period{font-size:9.5px;font-weight:500;letter-spacing:.08em;color:var(--ink-muted);text-transform:uppercase}
+    .mon-scenario-rate{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:500;color:var(--ink);letter-spacing:-.01em;line-height:1.2}
+    .mon-scenario-mult{font-size:10.5px;color:var(--ink-muted);font-family:'JetBrains Mono',monospace}
+
+    /* ── Account health strip ── */
+    .health-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+    .health-card{padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+    .health-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .health-name{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+    .health-name-dot{width:8px;height:8px;border-radius:50%}
+    .health-status{font-size:9.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:4px}
+    .status-ok{background:var(--green-bg);color:#1d6b46}
+    .status-stale{background:var(--gold-bg);color:#7a5a1a}
+    .status-delisted{background:var(--red-bg);color:#913221}
+    .health-row{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-muted)}
+    .health-row .num{font-family:'JetBrains Mono',monospace;color:var(--ink)}
+
+    /* ── Bar comparison (hour-of-day, day-of-week, source-sub) ── */
+    .barchart{display:flex;flex-direction:column;gap:5px;padding:14px 16px}
+    .barchart-row{display:grid;grid-template-columns:60px 1fr 60px;align-items:center;gap:10px;font-size:11.5px}
+    .barchart-label{color:var(--ink-muted);font-family:'JetBrains Mono',monospace}
+    .barchart-bar{height:8px;background:var(--bg-tint);border-radius:3px;position:relative;overflow:hidden}
+    .barchart-fill{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
+    .barchart-num{font-family:'JetBrains Mono',monospace;text-align:right;color:var(--ink);font-weight:500}
+
+    /* ── Voice A/B grid ── */
+    .voice-grid{padding:14px 18px}
+    .voice-row{display:grid;grid-template-columns:90px 1fr;gap:14px;align-items:center;padding:10px 0;border-bottom:.5px solid var(--divider)}
+    .voice-row:last-child{border-bottom:none}
+    .voice-name{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500}
+    .voice-cells{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+    .voice-cell{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--ink-muted)}
+    .voice-cell-acct{font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+    .voice-cell-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--ink);font-weight:500}
+    .voice-totals{display:flex;gap:18px;padding:14px 18px;border-top:.5px solid var(--divider);background:var(--bg-tint)}
+    .voice-total{display:flex;flex-direction:column;gap:2px}
+    .voice-total-label{font-size:9.5px;font-weight:500;letter-spacing:.07em;color:var(--ink-muted);text-transform:uppercase}
+    .voice-total-num{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:500}
+
+    /* ── Tier mix ── */
+    .tier-grid{padding:14px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px}
+    .tier-cell{display:flex;flex-direction:column;gap:4px}
+    .tier-label{font-size:9.5px;letter-spacing:.07em;color:var(--ink-muted);text-transform:uppercase}
+    .tier-num{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:500}
+    .tier-bar{height:5px;background:var(--bg-tint);border-radius:3px;position:relative;overflow:hidden;margin-top:2px}
+    .tier-bar-fill{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
+
+    /* ── Factor comparison ── */
+    .factor-grid{padding:14px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+    .factor-block{display:flex;flex-direction:column;gap:8px;padding:12px;background:var(--bg-tint);border-radius:8px}
+    .factor-title{font-size:10px;letter-spacing:.08em;color:var(--ink-muted);text-transform:uppercase;font-weight:500}
+    .factor-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .factor-tile{padding:8px 10px;background:var(--surface);border-radius:5px}
+    .factor-tile-label{font-size:9.5px;letter-spacing:.06em;color:var(--ink-muted);text-transform:uppercase}
+    .factor-tile-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--ink);font-weight:500}
+    .factor-tile-sub{font-size:10px;color:var(--ink-faint);font-family:'JetBrains Mono',monospace}
+
+    /* ── Top performers ── */
+    .top-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+    .top-card{padding:16px}
+    .top-channel{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+    .top-views{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:500;letter-spacing:-.01em}
+    .top-title{font-size:13.5px;color:var(--ink);font-weight:500;margin-top:6px;line-height:1.4}
+    .top-meta{font-size:11px;color:var(--ink-faint);margin-top:8px;font-family:'JetBrains Mono',monospace}
+
+    /* ── Cost summary ── */
+    .cost-trend-shell{position:relative;height:120px;padding:0 16px 16px}
+    .cost-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;padding:16px}
+    .cost-tile{display:flex;flex-direction:column;gap:3px}
+    .cost-label{font-size:10px;letter-spacing:.07em;color:var(--ink-muted);text-transform:uppercase}
+    .cost-value{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:var(--gold)}
+    .cost-sub{font-size:11px;color:var(--ink-faint);font-family:'JetBrains Mono',monospace}
+
+    /* ── Posting cadence ── */
+    .cadence-card{padding:18px}
+    .cadence-row{display:grid;grid-template-columns:140px 1fr;align-items:center;gap:10px;margin-bottom:6px}
+    .cadence-name{font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:6px}
+    .cadence-track{display:grid;grid-template-columns:repeat(14,1fr);gap:3px}
+    .cadence-cell{height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9.5px;color:var(--ink-muted);font-family:'JetBrains Mono',monospace;background:var(--bg-tint)}
+    .cadence-dates{display:grid;grid-template-columns:140px 1fr;align-items:center;gap:10px;margin-top:8px;padding-top:8px;border-top:.5px solid var(--divider)}
+    .cadence-date-row{display:grid;grid-template-columns:repeat(14,1fr);gap:3px;font-size:9px;color:var(--ink-faint);font-family:'JetBrains Mono',monospace;text-align:center}
+
+    /* ── Two-up panel layout ── */
+    .two-up{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:780px){.two-up{grid-template-columns:1fr}}
+
+    /* ── Hour × DoW heatmap ── */
+    .heatmap-card{padding:18px}
+    .heatmap-grid{display:grid;gap:3px;margin-top:10px}
+    .heatmap-row{display:grid;gap:3px;align-items:center}
+    .heatmap-rowlabel{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-muted);text-align:right;padding-right:8px}
+    .heatmap-collabel{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-muted);text-align:center;letter-spacing:.04em;text-transform:uppercase}
+    .heatmap-cell{height:32px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink);font-weight:500}
+    .heatmap-empty{background:var(--bg-tint);color:var(--ink-faint)}
+    .heatmap-legend{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:10px;font-size:10px;color:var(--ink-muted)}
+    .heatmap-legend-bar{width:120px;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--bg-tint),var(--gold))}
+
+    /* Channel rows */
+    .channel-card{padding:8px 20px}
+    .channel-row{display:grid;grid-template-columns:14px 130px 1fr 70px 60px;align-items:center;gap:14px;padding:14px 0;border-bottom:.5px solid var(--divider)}
+    .channel-row:last-child{border-bottom:none}
+    .channel-dot{width:8px;height:8px;border-radius:50%}
+    .channel-name{font-size:13.5px;font-weight:500;color:var(--ink)}
+    .channel-bar{height:5px;background:var(--bg-tint);border-radius:3px;position:relative;overflow:hidden}
+    .channel-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:3px}
+    .channel-value{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;text-align:right;color:var(--ink)}
+    .channel-rank{font-family:'JetBrains Mono',monospace;font-size:11px;text-align:right;color:var(--ink-muted);letter-spacing:.04em}
+
+    /* Videos */
+    .video-card{padding:0;overflow:hidden}
+    .video-row{display:grid;grid-template-columns:28px 1fr 130px 100px 80px 70px;align-items:center;gap:16px;padding:14px 20px;border-bottom:.5px solid var(--divider);transition:background .12s}
+    .video-row:last-child{border-bottom:none}
+    .video-row.is-header{background:var(--bg-tint);padding:10px 20px;font-size:10px;font-weight:500;letter-spacing:.08em;color:var(--ink-muted);text-transform:uppercase}
+    .video-row.is-highlight{background:linear-gradient(90deg,var(--gold-bg) 0%,transparent 50%)}
+    .video-rank{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-faint);text-align:right}
+    .video-title{font-size:13.5px;color:var(--ink);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .video-channel{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-soft)}
+    .video-channel .channel-dot{flex-shrink:0}
+    .video-posted{font-size:12px;color:var(--ink-muted)}
+    .video-num{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;text-align:right;color:var(--ink)}
+    .video-retention{font-family:'JetBrains Mono',monospace;font-size:12px;text-align:right}
+
+    /* Chart */
+    .chart-card{padding:20px}
+    .chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    .chart-toggles{display:flex;gap:4px;padding:3px;background:var(--bg-tint);border-radius:8px}
+    .toggle-btn{padding:5px 12px;background:transparent;border:none;border-radius:5px;font-family:inherit;font-size:12px;font-weight:500;color:var(--ink-muted);cursor:pointer}
+    .toggle-btn.active{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(80,65,30,.06)}
+    .chart-shell{position:relative;height:240px;width:100%}
+    .chart-shell canvas{position:absolute;inset:0}
+
+    .section-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+    .empty{padding:18px;font-size:13px;color:var(--ink-muted);font-style:italic}
+
+    @media (max-width:720px){
+      body{padding:20px 14px 48px}
+      h1{font-size:28px}
+      .channel-row{grid-template-columns:10px 105px 1fr 60px;gap:10px}
+      .video-row{grid-template-columns:1fr 80px 70px;padding:12px 16px}
+      .video-row .video-rank,.video-row .video-channel,.video-row .video-posted{display:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- ============================================ -->
+    <!-- HEADER                                       -->
+    <!-- ============================================ -->
+    <header>
+      <div class="title-block">
+        <h1 id="hero-greeting">Loading <em>—</em></h1>
+        <div class="meta">
+          <span class="live-dot"></span>
+          <span id="meta-channels">— channels</span>
+          <span class="meta-divider">·</span>
+          <span id="meta-synced">syncing…</span>
+          <span class="meta-divider">·</span>
+          <span id="meta-date">—</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" id="refresh-btn">Refresh</button>
+      </div>
+    </header>
+
+    <!-- ACCOUNT HEALTH -->
+    <section>
+      <h2>Account health</h2>
+      <div class="health-strip" id="health-strip"></div>
+    </section>
+
+    <!-- KPIs -->
+    <section>
+      <h2>This week at a glance</h2>
+      <div class="kpi-grid" id="kpi-grid"></div>
+    </section>
+
+    <!-- MONETIZATION -->
+    <section>
+      <div class="section-header">
+        <h2>Path to monetization</h2>
+        <span class="muted" id="monetization-leader">—</span>
+      </div>
+      <div class="mon-grid" id="mon-grid"></div>
+    </section>
+
+    <!-- INSIGHTS -->
+    <section>
+      <div class="section-header">
+        <h2>What's standing out</h2>
+      </div>
+      <div class="insight-grid" id="insight-grid"></div>
+    </section>
+
+    <!-- WHEN WORKS BEST -->
+    <section>
+      <div class="section-header"><h2>When works best</h2></div>
+      <div class="two-up">
+        <div class="card"><h2 style="padding:14px 16px 0;margin-bottom:0">Hour of day · MST</h2><div class="barchart" id="bar-hour"></div></div>
+        <div class="card"><h2 style="padding:14px 16px 0;margin-bottom:0">Day of week</h2><div class="barchart" id="bar-dow"></div></div>
+      </div>
+    </section>
+
+    <!-- WHAT'S WORKING -->
+    <section>
+      <div class="section-header"><h2>What's working</h2></div>
+      <div class="card"><h2 style="padding:14px 18px 0;margin-bottom:0">Voice A/B</h2><div id="voice-grid"></div></div>
+      <div class="two-up" style="margin-top:12px">
+        <div class="card"><h2 style="padding:14px 18px 0;margin-bottom:0">Picker tier mix</h2><div id="tier-grid"></div></div>
+        <div class="card"><h2 style="padding:14px 18px 0;margin-bottom:0">Source subreddit · avg views</h2><div class="barchart" id="bar-subs"></div></div>
+      </div>
+      <div class="card" style="margin-top:12px"><h2 style="padding:14px 18px 0;margin-bottom:0">Content factors · avg views</h2><div class="factor-grid" id="factor-grid"></div></div>
+    </section>
+
+    <!-- TOP PERFORMERS -->
+    <section>
+      <div class="section-header"><h2>Top performers · per channel</h2></div>
+      <div class="top-grid" id="top-grid"></div>
+    </section>
+
+    <!-- COST -->
+    <section>
+      <div class="section-header"><h2>Cost · Anthropic API</h2></div>
+      <div class="card">
+        <div class="cost-grid" id="cost-grid"></div>
+        <div style="padding:6px 16px 0;font-size:10.5px;letter-spacing:.07em;color:var(--ink-muted);text-transform:uppercase;font-weight:500">Avg cost per video · daily trend</div>
+        <div class="cost-trend-shell"><canvas id="cost-trend-canvas"></canvas></div>
+      </div>
+    </section>
+
+    <!-- CHANNEL BREAKDOWN -->
+    <section>
+      <div class="section-header">
+        <h2>By channel · 7-day views</h2>
+      </div>
+      <div class="card channel-card" id="channel-card"></div>
+    </section>
+
+    <!-- TREND CHART -->
+    <section>
+      <div class="card chart-card">
+        <div class="chart-header">
+          <h2 style="margin-bottom:0">Views trend</h2>
+          <div class="chart-toggles">
+            <button class="toggle-btn" data-range="7d">7d</button>
+            <button class="toggle-btn" data-range="14d">14d</button>
+            <button class="toggle-btn active" data-range="30d">30d</button>
+            <button class="toggle-btn" data-range="all">All</button>
+          </div>
+        </div>
+        <div class="chart-shell"><canvas id="chart-canvas"></canvas></div>
+      </div>
+    </section>
+
+    <!-- HOUR × DAY HEATMAP -->
+    <section>
+      <div class="section-header"><h2>Avg views · hour × day</h2></div>
+      <div class="card heatmap-card" id="heatmap-card"></div>
+    </section>
+
+    <!-- POSTING CADENCE -->
+    <section>
+      <div class="section-header"><h2>Posting cadence · last 14 days</h2></div>
+      <div class="card cadence-card" id="cadence-card"></div>
+    </section>
+
+  </div>
+
+  <script>
+    // ─────────────────────────────────────────────────────────────
+    // Format helpers
+    // ─────────────────────────────────────────────────────────────
+    const fmt = {
+      num: (n) => (n == null ? '—' : Number(n).toLocaleString('en-US')),
+      compact: (n) => {
+        if (n == null) return '—';
+        if (n < 1000) return Number(n).toLocaleString('en-US');
+        if (n < 1e6) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+        return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+      },
+      pct: (n) => (n == null ? '—' : n.toFixed(1) + '%'),
+      days: (n) => {
+        if (n == null) return 'needs more data';
+        if (n === 0) return 'reached';
+        if (n < 14) return `~${n} days`;
+        if (n < 60) return `~${Math.round(n)} days`;
+        if (n < 365) return `~${Math.round(n / 30)} months`;
+        return `~${(n / 365).toFixed(1)} years`;
+      },
+      time: (s) => {
+        if (s == null) return '—';
+        if (s < 60) return s.toFixed(1) + 's';
+        return Math.floor(s/60) + ':' + String(Math.round(s%60)).padStart(2,'0');
+      },
+    };
+
+    // ─────────────────────────────────────────────────────────────
+    // Renderers
+    // ─────────────────────────────────────────────────────────────
+    function renderHeader(d) {
+      document.getElementById('hero-greeting').innerHTML =
+        `${d.greeting} <em>—</em> here's where things stand`;
+      const liveCount = d.channels.filter(c => !c.is_delisted).length;
+      const total = d.channels.length;
+      document.getElementById('meta-channels').textContent =
+        `${liveCount} of ${total} channels active`;
+      document.getElementById('meta-synced').textContent =
+        `synced ${d.synced_at_local}`;
+      document.getElementById('meta-date').textContent = d.today_label;
+    }
+
+    function renderKpis(k) {
+      const grid = document.getElementById('kpi-grid');
+      const wow = k.wow_views_pct;
+      const wowDisplay = wow == null
+        ? '<span class="kpi-delta muted">— wow data</span>'
+        : `<span class="kpi-delta ${wow >= 0 ? 'up' : 'down'}">${wow >= 0 ? '↑' : '↓'} ${Math.abs(wow).toFixed(1)}% wow</span>`;
+
+      const cells = [
+        { label: 'TT views · 7d', value: fmt.compact(k.total_views_7d),
+          delta: wowDisplay },
+        { label: 'TT followers',  value: fmt.num(k.total_followers),
+          delta: '<span class="kpi-delta muted">across all accounts</span>' },
+        { label: 'YT subscribers', value: fmt.num(k.total_yt_subscribers),
+          delta: '<span class="kpi-delta muted">across all channels</span>' },
+        { label: 'Posts · 7d', value: fmt.num(k.posts_7d),
+          delta: '<span class="kpi-delta muted">3 channels</span>' },
+      ];
+
+      grid.innerHTML = cells.map(c => `
+        <div class="card kpi-card">
+          <div class="kpi-label">${c.label}</div>
+          <div class="kpi-value">${c.value}</div>
+          ${c.delta}
+        </div>
+      `).join('');
+    }
+
+    function renderMonetization(m) {
+      const grid = document.getElementById('mon-grid');
+      if (!m || !m.channels.length) {
+        grid.innerHTML = '<div class="empty">No channels.</div>'; return;
+      }
+      const leaderEl = document.getElementById('monetization-leader');
+      const leader = m.channels.find(c => c.handle === m.leader_handle);
+      if (leader && leader.eta_date) {
+        const yrs = leader.eta_days >= 365
+          ? ` (${(leader.eta_days/365).toFixed(1)} yr at current pace)` : '';
+        leaderEl.innerHTML = `${leader.label} closest · ETA ${leader.eta_date}${yrs}`;
+      } else if (leader && leader.blocked_reason) {
+        leaderEl.innerHTML = `<span class="down">all channels blocked or pre-data</span>`;
+      } else {
+        leaderEl.innerHTML = '<span class="muted">tracking…</span>';
+      }
+
+      // Helper: render one tile (label on top, value, optional subtext)
+      const tile = (label, value, sub) => `
+        <div class="mon-stat">
+          <div class="mon-stat-label">${label}</div>
+          <div class="mon-stat-value">${value || '—'}</div>
+          ${sub ? `<div class="mon-stat-sub">${sub}</div>` : ''}
+        </div>
+      `;
+      const emptyTile = (label, msg) => `
+        <div class="mon-stat">
+          <div class="mon-stat-label">${label}</div>
+          <div class="mon-stat-empty">${msg}</div>
+        </div>
+      `;
+
+      grid.innerHTML = m.channels.map((c, i) => {
+        // ── ETA header. eta_date can be null for several reasons; pick
+        // the message that reflects the actual situation (instead of
+        // always blaming "no data"):
+        //   1. Account literally fresh: 0 followers AND no view rate.
+        //   2. Has data but flat-rate doesn't reach the views threshold —
+        //      this is the common case for tiny channels post-bug-fix.
+        //   3. Has data but follower projection >30yr.
+        let etaHTML = '';
+        if (c.eta_date) {
+          const yrs = c.eta_days >= 365
+            ? ` <span class="muted" style="font-size:11px">(~${(c.eta_days/365).toFixed(1)} yr)</span>`
+            : '';
+          // Range across ensemble models — the uncertainty band
+          const fr = c.days_to_followers_range;
+          const vr = c.days_to_views_range;
+          let rangeHTML = '';
+          if (fr || vr) {
+            const today = new Date();
+            const fmtRng = ([lo, hi]) => {
+              if (lo === hi) return null;
+              const dl = new Date(today.getTime() + lo*86400000);
+              const dh = new Date(today.getTime() + hi*86400000);
+              const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+              return `${m[dl.getMonth()]} ${dl.getDate()} ’${String(dl.getFullYear()).slice(2)} – ${m[dh.getMonth()]} ${dh.getDate()} ’${String(dh.getFullYear()).slice(2)}`;
+            };
+            // Use the gating range (whichever is the bottleneck)
+            const gate = (c.bottleneck === 'followers' || c.bottleneck === 'followers (>30yr at current pace)') ? fr : vr;
+            const r = gate && fmtRng(gate);
+            if (r) rangeHTML = ` <span class="muted" style="font-size:11px">· range ${r}</span>`;
+          }
+          etaHTML = `<span class="mon-eta-num">${c.eta_date}</span>${yrs}${rangeHTML}`;
+        } else if ((c.followers_now || 0) === 0 && !(c.avg_daily_views > 0)) {
+          etaHTML = `<span class="muted" style="font-size:13px">tracking — needs first followers + view data</span>`;
+        } else {
+          // Has data but model won't project. Show a one-line reason +
+          // the actionable multiplier (already computed server-side).
+          const fpd = c.followers_per_day_in_30d || c.followers_per_day || 0;
+          const yrsToFollowers = (fpd > 0)
+            ? ((10000 - (c.followers_now || 0)) / fpd / 365).toFixed(1)
+            : null;
+          const followerLine = yrsToFollowers
+            ? `~${yrsToFollowers} yr to 10K at flat ${fpd}/day`
+            : null;
+          const m12 = c.multiplier_12mo;
+          const multLine = (m12 && m12 > 1)
+            ? `needs <strong>${m12}× current views/day</strong> for 12-mo monetization`
+            : null;
+          const lines = [followerLine, multLine].filter(Boolean);
+          etaHTML = `<span class="muted" style="font-size:12px;line-height:1.5">
+            unreachable at current pace${lines.length ? '<br>' + lines.join(' · ') : ''}
+          </span>`;
+        }
+        const bottleneckTag = c.bottleneck
+          ? ` <span class="muted" style="font-size:11px">· bottleneck: ${c.bottleneck}</span>`
+          : '';
+
+        // ── TT followers tile strip
+        const ttFollowersTiles = c.followers_per_day > 0
+          ? tile('Current rate',  `+${c.followers_per_day}/day`, 'derived')
+          + tile('Conversion',    `${c.followers_per_view_pct}%`, 'followers / view')
+          + tile('To threshold',  fmt.days(c.days_to_followers), c.eta_date || '')
+          : emptyTile('Current rate', 'no growth yet')
+          + emptyTile('Conversion', '—')
+          + emptyTile('To threshold', '—');
+
+        // ── TT views tile strip. Trend reflects the polynomial fit:
+        //   quadratic → shows acceleration (c·t²) — "TT-discovery" curve
+        //   linear    → shows per-day-of-acceleration of view rate
+        //   flat      → no signal
+        let trendValue = 'flat', trendSub = '—';
+        if (c.view_mode === 'quadratic') {
+          // Acceleration sign + magnitude
+          const c2 = c.view_curvature || 0;
+          const dir = c2 > 0 ? '↑ accelerating' : (c2 < 0 ? '↓ decelerating' : 'linear');
+          trendValue = `${c2 > 0 ? '+' : ''}${fmt.compact(c.view_linear_slope)}/d² + ${c2.toFixed(2)}·t²`;
+          trendSub = `quadratic ${dir} · R²=${(c.view_r2 ?? 0).toFixed(2)}`;
+        } else if (c.view_mode === 'linear' && c.view_linear_slope > 0) {
+          trendValue = `+${fmt.compact(c.view_linear_slope)}/day²`;
+          trendSub = `linear · R²=${(c.view_r2 ?? 0).toFixed(2)}`;
+        } else {
+          trendSub = c.view_signal || 'no signal';
+        }
+        const ttViewsTiles = c.avg_daily_views > 0
+          ? tile('Daily avg',     fmt.compact(c.avg_daily_views), 'today')
+          + tile('Trend',         trendValue, trendSub)
+          + tile('To threshold',  c.days_to_views != null ? fmt.days(c.days_to_views) : '—', '3,333/day target')
+          : emptyTile('Daily avg', 'no data')
+          + emptyTile('Trend', '—')
+          + emptyTile('To threshold', '—');
+
+        // ── YT subs tile strip
+        const ytTiles = c.yt_subs_per_day != null && c.yt_subs_per_day > 0
+          ? tile('Current rate', `+${c.yt_subs_per_day}/day`, c.yt_rate_source)
+          + tile('Subscribers',  fmt.num(c.yt_subscribers), `${c.yt_subs_pct}% of 1K`)
+          + tile('To threshold', fmt.days(c.yt_days_to_subs), c.yt_eta_date || '')
+          : emptyTile('Current rate', c.yt_subscribers > 0 ? 'tracking' : 'no subs yet')
+          + tile('Subscribers',   c.yt_subscribers != null ? fmt.num(c.yt_subscribers) : '?', `${c.yt_subs_pct}% of 1K`)
+          + emptyTile('To threshold', '—');
+
+        // ── Scenario tiles (what would it take)
+        let scenarioHTML = '';
+        if (c.views_needed_12mo != null && c.avg_daily_views > 0) {
+          const mult12 = c.multiplier_12mo > 1 ? `${c.multiplier_12mo}× current views/d` : 'on pace';
+          const mult24 = c.multiplier_24mo > 1 ? `${c.multiplier_24mo}× current views/d` : 'on pace';
+          scenarioHTML = `
+            <div class="mon-scenario">
+              <div class="mon-scenario-title">What it'd take to monetize</div>
+              <div class="mon-scenario-grid">
+                <div class="mon-scenario-tile">
+                  <div class="mon-scenario-period">10K followers · 12 mo</div>
+                  <div class="mon-scenario-rate">${fmt.compact(c.views_needed_12mo)} views/d</div>
+                  <div class="mon-scenario-mult">${mult12}</div>
+                </div>
+                <div class="mon-scenario-tile">
+                  <div class="mon-scenario-period">10K followers · 24 mo</div>
+                  <div class="mon-scenario-rate">${fmt.compact(c.views_needed_24mo)} views/d</div>
+                  <div class="mon-scenario-mult">${mult24}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        // ── Model provenance: snapshot-history fit + ensemble vote.
+        // Source is daily TT public-profile snapshots only (Refresh
+        // button writes one row per day per account).
+        let freshnessHTML = '';
+        const growthBlurb = c.growth_source || '';
+        const ens = (c.ensemble && c.ensemble.models) || [];
+        const ensSummary = ens.length
+          ? ens.map(m => `${m.name} ${(m.weight*100).toFixed(0)}%`).join(' · ')
+          : 'no ensemble (need 2+ daily snapshots)';
+        const ensTitle = ens.length
+          ? ens.map(m => `${m.name}: weight=${(m.weight*100).toFixed(1)}%, R²=${m.r2}, LOOCV=${m.loocv ?? 'n/a'}`).join('\n')
+          : 'Refresh once a day to accumulate snapshot history.';
+        freshnessHTML = `
+          <div class="mon-freshness" title="${ensTitle}">
+            ⓘ ${growthBlurb} · ${c.views_per_heart}× views/heart (default)<br>
+            ensemble: ${ensSummary}
+          </div>`;
+
+        return `
+          <div class="card mon-card ${c.blocked_reason ? 'delisted' : ''}">
+            <div class="mon-head">
+              <div>
+                <div class="mon-handle">
+                  <span class="mon-dot" style="background:${c.color}"></span>
+                  ${c.label}
+                </div>
+                <div class="mon-eta">ETA: ${etaHTML}${bottleneckTag}</div>
+                ${freshnessHTML}
+              </div>
+              <span class="mon-rank">#${i+1}</span>
+            </div>
+            ${c.blocked_reason
+              ? `<div class="mon-blocked">⚠ ${c.blocked_reason}</div>`
+              : ''}
+
+            <div class="mon-row">
+              <div class="mon-row-label">
+                <span>TT followers · 10K threshold</span>
+                <span class="mon-row-num">${fmt.num(c.followers_now)} / 10K</span>
+              </div>
+              <div class="mon-bar"><div class="mon-bar-fill"
+                  style="width:${c.followers_pct}%;background:${c.color}"></div></div>
+              <div class="mon-stat-strip">${ttFollowersTiles}</div>
+            </div>
+
+            <div class="mon-row" style="margin-top:18px">
+              <div class="mon-row-label">
+                <span>TT 30d views · 100K threshold</span>
+                <span class="mon-row-num">${fmt.compact(c.projected_30d_views)} / 100K</span>
+              </div>
+              <div class="mon-bar"><div class="mon-bar-fill"
+                  style="width:${c.views_pct}%;background:${c.color}"></div></div>
+              <div class="mon-stat-strip">${ttViewsTiles}</div>
+            </div>
+
+            <div class="mon-row" style="margin-top:18px">
+              <div class="mon-row-label">
+                <span>YT subscribers · 1K threshold for YPP</span>
+                <span class="mon-row-num">${c.yt_subscribers != null ? fmt.num(c.yt_subscribers) : '?'} / 1K</span>
+              </div>
+              <div class="mon-bar"><div class="mon-bar-fill"
+                  style="width:${c.yt_subs_pct}%;background:${c.color};opacity:.7"></div></div>
+              <div class="mon-stat-strip">${ytTiles}</div>
+            </div>
+
+            ${scenarioHTML}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderInsights(insights) {
+      const grid = document.getElementById('insight-grid');
+      if (!insights || !insights.length) {
+        grid.innerHTML = '<div class="card empty">No insights surfaced this run.</div>';
+        return;
+      }
+      grid.innerHTML = insights.map(ins => `
+        <article class="card insight-card ${ins.type}">
+          <div class="insight-header">
+            <span class="badge badge-${ins.type}">${ins.type}</span>
+            <span class="insight-time">${ins.time_ref || ''}</span>
+          </div>
+          <p class="insight-text">${ins.text}</p>
+        </article>
+      `).join('');
+    }
+
+    function renderChannels(channels) {
+      const card = document.getElementById('channel-card');
+      const sorted = [...channels].sort((a,b) => b.views_7d - a.views_7d);
+      const max = Math.max(1, ...sorted.map(c => c.views_7d));
+      card.innerHTML = sorted.map((c, i) => `
+        <div class="channel-row">
+          <div class="channel-dot" style="background:${c.color}"></div>
+          <div class="channel-name">${c.label}${c.is_delisted ? ' <span class="muted" style="font-size:11px">· delisted</span>' : ''}</div>
+          <div class="channel-bar">
+            <div class="channel-bar-fill"
+                 style="width:${(c.views_7d / max * 100).toFixed(1)}%;background:${c.color}"></div>
+          </div>
+          <div class="channel-value">${fmt.compact(c.views_7d)}</div>
+          <div class="channel-rank">#${i+1}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderRecentVideos(videos) {
+      const card = document.getElementById('video-card');
+      if (!videos || !videos.length) {
+        card.innerHTML = '<div class="empty">No videos yet.</div>'; return;
+      }
+      const header = `
+        <div class="video-row is-header">
+          <div></div><div>Title</div><div>Channel</div>
+          <div>Posted</div>
+          <div style="text-align:right">Day views</div>
+          <div style="text-align:right">Retention</div>
+        </div>
+      `;
+      const rows = videos.map((v, i) => {
+        const ret = v.retention_pct != null
+          ? `<div class="video-retention ${v.retention_pct >= 50 ? 'up' : 'down'}">${v.retention_pct}%</div>`
+          : `<div class="video-retention muted">—</div>`;
+        return `
+          <div class="video-row${i === 0 ? ' is-highlight' : ''}">
+            <div class="video-rank">${String(i+1).padStart(2,'0')}</div>
+            <div class="video-title" title="${v.title}">${v.title}</div>
+            <div class="video-channel">
+              <span class="channel-dot" style="background:${v.channel_color}"></span>
+              ${v.channel_label}
+            </div>
+            <div class="video-posted">${v.posted_date} · ${(v.posted_time || '').slice(0,5)}</div>
+            <div class="video-num">${fmt.num(v.day_views)}</div>
+            ${ret}
+          </div>
+        `;
+      }).join('');
+      card.innerHTML = header + rows;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Account health strip
+    // ─────────────────────────────────────────────────────────────
+    function renderHealth(rows) {
+      const el = document.getElementById('health-strip');
+      el.innerHTML = rows.map(r => {
+        const lastSeen = r.hours_since_last_post != null
+          ? (r.hours_since_last_post < 1
+              ? `${Math.round(r.hours_since_last_post * 60)}m ago`
+              : (r.hours_since_last_post < 48
+                  ? `${r.hours_since_last_post.toFixed(1)}h ago`
+                  : `${Math.round(r.hours_since_last_post / 24)}d ago`))
+          : '—';
+        return `
+          <div class="card health-card">
+            <div class="health-head">
+              <div class="health-name">
+                <span class="health-name-dot" style="background:${r.color}"></span>
+                ${r.label}
+              </div>
+              <span class="health-status status-${r.status}">${r.status}</span>
+            </div>
+            <div class="health-row"><span>Last posted</span><span class="num">${lastSeen}</span></div>
+            <div class="health-row"><span>Posts today</span><span class="num">${r.posts_today}</span></div>
+            <div class="health-row"><span>TT public videos</span><span class="num">${r.tt_video_count}</span></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Bar chart (used for hour-of-day, day-of-week, source subs)
+    // ─────────────────────────────────────────────────────────────
+    function renderBars(elId, items, opts) {
+      const el = document.getElementById(elId);
+      if (!items || !items.length) { el.innerHTML = '<div class="empty" style="padding:14px">No data yet.</div>'; return; }
+      const max = Math.max(1, ...items.map(it => it[opts.valueKey] || 0));
+      el.innerHTML = items.map(it => {
+        const v = it[opts.valueKey] || 0;
+        const w = (v / max * 100).toFixed(1);
+        return `
+          <div class="barchart-row">
+            <div class="barchart-label">${opts.labelFn(it)}</div>
+            <div class="barchart-bar"><div class="barchart-fill" style="width:${w}%;background:${opts.color || 'var(--gold)'}"></div></div>
+            <div class="barchart-num">${opts.valueFn ? opts.valueFn(it) : fmt.num(v)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Voice A/B grid
+    // ─────────────────────────────────────────────────────────────
+    function renderVoice(va) {
+      if (!va || !va.voices || !va.voices.length) {
+        document.getElementById('voice-grid').innerHTML = '<div class="empty" style="padding:14px">No voice data yet.</div>';
+        return;
+      }
+      const cellsByVoice = {};
+      va.voices.forEach(v => cellsByVoice[v] = {});
+      va.cells.forEach(c => { cellsByVoice[c.voice][c.account] = c; });
+      const sortedVoices = [...va.totals_by_voice].map(t => t.voice);
+      const totalsMap = Object.fromEntries(va.totals_by_voice.map(t => [t.voice, t]));
+      const grid = sortedVoices.map(v => `
+        <div class="voice-row">
+          <div class="voice-name">${v}</div>
+          <div class="voice-cells">
+            ${va.accounts.map(a => {
+              const c = cellsByVoice[v][a];
+              if (!c) return `<div class="voice-cell"><div class="voice-cell-acct">${a}</div><div class="voice-cell-num" style="color:var(--ink-faint)">—</div></div>`;
+              return `<div class="voice-cell">
+                <div class="voice-cell-acct">@${a}</div>
+                <div class="voice-cell-num">${fmt.num(c.avg)}</div>
+                <div>n=${c.n} · max ${fmt.num(c.max)}</div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      `).join('');
+      const totals = sortedVoices.map(v => {
+        const t = totalsMap[v];
+        return `<div class="voice-total">
+          <div class="voice-total-label">${v}</div>
+          <div class="voice-total-num">${fmt.num(t.avg)}</div>
+          <div style="font-size:10px;color:var(--ink-muted);font-family:'JetBrains Mono',monospace">avg · n=${t.n}</div>
+        </div>`;
+      }).join('');
+      document.getElementById('voice-grid').innerHTML =
+        `<div class="voice-grid">${grid}</div><div class="voice-totals">${totals}</div>`;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Tier mix
+    // ─────────────────────────────────────────────────────────────
+    function renderTier(tm) {
+      const el = document.getElementById('tier-grid');
+      if (!tm || !tm.tiers.length) { el.innerHTML = '<div class="empty" style="padding:14px">Tier tracking started 2026-05-03 — needs more posts.</div>'; return; }
+      const colors = { T1: 'var(--green)', T2: 'var(--gold)', T3: 'var(--red)', T4: 'var(--plum)' };
+      el.innerHTML = `<div class="tier-grid">${tm.tiers.map(t => `
+        <div class="tier-cell">
+          <div class="tier-label">Tier ${t.tier}</div>
+          <div class="tier-num">${t.n}</div>
+          <div style="font-size:10.5px;color:var(--ink-faint);font-family:'JetBrains Mono',monospace">${t.pct}% · avg ${t.avg_views ? fmt.num(t.avg_views) : '—'}</div>
+          <div class="tier-bar"><div class="tier-bar-fill" style="width:${t.pct}%;background:${colors[t.tier] || 'var(--ink-muted)'}"></div></div>
+        </div>
+      `).join('')}</div>`;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Factor impacts (chart, kalshi, hashtags)
+    // ─────────────────────────────────────────────────────────────
+    function renderFactors(fi) {
+      const el = document.getElementById('factor-grid');
+      if (!fi) { el.innerHTML = ''; return; }
+      function block(title, pair, withLabel, withoutLabel) {
+        const w  = pair[withLabel]  || { n: 0, avg: null };
+        const wo = pair[withoutLabel] || { n: 0, avg: null };
+        return `
+          <div class="factor-block">
+            <div class="factor-title">${title}</div>
+            <div class="factor-pair">
+              <div class="factor-tile">
+                <div class="factor-tile-label">${withLabel}</div>
+                <div class="factor-tile-num">${w.avg != null ? fmt.num(w.avg) : '—'}</div>
+                <div class="factor-tile-sub">n=${w.n}</div>
+              </div>
+              <div class="factor-tile">
+                <div class="factor-tile-label">${withoutLabel}</div>
+                <div class="factor-tile-num">${wo.avg != null ? fmt.num(wo.avg) : '—'}</div>
+                <div class="factor-tile-sub">n=${wo.n}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      el.innerHTML = block('chart_stock template', fi.chart, 'with', 'without')
+                   + block('Kalshi mention', fi.kalshi, 'with', 'without')
+                   + block('Hashtag composition', fi.hashtags, 'low', 'high');
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Top performers (one card per channel)
+    // ─────────────────────────────────────────────────────────────
+    function renderTop(tops) {
+      const el = document.getElementById('top-grid');
+      if (!tops || !tops.length) { el.innerHTML = '<div class="empty">No data yet.</div>'; return; }
+      el.innerHTML = tops.map(t => `
+        <div class="card top-card">
+          <div class="top-channel">@${t.channel_handle}</div>
+          <div class="top-views">${fmt.num(t.day_views)} <span style="font-size:11px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.06em">day-total views</span></div>
+          <div class="top-title">${t.title}</div>
+          <div class="top-meta">${t.posted_date} · voice ${t.voice}${t.has_chart_stock ? ' · chart_stock' : ''}</div>
+        </div>
+      `).join('');
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Cost
+    // ─────────────────────────────────────────────────────────────
+    let costTrendChart = null;
+    function renderCost(c) {
+      const el = document.getElementById('cost-grid');
+      const sourceNote = c.source === 'log-scan'
+        ? `${c.total_videos} renders · log-scanned`
+        : `${c.total_videos} videos · render-side only`;
+      el.innerHTML = `
+        <div class="cost-tile"><div class="cost-label">Lifetime spend</div><div class="cost-value">$${c.total_cost_usd}</div><div class="cost-sub">${sourceNote}</div></div>
+        <div class="cost-tile"><div class="cost-label">Avg per video</div><div class="cost-value">$${c.avg_per_video_usd}</div><div class="cost-sub">Sonnet + Haiku, render + builder</div></div>
+        <div class="cost-tile"><div class="cost-label">Last 7 days</div><div class="cost-value">$${c.last_7d_cost_usd}</div><div class="cost-sub">recent burn</div></div>
+        <div class="cost-tile"><div class="cost-label">Monthly projection</div><div class="cost-value">$${c.monthly_projection_usd}</div><div class="cost-sub">at 6/day target</div></div>
+      `;
+
+      // Daily avg-cost-per-video trend chart
+      const ctx = document.getElementById('cost-trend-canvas').getContext('2d');
+      if (costTrendChart) { costTrendChart.destroy(); costTrendChart = null; }
+      const labels = (c.daily || []).map(d => d.date.slice(5));   // MM-DD
+      const data   = (c.daily || []).map(d => d.avg_per_video_usd);
+      const counts = (c.daily || []).map(d => d.videos);
+      costTrendChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets: [{
+          label: 'Avg $/video',
+          data, borderColor: '#c8964a',
+          backgroundColor: 'rgba(200,150,74,.12)',
+          borderWidth: 1.5, pointRadius: 3, pointBackgroundColor: '#c8964a',
+          tension: 0.32, fill: true,
+        }]},
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1a1612', titleColor: '#faf6ec', bodyColor: '#faf6ec',
+              titleFont: { family: 'Inter', weight: '500', size: 11 },
+              bodyFont: { family: 'JetBrains Mono', size: 11 },
+              padding: 10,
+              callbacks: {
+                label: (ctx) => `$${ctx.parsed.y.toFixed(3)}/video · ${counts[ctx.dataIndex]} renders`,
+              },
+            },
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 10 }, color: '#7d7568' }, border: { display: false } },
+            y: { beginAtZero: true,
+                  grid: { color: '#f0e9d8', drawBorder: false },
+                  ticks: { font: { family: 'JetBrains Mono', size: 10 }, color: '#7d7568',
+                           callback: (v) => '$' + v.toFixed(2) },
+                  border: { display: false } },
+          },
+        },
+      });
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Posting cadence calendar
+    // ─────────────────────────────────────────────────────────────
+    function renderCadence(cd) {
+      const el = document.getElementById('cadence-card');
+      const dateLabels = cd.dates.map(d => d.slice(5));   // MM-DD
+      const max = Math.max(1, ...cd.rows.flatMap(r => r.values));
+      el.innerHTML = cd.rows.map(r => `
+        <div class="cadence-row">
+          <div class="cadence-name"><span class="health-name-dot" style="background:${r.color}"></span>${r.label}</div>
+          <div class="cadence-track">
+            ${r.values.map(v => {
+              const intensity = v / max;
+              const bg = v === 0 ? 'var(--bg-tint)' : `color-mix(in srgb, ${r.color} ${20 + intensity*60}%, var(--bg-tint))`;
+              const color = v === 0 ? 'var(--ink-faint)' : 'var(--ink)';
+              return `<div class="cadence-cell" style="background:${bg};color:${color}">${v || ''}</div>`;
+            }).join('')}
+          </div>
+        </div>
+      `).join('') + `
+        <div class="cadence-dates">
+          <div></div>
+          <div class="cadence-date-row">${dateLabels.map(d => `<div>${d}</div>`).join('')}</div>
+        </div>
+      `;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Hour × Day-of-week heatmap (true 2-D, color-by-intensity)
+    // ─────────────────────────────────────────────────────────────
+    function renderHeatmap(hm) {
+      const el = document.getElementById('heatmap-card');
+      if (!hm || !hm.hours || !hm.hours.length) {
+        el.innerHTML = '<div class="empty">Not enough hour×day samples yet — needs more posts at different slots.</div>';
+        return;
+      }
+      const cols = hm.days.length;
+      const max = hm.max_avg || 1;
+      // Header row
+      const headerCells = hm.days.map(d => `<div class="heatmap-collabel">${d}</div>`).join('');
+      const header = `<div class="heatmap-row" style="grid-template-columns:54px repeat(${cols},1fr)">
+        <div></div>${headerCells}
+      </div>`;
+      const rows = hm.grid.map(r => {
+        const hLabel = String(r.hour).padStart(2, '0') + ':00';
+        const cells = r.row.map(cell => {
+          if (cell.avg == null) {
+            return `<div class="heatmap-cell heatmap-empty" title="no data">—</div>`;
+          }
+          // Intensity ramp: bg-tint → channel color via opacity
+          const intensity = (cell.avg / max);
+          const bg = `color-mix(in srgb, var(--gold) ${10 + intensity*70}%, var(--bg-tint))`;
+          const text = cell.avg >= 1000
+            ? (cell.avg/1000).toFixed(1).replace(/\.0$/,'') + 'K'
+            : Math.round(cell.avg);
+          return `<div class="heatmap-cell" style="background:${bg}" title="${cell.avg} avg · n=${cell.n}">${text}</div>`;
+        }).join('');
+        return `<div class="heatmap-row" style="grid-template-columns:54px repeat(${cols},1fr)">
+          <div class="heatmap-rowlabel">${hLabel}</div>${cells}
+        </div>`;
+      }).join('');
+      el.innerHTML = header + `<div class="heatmap-grid">${rows}</div>
+        <div class="heatmap-legend">
+          <span>0</span>
+          <div class="heatmap-legend-bar"></div>
+          <span>${fmt.compact(max)} avg views</span>
+        </div>`;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Chart
+    // ─────────────────────────────────────────────────────────────
+    let chart = null;
+    // Custom Chart.js plugin: vertical dashed lines for policy events
+    // (Rule 1.5 shipped, faces disabled, etc.) overlaid on the trend chart
+    // so view-trend changes can be correlated with what we shipped when.
+    const policyOverlayPlugin = {
+      id: 'policyOverlay',
+      afterDatasetsDraw(chart, args, opts) {
+        if (!opts.events || !opts.events.length) return;
+        const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
+        const labels = chart.data.labels || [];
+
+        // Group events by date so multiple events on the same day stack
+        // vertically instead of writing on top of each other.
+        const byDate = new Map();
+        opts.events.forEach(ev => {
+          const idx = labels.indexOf(ev.date);
+          if (idx === -1) return;
+          if (!byDate.has(idx)) byDate.set(idx, []);
+          byDate.get(idx).push(ev);
+        });
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(122, 72, 146, 0.35)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.font = '9px Inter';
+        ctx.fillStyle = 'rgba(122, 72, 146, 0.85)';
+        ctx.textBaseline = 'top';
+
+        const LINE_H = 11;       // px between stacked labels
+        const MAX_CHARS = 22;    // truncation per label
+        const MAX_VISIBLE = 4;   // beyond this, collapse to "+N more"
+
+        byDate.forEach((events, idx) => {
+          const px = x.getPixelForValue(idx);
+          ctx.beginPath();
+          ctx.moveTo(px, top);
+          ctx.lineTo(px, bottom);
+          ctx.stroke();
+
+          const visible = events.slice(0, MAX_VISIBLE);
+          const overflow = events.length - visible.length;
+          visible.forEach((ev, i) => {
+            const label = ev.name.length > MAX_CHARS
+              ? ev.name.slice(0, MAX_CHARS - 1) + '…'
+              : ev.name;
+            ctx.fillText(label, px + 3, top + 4 + i * LINE_H);
+          });
+          if (overflow > 0) {
+            ctx.fillText('+' + overflow + ' more',
+                          px + 3, top + 4 + visible.length * LINE_H);
+          }
+        });
+        ctx.restore();
+      },
+    };
+
+    function renderChart(t, overlays) {
+      const ctx = document.getElementById('chart-canvas').getContext('2d');
+      if (chart) { chart.destroy(); chart = null; }
+      chart = new Chart(ctx, {
+        type: 'line',
+        plugins: [policyOverlayPlugin],
+        data: {
+          labels: t.labels,
+          datasets: t.datasets.map(ds => ({
+            label: ds.label,
+            data: ds.data,
+            borderColor: ds.color,
+            backgroundColor: ds.color + '1a',
+            borderWidth: 1.5,
+            pointRadius: 0,
+            tension: 0.32,
+            fill: true,
+            // Connect across days with no data (= null from server).
+            // Without this, a partial-day pull at the end of the
+            // window would drop the line to the bottom of the chart.
+            spanGaps: true,
+          })),
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          layout: { padding: { top: 6, right: 18, bottom: 0, left: 0 } },
+          plugins: {
+            legend: {
+              align: 'start', position: 'bottom',
+              labels: {
+                font: { family: 'Inter', size: 11 },
+                boxWidth: 10, boxHeight: 10,
+                padding: 14, usePointStyle: true, pointStyle: 'circle',
+              },
+            },
+            tooltip: {
+              backgroundColor: '#1a1612', titleColor: '#faf6ec', bodyColor: '#faf6ec',
+              titleFont: { family: 'Inter', weight: '500', size: 11 },
+              bodyFont: { family: 'JetBrains Mono', size: 11 },
+              padding: 10, displayColors: true, boxWidth: 8,
+            },
+            policyOverlay: { events: overlays || [] },
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { family: 'Inter', size: 11 }, color: '#7d7568' },
+              border: { display: false },
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: '#f0e9d8', drawBorder: false },
+              ticks: { font: { family: 'JetBrains Mono', size: 10 }, color: '#7d7568' },
+              border: { display: false },
+            },
+          },
+        },
+      });
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Refresh — runs the full pipeline including pull_tt_views
+    // ─────────────────────────────────────────────────────────────
+    async function refresh() {
+      const btn = document.getElementById('refresh-btn');
+      btn.disabled = true; btn.textContent = 'Refreshing…';
+      try {
+        // Trigger a fresh TT account snapshot, then re-fetch data.
+        await Promise.resolve(); // best-effort
+        const res = await fetch('./data.json');
+        const data = await res.json();
+        if (data.error) {
+          document.getElementById('hero-greeting').innerHTML =
+            `<em>${data.error}</em>`;
+          return;
+        }
+        renderHeader(data);
+        renderHealth(data.account_health);
+        renderKpis(data.kpis);
+        renderMonetization(data.monetization);
+        renderInsights(data.insights);
+        renderBars('bar-hour', data.hour_dow.by_hour, {
+          valueKey: 'avg',
+          labelFn: it => String(it.hour).padStart(2,'0') + ':00',
+          color: 'var(--gold)',
+        });
+        renderBars('bar-dow', data.hour_dow.by_dow, {
+          valueKey: 'avg',
+          labelFn: it => it.day.slice(0,3),
+          color: 'var(--blue)',
+        });
+        renderVoice(data.voice_ab);
+        renderTier(data.tier_mix);
+        renderBars('bar-subs', data.source_subs, {
+          valueKey: 'avg_views',
+          labelFn: it => 'r/' + it.subreddit,
+          valueFn: it => it.avg_views != null ? fmt.num(it.avg_views) : '—',
+          color: 'var(--plum)',
+        });
+        renderFactors(data.factor_impacts);
+        renderTop(data.top_videos);
+        renderCost(data.cost);
+        renderChannels(data.channels);
+        renderChart(data.trend_chart, data.policy_overlays);
+        renderHeatmap(data.heatmap_hour_x_dow);
+        renderCadence(data.cadence);
+      } catch (e) {
+        console.error(e);
+        document.getElementById('hero-greeting').innerHTML =
+          `<em>Refresh failed — see console</em>`;
+      } finally {
+        btn.disabled = false; btn.textContent = 'Refresh';
+      }
+    }
+
+    // Initial load (no pull, just fetch)
+    async function initial() {
+      try {
+        const res = await fetch('./data.json');
+        const data = await res.json();
+        if (data.error) {
+          document.getElementById('hero-greeting').innerHTML =
+            `<em>${data.error}</em>`;
+          return;
+        }
+        renderHeader(data);
+        renderHealth(data.account_health);
+        renderKpis(data.kpis);
+        renderMonetization(data.monetization);
+        renderInsights(data.insights);
+        renderBars('bar-hour', data.hour_dow.by_hour, {
+          valueKey: 'avg',
+          labelFn: it => String(it.hour).padStart(2,'0') + ':00',
+          color: 'var(--gold)',
+        });
+        renderBars('bar-dow', data.hour_dow.by_dow, {
+          valueKey: 'avg',
+          labelFn: it => it.day.slice(0,3),
+          color: 'var(--blue)',
+        });
+        renderVoice(data.voice_ab);
+        renderTier(data.tier_mix);
+        renderBars('bar-subs', data.source_subs, {
+          valueKey: 'avg_views',
+          labelFn: it => 'r/' + it.subreddit,
+          valueFn: it => it.avg_views != null ? fmt.num(it.avg_views) : '—',
+          color: 'var(--plum)',
+        });
+        renderFactors(data.factor_impacts);
+        renderTop(data.top_videos);
+        renderCost(data.cost);
+        renderChannels(data.channels);
+        renderChart(data.trend_chart, data.policy_overlays);
+        renderHeatmap(data.heatmap_hour_x_dow);
+        renderCadence(data.cadence);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    document.getElementById('refresh-btn').addEventListener('click', refresh);
+
+    // Range toggles — refetch /api/dashboard with a range hint
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const range = btn.dataset.range;
+        const res = await fetch(`./data_${range}.json`);
+        const data = await res.json();
+        if (!data.error) renderChart(data.trend_chart, data.policy_overlays);
+      });
+    });
+
+    initial();
+  </script>
+</body>
 </html>
