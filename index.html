@@ -184,6 +184,18 @@
 
     /* ── Posting cadence ── */
     .cadence-card{padding:18px}
+    /* System status banner — only renders when warnings present */
+    .sysstatus-card{padding:16px 20px;border-left:4px solid var(--gold)}
+    .sysstatus-card.has-error{border-left-color:var(--red);background:var(--red-bg)}
+    .sysstatus-card.healthy{border-left-color:var(--green);background:var(--green-bg)}
+    .sysstatus-row{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+    .sysstatus-icon{font-size:20px;line-height:1;flex:0 0 auto;margin-top:2px}
+    .sysstatus-body{flex:1 1 auto;min-width:200px}
+    .sysstatus-title{font-weight:600;font-size:14px;color:var(--ink);margin-bottom:4px}
+    .sysstatus-warnings{font-size:13px;color:var(--ink-soft);line-height:1.5}
+    .sysstatus-warnings li{margin-left:18px}
+    .sysstatus-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);margin-top:8px}
+    .sysstatus-meta b{color:var(--ink-soft);font-weight:500}
     /* Sortable video table */
     .vtable{width:100%;border-collapse:collapse;font-size:13px}
     .vtable thead th{
@@ -303,6 +315,11 @@
         <button class="btn btn-primary" id="refresh-btn">Refresh</button>
       </div>
     </header>
+
+    <!-- SYSTEM STATUS — only renders when there's something worth flagging -->
+    <section id="system-status-section" style="display:none">
+      <div class="card sysstatus-card" id="sysstatus-card"></div>
+    </section>
 
     <!-- ACCOUNT HEALTH -->
     <section>
@@ -1204,6 +1221,63 @@
     }
 
     // ─────────────────────────────────────────────────────────────
+    // System status banner (YT re-auth health + pending backlog)
+    // Only renders when there's something to flag, OR shows healthy
+    // tick when everything is fine for the past 24h.
+    // ─────────────────────────────────────────────────────────────
+    function renderSystemStatus(s) {
+      const section = document.getElementById('system-status-section');
+      const card = document.getElementById('sysstatus-card');
+      if (!section || !card) return;
+      if (!s) { section.style.display = 'none'; return; }
+
+      const warnings = s.warnings || [];
+      const yt = s.yt_reauth;
+      const pending = s.pending_count || 0;
+      const lag = s.hourly_lag_minutes;
+
+      const healthy = warnings.length === 0;
+      // Only suppress the panel entirely if EVERYTHING is healthy AND
+      // we have no useful info to display.
+      if (healthy && pending === 0 && !yt && lag == null) {
+        section.style.display = 'none';
+        return;
+      }
+      section.style.display = '';
+
+      card.classList.remove('has-error', 'healthy');
+      card.classList.add(healthy ? 'healthy' : 'has-error');
+
+      const icon = healthy ? '✓' : '⚠';
+      const title = healthy ? 'All systems green' : `${warnings.length} issue${warnings.length === 1 ? '' : 's'} need attention`;
+
+      let metaBits = [];
+      if (yt) {
+        const when = yt.ran_at ? new Date(yt.ran_at).toLocaleString() : '—';
+        metaBits.push(`<b>YT re-auth:</b> ${yt.ok_count}/${yt.total} ok, last ${when}`);
+      } else {
+        metaBits.push('<b>YT re-auth:</b> not yet run');
+      }
+      metaBits.push(`<b>Pending queue:</b> ${pending} item${pending === 1 ? '' : 's'}`);
+      if (lag != null) metaBits.push(`<b>Hourly lag:</b> ${lag} min`);
+
+      const warningList = warnings.length
+        ? `<ul class="sysstatus-warnings">${warnings.map(w => `<li>${w}</li>`).join('')}</ul>`
+        : '';
+
+      card.innerHTML = `
+        <div class="sysstatus-row">
+          <div class="sysstatus-icon">${icon}</div>
+          <div class="sysstatus-body">
+            <div class="sysstatus-title">${title}</div>
+            ${warningList}
+            <div class="sysstatus-meta">${metaBits.join('  ·  ')}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Video table (recent uploads with TT + YT views, sortable)
     // ─────────────────────────────────────────────────────────────
     let _videoTableState = { rows: [], sortKey: 'hours_old', sortDir: 'asc' };
@@ -1336,6 +1410,7 @@
         renderHeatmap(data.heatmap_hour_x_dow);
         renderCadence(data.cadence);
         renderVideoTable(data.video_table);
+        renderSystemStatus(data.system_status);
       } catch (e) {
         console.error(e);
         document.getElementById('hero-greeting').innerHTML =
@@ -1386,6 +1461,7 @@
         renderHeatmap(data.heatmap_hour_x_dow);
         renderCadence(data.cadence);
         renderVideoTable(data.video_table);
+        renderSystemStatus(data.system_status);
       } catch (e) {
         console.error(e);
       }
