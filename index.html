@@ -1175,7 +1175,10 @@
       if (chart) { chart.destroy(); chart = null; }
       chart = new Chart(ctx, {
         type: 'line',
-        plugins: [policyOverlayPlugin],
+        // policyOverlayPlugin removed — purple text labels stack on
+        // shared dates and overlap each other unreadably. Kept the
+        // plugin code above in case we revisit a non-text annotation.
+        plugins: [],
         data: {
           labels: t.labels,
           datasets: t.datasets.map(ds => ({
