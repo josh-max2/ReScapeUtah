@@ -220,10 +220,22 @@
     .vt-views-strong{color:var(--ink);font-weight:600}
     .vt-views-zero{color:var(--ink-faint)}
     .vt-views-na{color:var(--ink-faint);font-style:italic}
+    .vt-col-hint{display:block;font-size:9.5px;color:var(--ink-faint);font-weight:400;letter-spacing:0.02em;margin-top:2px;text-transform:none}
+    .vt-source-cell{display:flex;flex-direction:column;align-items:flex-end;gap:2px;line-height:1.15}
+    .vt-source-main{font-size:13px}
+    .vt-source-delta{font-size:10.5px;font-family:'JetBrains Mono',monospace}
+    .vt-spark{display:block;margin:1px 0}
+    .vt-delta-line{display:inline-flex;gap:4px;align-items:baseline}
+    .vt-delta-pos{color:#1faa5b}
+    .vt-delta-neg{color:#d33a3a}
+    .vt-delta-zero{color:var(--ink-faint)}
+    .vt-delta-na{color:var(--ink-faint);font-style:italic}
+    .vt-delta-sep{color:var(--ink-faint)}
     @media (max-width:760px){
       .vtable thead th, .vtable tbody td{padding:10px 10px;font-size:12px}
       .vtable tbody td.vt-title{max-width:160px}
       .vt-channel{font-size:11px}
+      .vt-spark{width:60px}
     }
     .cadence-row{display:grid;grid-template-columns:140px 1fr;align-items:center;gap:10px;margin-bottom:6px}
     .cadence-name{font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:6px}
@@ -436,8 +448,8 @@
                 <th data-sort="title" class="vt-title">Title</th>
                 <th data-sort="channel">Channel</th>
                 <th data-sort="hours_old" class="vt-num active">Posted ↓</th>
-                <th data-sort="tt_views" class="vt-num">TT views</th>
-                <th data-sort="yt_views" class="vt-num">YT views</th>
+                <th data-sort="tt_views" class="vt-num">TT views <span class="vt-col-hint">trend · Δ1d · Δ7d</span></th>
+                <th data-sort="yt_views" class="vt-num">YT views <span class="vt-col-hint">trend · Δ1d · Δ7d</span></th>
                 <th data-sort="total_views" class="vt-num">Total</th>
               </tr>
             </thead>
@@ -1303,6 +1315,51 @@
       return `<span class="${cls}">${fmt.num(n)}</span>`;
     }
 
+    // Compact "+12 / +47" style delta line — Δ1d / Δ7d. Null deltas
+    // (video too new for a 1d/7d-ago snapshot to exist) render as —.
+    function _fmtDelta(n) {
+      if (n == null) return '<span class="vt-delta-na">—</span>';
+      if (n === 0)   return '<span class="vt-delta-zero">+0</span>';
+      const cls = n > 0 ? 'vt-delta-pos' : 'vt-delta-neg';
+      const sign = n > 0 ? '+' : '';
+      return `<span class="${cls}">${sign}${fmt.num(n)}</span>`;
+    }
+    function _deltaLineHTML(d1, d7) {
+      return `<span class="vt-delta-line">${_fmtDelta(d1)} <span class="vt-delta-sep">·</span> ${_fmtDelta(d7)}</span>`;
+    }
+
+    // Inline-SVG sparkline of cumulative views over time. Empty history
+    // (or a single point) renders nothing — the cell stays clean.
+    // Trend reads at a glance: rising tail = re-engagement.
+    function _sparklineSVG(history, color) {
+      if (!history || history.length < 2) return '';
+      const w = 80, h = 18, pad = 1;
+      const ys = history.map(p => p.v == null ? 0 : p.v);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+      const rangeY = Math.max(1, maxY - minY);
+      const n = history.length;
+      const pts = history.map((p, i) => {
+        const x = pad + (i / Math.max(1, n - 1)) * (w - 2 * pad);
+        const y = h - pad - ((p.v - minY) / rangeY) * (h - 2 * pad);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(' ');
+      return `<svg class="vt-spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">`
+           + `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>`
+           + `</svg>`;
+    }
+
+    function _sourceCellHTML(views, d1, d7, history, color) {
+      const main = _viewCellHTML(views);
+      const delta = _deltaLineHTML(d1, d7);
+      const spark = _sparklineSVG(history, color);
+      return `<div class="vt-source-cell">`
+           + `<div class="vt-source-main">${main}</div>`
+           + `${spark}`
+           + `<div class="vt-source-delta">${delta}</div>`
+           + `</div>`;
+    }
+
     function _renderVideoTableSorted() {
       const tbody = document.getElementById('video-table-body');
       if (!tbody) return;
@@ -1325,13 +1382,15 @@
         }
         return sortDir === 'asc' ? av - bv : bv - av;
       });
+      const TT_SPARK = '#ff2d55';
+      const YT_SPARK = '#ff0000';
       tbody.innerHTML = sorted.map(r => `
         <tr>
           <td class="vt-title" title="${(r.title || '').replace(/"/g, '&quot;')}">${r.title || r.slug}</td>
           <td><span class="vt-channel"><span class="vt-channel-dot" style="background:${r.channel_color}"></span>${r.channel_label}</span></td>
           <td class="vt-num"><span class="vt-age">${_formatHoursOld(r.hours_old)}</span></td>
-          <td class="vt-num">${_viewCellHTML(r.tt_views)}</td>
-          <td class="vt-num">${_viewCellHTML(r.yt_views)}</td>
+          <td class="vt-num">${_sourceCellHTML(r.tt_views, r.tt_delta_1d, r.tt_delta_7d, r.tt_history, TT_SPARK)}</td>
+          <td class="vt-num">${_sourceCellHTML(r.yt_views, r.yt_delta_1d, r.yt_delta_7d, r.yt_history, YT_SPARK)}</td>
           <td class="vt-num">${_viewCellHTML(r.total_views)}</td>
         </tr>
       `).join('');
