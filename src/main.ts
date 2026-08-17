@@ -14,7 +14,8 @@ import { waveMix, STAGE_SECS, waveHpMul } from './sim/waves';
 import { shove } from './sim/combat';
 import { placeTower, upgradeTower, sellTower, destroyTower } from './sim/towers';
 import { loadSave, persist, type Settings } from './meta/save';
-import { UPGRADES, computeMods } from './meta/upgrades';
+import { computeMods, NODE_BY_ID, TREE, nodeCost, isGated, treeSpent } from './meta/tree';
+import { emptyMods } from './meta/upgrades';
 import { CARDS, playModCard, playStrikeCard, playInstantCard } from './sim/cards';
 import { initHand, updateHand } from './ui/hand';
 import { initHud, updateHud, markMetaDirty, HudCallbacks } from './ui/hud';
@@ -22,7 +23,7 @@ import { render, UiState } from './render/draw';
 import './style.css';
 
 const save = loadSave();
-const game = createGame(computeMods(save.upgrades));
+const game = createGame(computeMods(save.tree));
 
 const ui: UiState = {
   placing: null,
@@ -66,7 +67,10 @@ const cb: HudCallbacks = {
     ui.strikeArmed = false;
   },
   cycleSpeed() {
-    game.speed = game.speed === 1 ? 2 : game.speed === 2 ? 4 : game.speed === 4 ? 10 : 1;
+    // Fast Forward (Pit Wall) unlocks the steps past 10x, one per rank.
+    const steps = [1, 2, 4, 10, 15, 20, 30].slice(0, 4 + game.mods.speedSteps);
+    const i = steps.indexOf(game.speed);
+    game.speed = steps[(i + 1) % steps.length] ?? 1;
   },
   armStrike() {
     if (game.phase !== 'running') {
@@ -77,19 +81,36 @@ const cb: HudCallbacks = {
     ui.placing = null;
   },
   buyUpgrade(id: string) {
-    const def = UPGRADES.find((u) => u.id === id);
-    if (!def) return;
-    const lvl = save.upgrades[id] ?? 0;
-    const cost = def.cost(lvl);
-    if (lvl >= def.max || save.cores < cost) return;
+    const node = NODE_BY_ID.get(id);
+    if (!node) return;
+    const lvl = save.tree[id] ?? 0;
+    const cost = nodeCost(node, lvl);
+    // Gates read bestTime, so a node can be visible-but-locked and its price
+    // still shown — the player can see what holding longer would open.
+    if (lvl >= node.ranks || save.cores < cost) return;
+    if (isGated(node, save.bestTime ?? 0)) return;
     save.cores -= cost;
-    save.upgrades[id] = lvl + 1;
+    save.tree[id] = lvl + 1;
+    persist(save);
+    markMetaDirty();
+  },
+  respec() {
+    // Free Respec hands back every chip. Deliberately total: a partial refund
+    // makes players hoard rather than experiment, which is the opposite of
+    // what a tree this size wants.
+    save.cores += treeSpent(save.tree);
+    save.tree = {};
+    persist(save);
+    markMetaDirty();
+  },
+  selectTrack(id: string) {
+    save.track = id;
     persist(save);
     markMetaDirty();
   },
   launchRun() {
     // Money persists: come back with the bank you died holding.
-    startRun(game, computeMods(save.upgrades), save.gold);
+    startRun(game, computeMods(save.tree), save.gold);
     game.speed = save.settings.defaultSpeed;
     ui.placing = 'autocannon';
     ui.strikeArmed = false;
@@ -250,7 +271,7 @@ const demoParam = new URLSearchParams(location.search).get('demo');
 if (demoParam !== null) {
   // Clamp: waveBudget grows exponentially, an absurd N would hang the spawner.
   const demoWave = clamp(parseInt(demoParam, 10) || 5, 1, WAVES_PER_RUN);
-  startRun(game, computeMods(save.upgrades));
+  startRun(game, computeMods(save.tree));
   game.gold = 3000;
   // Towers on the canyon rims: unwalkable cells that touch the road.
   const kinds: TowerKind[] = [
@@ -285,6 +306,16 @@ if (demoParam !== null) {
   game,
   save,
   cardsEnabled: CARDS_ENABLED,
+  // The skill tree, so a harness can assert every node moves a real modifier.
+  // A node wired to nothing is the specific failure this project has hit
+  // before, and it is invisible in the UI — the button still depresses.
+  tree: TREE,
+  computeMods,
+  emptyMods,
+  applyTree: (owned: Record<string, number>) => { save.tree = owned; markMetaDirty(); },
+  // Harnesses mutate `save` directly to stage a state; without this the meta
+  // screen keeps showing the stale render and the test reads the old DOM.
+  refreshMeta: () => markMetaDirty(),
   tick: (dt: number) => tick(game, save, dt),
   render: () => render(ctx, game, ui),
   // Placement through the real code path, so harnesses can build a barrier

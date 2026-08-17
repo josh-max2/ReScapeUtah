@@ -36,27 +36,57 @@ export interface SaveData {
   cores: number;
   /** Money survives a failed run — the progression hook under continuous flow. */
   gold: number;
-  /** Longest continuous run, seconds. */
+  /** Longest continuous run, seconds. Deep tree nodes gate on this. */
   bestTime: number;
-  upgrades: Record<string, number>;
+  /** Skill-tree ranks by node id (see meta/tree.ts). Replaced `upgrades` in v4. */
+  tree: Record<string, number>;
+  /** Selected track (map id). */
+  track: string;
   bestWave: number;
   wins: number;
   settings: Settings;
 }
 
 const KEY = 'swarm-td-save';
-const VERSION = 3;
+const VERSION = 4;
 
 const DEFAULTS: SaveData = {
   version: VERSION,
   cores: 0,
   gold: 0,
   bestTime: 0,
-  upgrades: {},
+  tree: {},
+  track: 'map2',
   bestWave: 0,
   wins: 0,
   settings: { ...DEFAULT_SETTINGS },
 };
+
+/**
+ * v3's five flat upgrades and their price curves, frozen here on purpose.
+ * A migration must not read the live upgrade table — that table is gone, and
+ * even when it existed it would keep changing underneath old saves. The only
+ * safe refund basis is the prices the player actually paid.
+ */
+const LEGACY_COSTS: Record<string, (l: number) => number> = {
+  dmg: (l) => Math.round(12 * Math.pow(1.5, l)),
+  rate: (l) => Math.round(14 * Math.pow(1.55, l)),
+  hp: (l) => Math.round(10 * Math.pow(1.45, l)),
+  gold: (l) => Math.round(10 * Math.pow(1.6, l)),
+  strike: (l) => Math.round(20 * Math.pow(1.5, l)),
+};
+
+/** Chips to hand back for a v3 save's flat upgrades, so nothing is confiscated. */
+function refundLegacy(upgrades: unknown): number {
+  if (!upgrades || typeof upgrades !== 'object') return 0;
+  let chips = 0;
+  for (const [id, lvl] of Object.entries(upgrades as Record<string, unknown>)) {
+    const price = LEGACY_COSTS[id];
+    if (!price || typeof lvl !== 'number') continue;
+    for (let i = 0; i < lvl; i++) chips += price(i);
+  }
+  return chips;
+}
 
 /** Accept only known values — a hand-edited or future save must not brick. */
 function readSettings(raw: unknown): Settings {
@@ -78,24 +108,30 @@ function readSettings(raw: unknown): Settings {
 export function loadSave(): SaveData {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return { ...DEFAULTS, upgrades: {}, settings: { ...DEFAULT_SETTINGS } };
-    const data = JSON.parse(raw) as Partial<SaveData>;
+    if (!raw) return { ...DEFAULTS, tree: {}, settings: { ...DEFAULT_SETTINGS } };
+    const data = JSON.parse(raw) as Partial<SaveData> & { upgrades?: unknown };
+    // v3 -> v4: the five flat upgrades became a skill tree. Their ranks cannot
+    // be remapped onto nodes one-for-one, so REFUND them — every chip the
+    // player spent comes back to be respent in the tree. Nothing is lost and
+    // nothing is silently converted into something they did not choose.
+    const refunded = (data.version ?? 0) < 4 ? refundLegacy(data.upgrades) : 0;
     // v1 -> v2: settings did not exist. Everything else carries over as-is, so
     // the migration is simply "fill in defaults" — progress is never lost.
     return {
       version: VERSION,
-      cores: typeof data.cores === 'number' ? data.cores : 0,
+      cores: (typeof data.cores === 'number' ? data.cores : 0) + refunded,
       // v2 -> v3: gold and bestTime did not exist; default them. Nothing is
       // lost, a v2 player simply starts the new economy with an empty bank.
       gold: typeof data.gold === 'number' ? data.gold : 0,
       bestTime: typeof data.bestTime === 'number' ? data.bestTime : 0,
-      upgrades: data.upgrades && typeof data.upgrades === 'object' ? data.upgrades : {},
+      tree: data.tree && typeof data.tree === 'object' ? data.tree : {},
+      track: typeof data.track === 'string' ? data.track : 'map2',
       bestWave: typeof data.bestWave === 'number' ? data.bestWave : 0,
       wins: typeof data.wins === 'number' ? data.wins : 0,
       settings: readSettings(data.settings),
     };
   } catch {
-    return { ...DEFAULTS, upgrades: {}, settings: { ...DEFAULT_SETTINGS } };
+    return { ...DEFAULTS, tree: {}, settings: { ...DEFAULT_SETTINGS } };
   }
 }
 

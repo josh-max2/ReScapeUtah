@@ -182,10 +182,13 @@ export function updateTowers(g: Game, dt: number): void {
     // Still being aimed by the player: placed, but not yet a weapon.
     if (!t.armed) continue;
     const def = TOWER_DEFS[t.kind];
-    const S = towerStats(t); // upgrade branch resolved here
+    // Upgrade branch AND the meta tree resolve here. Note hitMul/rateMul no
+    // longer carry g.mods — towerStats owns that now, and applying it in both
+    // places would square every global damage node.
+    const S = towerStats(t, g.mods);
     const tm = g.typeMods[t.kind];
-    const hitMul = g.mods.dmgMul * Math.pow(1.4, tm.dmg);
-    const rateMul = g.mods.rateMul * Math.pow(1.35, tm.rate);
+    const hitMul = Math.pow(1.4, tm.dmg);
+    const rateMul = Math.pow(1.35, tm.rate);
     const splashMul = Math.pow(1.3, tm.splash);
 
     if (t.kind === 'mine') {

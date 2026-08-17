@@ -7,6 +7,7 @@ import {
 } from '../defs';
 import { SPAWN_X, SPAWN_Y, GOAL_X, GOAL_Y } from './terrain';
 import type { Game } from '../state';
+import type { MetaMods } from '../meta/upgrades';
 
 export interface Tower {
   kind: TowerKind;
@@ -66,31 +67,56 @@ export function defaultAim(g: Game, x: number, y: number): number {
 }
 
 /** Resolved stats for a tower after its upgrade branch is applied. */
-export function towerStats(t: Tower) {
+/**
+ * Resolve a tower's live stats: base def, its one-shot upgrade branch, and the
+ * meta tree on top. EVERY consumer must read stats from here — combat reading
+ * raw `def.*` is how tree nodes end up silently doing nothing, which CLAUDE.md
+ * flags as a repeat failure. `m` is optional only so the inspector can preview
+ * a tower without a run in progress.
+ */
+export function towerStats(t: Tower, m?: MetaMods) {
   const def = TOWER_DEFS[t.kind];
   const opt = t.upg ? TOWER_UPGRADES[t.kind]?.[t.upg - 1] : undefined;
+  const k = m ? m.kind[t.kind] : undefined;
+  const gDmg = m ? m.dmgMul : 1;
+  const gRate = m ? m.rateMul : 1;
+  const gSplash = m ? m.splashMul : 1;
   return {
     def,
     opt,
-    range: def.range * (opt?.rangeMul ?? 1),
-    rate: def.rate * (opt?.rateMul ?? 1),
-    hit: def.hit * (opt?.hitMul ?? 1),
-    hitMax: (def.hitMax ?? def.hit) * (opt?.hitMul ?? 1) * (opt?.hitMaxMul ?? 1),
-    splash: (def.splash ?? 0) * (opt?.splashMul ?? 1),
+    range: def.range * (opt?.rangeMul ?? 1) + (m ? m.rangeAdd : 0) + (k?.rangeAdd ?? 0),
+    rate: def.rate * (opt?.rateMul ?? 1) * gRate * (k?.rateMul ?? 1),
+    hit: def.hit * (opt?.hitMul ?? 1) * gDmg * (k?.dmgMul ?? 1),
+    hitMax: (def.hitMax ?? def.hit) * (opt?.hitMul ?? 1) * (opt?.hitMaxMul ?? 1)
+      * gDmg * (k?.dmgMul ?? 1) * (k?.hitMaxMul ?? 1),
+    splash: (def.splash ?? 0) * (opt?.splashMul ?? 1) * gSplash * (k?.splashMul ?? 1),
     chains: opt?.chains ?? def.chains ?? 0,
-    salvo: opt?.salvo ?? def.salvo ?? 1,
-    rampTime: (def.rampTime ?? 4) * (opt?.rampMul ?? 1),
+    salvo: (opt?.salvo ?? def.salvo ?? 1) + (k?.salvoAdd ?? 0),
+    rampTime: (def.rampTime ?? 4) * (opt?.rampMul ?? 1) * (k?.rampMul ?? 1),
     recharge: (def.rechargeS ?? 8) * (opt?.rechargeMul ?? 1),
-    maxCharges: (def.charges ?? 0) + (opt?.chargesAdd ?? 0),
-    threshIgnore: opt?.threshIgnoreAll ? 9999 : (def.threshIgnore ?? 0),
-    slowS: (def.slowS ?? 0) * (opt?.slowMul ?? 1),
+    maxCharges: (def.charges ?? 0) + (opt?.chargesAdd ?? 0) + (k?.chargesAdd ?? 0),
+    threshIgnore: (opt?.threshIgnoreAll || (m?.pierceAll && !ENERGY.has(t.kind)))
+      ? 9999 : (def.threshIgnore ?? 0),
+    slowS: (def.slowS ?? 0) * (opt?.slowMul ?? 1) * (k?.slowMul ?? 1),
     hitFloor: opt?.hitFloor ?? 0,
     vsArmor: opt?.vsArmor ?? 1,
     cluster: opt?.cluster ?? 1,
     shatter: opt?.shatter ?? false,
-    burnS: (def.burnS ?? 4) * (opt?.burnMul ?? 1),
+    burnS: (def.burnS ?? 4) * (opt?.burnMul ?? 1) * (k?.burnMul ?? 1),
     preSpun: opt?.preSpun ?? 0,
   };
+}
+
+/**
+ * ARMOUR PIERCING is a KINETIC capstone — the Lattice is energy, and its own
+ * Piercing Optics branch must stay a live decision (design bible, de-dupe rule).
+ */
+const ENERGY: ReadonlySet<TowerKind> = new Set(['flame', 'tesla', 'lattice']);
+
+/** What this tower costs to build right now, meta discounts included. */
+export function towerCost(g: Game, kind: TowerKind): number {
+  return Math.max(1, Math.round(
+    TOWER_DEFS[kind].cost * g.mods.costMul * g.mods.kind[kind].costMul));
 }
 
 export function canPlace(g: Game, cx: number, cy: number, kind: TowerKind): boolean {
@@ -113,11 +139,13 @@ export function canPlace(g: Game, cx: number, cy: number, kind: TowerKind): bool
 /** Returns the new tower's index, or -1 if it could not be placed. */
 export function placeTower(g: Game, kind: TowerKind, cx: number, cy: number): number {
   const def = TOWER_DEFS[kind];
-  if (!canPlace(g, cx, cy, kind) || g.gold < def.cost) return -1;
-  g.gold -= def.cost;
+  const price = towerCost(g, kind);
+  if (!canPlace(g, cx, cy, kind) || g.gold < price) return -1;
+  g.gold -= price;
   const c = cy * COLS + cx;
-  // Plating card stacks: +50% per level (walls +100%).
-  const hp = def.hp * Math.pow(kind === 'wall' ? 2 : 1.5, g.typeMods[kind].hp);
+  // Plating card stacks: +50% per level (walls +100%), then meta (Rebar).
+  const hp = def.hp * Math.pow(kind === 'wall' ? 2 : 1.5, g.typeMods[kind].hp)
+    * g.mods.kind[kind].hpMul;
   const t: Tower = {
     kind, cx, cy,
     x: cx * CELL + CELL / 2,
@@ -180,8 +208,8 @@ export function sellTower(g: Game, ti: number): number {
   if (!t) return 0;
   const def = TOWER_DEFS[t.kind];
   const opt = t.upg ? TOWER_UPGRADES[t.kind]?.[t.upg - 1] : undefined;
-  const paid = def.cost + (opt?.cost ?? 0);
-  const refund = Math.floor(paid * 0.6);
+  const paid = towerCost(g, t.kind) + (opt?.cost ?? 0);
+  const refund = Math.floor(paid * g.mods.sellMul);
   g.gold += refund;
   destroyTower(g, ti);
   return refund;

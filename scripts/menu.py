@@ -24,9 +24,14 @@ with sync_playwright() as p:
     mig = pg.evaluate("() => window.__swarm.save")
     print("v1 save migrated ->", {k: mig[k] for k in ('version','cores','bestWave','wins')},
           "settings:", mig["settings"])
+    # v4 replaced the five flat upgrades with the skill tree. There is no
+    # one-for-one remap, so the migration REFUNDS them: dmg:2 cost 12 + 18 = 30
+    # chips, which land back on top of the 123 already banked. Progress is not
+    # preserved in place — it is preserved in value, to be respent in the tree.
     results["v1_save_migrates_keeping_progress"] = (
-        mig["version"] == 3 and mig["cores"] == 123 and mig["bestWave"] == 7
-        and mig["upgrades"].get("dmg") == 2 and mig["settings"]["detail"] == "high")
+        mig["version"] == 4 and mig["cores"] == 153 and mig["bestWave"] == 7
+        and mig.get("upgrades") is None and mig["tree"] == {}
+        and mig["settings"]["detail"] == "high")
 
     # ---- menu is the first thing you see ----
     title = pg.text_content(".gametitle")

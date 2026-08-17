@@ -71,7 +71,9 @@ export interface Game {
   typeMods: Record<TowerKind, TypeMods>; // per-type card upgrades (visibly stack)
   runFx: RunFx;                          // run-wide instant-card effects
   cardChoices: string[] | null;          // every-3rd-wave draft (blocks Start Wave)
-  strikeCd: number;   // seconds until the strike is ready (0 = ready)
+  strikeCd: number;   // seconds until the next strike charge (0 = ready)
+  strikeCharges: number;    // banked Q-strikes (Second Wind buys a second)
+  contingencyLeft: boolean; // Contingency: one lethal leak survived at 1 HP
   speed: number;      // sim speed multiplier: 1 | 2 | 4
   time: number;       // sim clock (s)
   selected: number;   // index of the inspected tower, -1 = none

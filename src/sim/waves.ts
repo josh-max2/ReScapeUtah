@@ -56,8 +56,8 @@ export function waveMix(wave: number): WaveMix {
  * the count), so a wave-scaled hard cap keeps them rare and keeps the aura
  * pass cheap at horde scale.
  */
-function auraCap(wave: number): number {
-  return 4 + Math.floor(wave * 0.7);
+function auraCap(wave: number, cut = 0): number {
+  return Math.max(0, 4 + Math.floor(wave * 0.7) - cut);
 }
 
 /**
@@ -130,7 +130,7 @@ export class Spawner {
   private idx = 0;
   elapsed = 0;
 
-  constructor(wave: number, runId = 0) {
+  constructor(wave: number, runId = 0, auraCut = 0) {
     let budget = waveBudget(wave);
     const duration = 18 + wave * 1.2;
     // Spawns cluster into surges so the horde arrives as tides, not a drizzle.
@@ -141,7 +141,7 @@ export class Spawner {
     }
     const mix = waveMix(wave);
     const entries: SpawnEntry[] = [];
-    const cap = auraCap(wave);
+    const cap = auraCap(wave, auraCut);
     let auras = 0;
     while (budget > 0) {
       let type = pickType(mix);
@@ -254,7 +254,7 @@ export class FlowSpawner {
 
     g.spawnAcc += flowRate(g.runT) * dt;
     const mix = waveMix(Math.min(stage, WAVES_PER_RUN));
-    const cap = auraCap(stage);
+    const cap = auraCap(stage, g.mods.auraCut);
     let guard = 0;
     while (g.spawnAcc > 0 && guard++ < 400) {
       let type = pickType(mix);
@@ -278,5 +278,10 @@ export class FlowSpawner {
       sy = SPAWN_Y1 + Math.random() * (SPAWN_Y2 - SPAWN_Y1);
     }
     g.enemies.spawn(type, sx, sy);
+    // Cold Start holds new arrivals at reduced speed as they leave the rift.
+    if (g.mods.riftSlow > 0) {
+      const i = g.enemies.n - 1;
+      g.enemies.slow[i] = Math.max(g.enemies.slow[i], g.mods.riftSlow);
+    }
   }
 }

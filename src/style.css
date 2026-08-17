@@ -852,3 +852,160 @@ body,
 }
 
 .optionsview .launch.ghost { width: 260px; }
+
+/* ---- skill tree (constellation) ----
+   Branch identity uses warm earth hues + one violet. Red stays damage-only and
+   cyan stays interaction-only per the design contract, so neither is spent on
+   a branch colour; cyan appears here ONLY on the selected node. */
+.metainner.wide { width: min(1180px, 96%); padding: 22px 24px 28px; }
+
+.treewrap { width: 100%; margin: 4px 0 14px; }
+
+.treehead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 6px;
+}
+
+.treehead h2 { margin: 0; }
+.treehead .dim { color: var(--ink-dim); font-size: 11px; margin: 3px 0 0; }
+
+.treebody {
+  display: grid;
+  grid-template-columns: 1fr 268px;
+  gap: 16px;
+  align-items: start;
+}
+
+.board {
+  width: 100%;
+  height: auto;
+  max-height: 54vh;
+  display: block;
+}
+
+.board .hub {
+  fill: rgba(232, 194, 106, 0.10);
+  stroke: var(--gold);
+  stroke-width: 1.5;
+}
+
+.board .spoke { stroke: rgba(255, 255, 255, 0.16); stroke-width: 1.5; }
+.board .twig { stroke: rgba(255, 255, 255, 0.08); stroke-width: 1; }
+
+.board .node circle {
+  fill: rgba(20, 17, 14, 0.92);
+  stroke: rgba(255, 255, 255, 0.20);
+  stroke-width: 1.5;
+  cursor: pointer;
+  transition: stroke 0.12s ease, fill 0.12s ease;
+}
+
+.board .node text {
+  fill: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.board .node:hover circle { stroke: rgba(255, 255, 255, 0.45); }
+
+.board .node.command circle { stroke: rgba(232, 194, 106, 0.55); }
+.board .node.garage  circle { stroke: rgba(201, 130, 90, 0.55); }
+.board .node.rulebook circle { stroke: rgba(143, 191, 95, 0.55); }
+.board .node.pitwall circle { stroke: rgba(176, 160, 138, 0.6); }
+.board .node.holdings circle { stroke: rgba(185, 166, 216, 0.55); }
+
+.board .node.owned circle { fill: rgba(232, 194, 106, 0.16); }
+.board .node.maxed circle { fill: rgba(232, 194, 106, 0.34); }
+.board .node.capstone circle { stroke-width: 2.5; }
+.board .node.gated circle { stroke-dasharray: 3 3; opacity: 0.55; }
+.board .node.sel circle { stroke: var(--cyan); stroke-width: 2.5; }
+
+.board .hublabel,
+.board .brlabel {
+  fill: var(--ink-dim);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.board .hublabel { fill: var(--gold); }
+
+.treeside { display: flex; flex-direction: column; gap: 10px; }
+
+.nodedetail {
+  background: var(--panel-flat);
+  border: 1px solid var(--panel-line);
+  border-left: 3px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 14px 16px 16px;
+  text-align: left;
+}
+
+.nodedetail.command  { border-left-color: var(--gold); }
+.nodedetail.garage   { border-left-color: #c9825a; }
+.nodedetail.rulebook { border-left-color: #8fbf5f; }
+.nodedetail.pitwall  { border-left-color: #b0a08a; }
+.nodedetail.holdings { border-left-color: #b9a6d8; }
+
+.nodedetail .ndline {
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  color: var(--ink-dim);
+}
+
+.nodedetail h3 {
+  margin: 5px 0 7px;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+}
+
+.nodedetail .nddesc { margin: 0 0 10px; font-size: 12px; line-height: 1.45; }
+.nodedetail .dim { color: var(--ink-dim); }
+
+.nodedetail .ndrank {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--ink-dim);
+  margin-bottom: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.nodedetail button {
+  width: 100%;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--bg);
+  background: var(--gold);
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.nodedetail button:disabled {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink-dim);
+  cursor: default;
+}
+
+.nodedetail.empty { border-left-color: rgba(255, 255, 255, 0.12); }
+.nodedetail.empty p { margin: 0 0 8px; font-size: 12px; }
+
+.respec {
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  opacity: 0.65;
+}
+
+@media (max-width: 980px) {
+  .treebody { grid-template-columns: 1fr; }
+}

@@ -8,7 +8,7 @@ import {
 import { towerStats } from '../sim/towers';
 import type { Game } from '../state';
 import type { SaveData, Settings } from '../meta/save';
-import { UPGRADES } from '../meta/upgrades';
+import { renderTree, setSelectedNode } from './tree';
 import { waveMix, STAGE_SECS } from '../sim/waves';
 import { CARDS } from '../sim/cards';
 import { makeTowerIcon } from '../render/towerArt';
@@ -19,6 +19,8 @@ export interface HudCallbacks {
   cycleSpeed(): void;
   armStrike(): void;
   buyUpgrade(id: string): void;
+  respec(): void;
+  selectTrack(id: string): void;
   launchRun(): void;
   pickCard(id: string | null): void;
   upgradeSelected(branch: 1 | 2): void;
@@ -144,8 +146,18 @@ export function initHud(root: HTMLElement, cb: HudCallbacks): HTMLElement {
 
   const metaScreen = el('div', 'metascreen', stage);
   metaScreen.addEventListener('click', (ev) => {
+    // Tree nodes are SVG groups, not buttons, so they are matched first.
+    const dot = (ev.target as Element).closest?.('[data-node]');
+    if (dot) {
+      setSelectedNode(dot.getAttribute('data-node'));
+      metaDirty = true;
+      return;
+    }
     const target = (ev.target as HTMLElement).closest('button');
     if (!target) return;
+    if (target.hasAttribute('data-respec')) { cb.respec(); return; }
+    const track = target.getAttribute('data-track');
+    if (track) { cb.selectTrack(track); return; }
     const up = target.getAttribute('data-upgrade');
     const nav = target.getAttribute('data-view');
     const set = target.getAttribute('data-set');
@@ -334,8 +346,8 @@ function renderMenu(save: SaveData): string {
         <button class="launch" data-view="hangar">PLAY</button>
         <button class="launch ghost" data-view="options">OPTIONS</button>
       </div>
-      <p class="meta-stats">CORES <b>${save.cores}</b> · BEST WAVE <b>${save.bestWave}</b>
-        · WINS <b>${save.wins}</b></p>
+      <p class="meta-stats">CHIPS <b>${save.cores} ◆</b> · LONGEST HELD
+        <b>${Math.floor((save.bestTime ?? 0) / 60)}:${String((save.bestTime ?? 0) % 60).padStart(2, '0')}</b></p>
     </div>`;
 }
 
@@ -355,30 +367,10 @@ function renderMeta(g: Game, save: SaveData): void {
   } else {
     head = `<h2>SWARM</h2><p>One unbroken flow. It only ever gets heavier.</p>`;
   }
-  const bt = save.bestTime ?? 0;
-  const bm = Math.floor(bt / 60), bs = bt % 60;
-  const stats = `<p class="meta-stats">BANK <b>${Math.floor(save.gold)} ⬡</b>` +
-    ` · CORES <b>${save.cores}</b>` +
-    ` · LONGEST HELD <b>${bm}:${bs < 10 ? '0' : ''}${bs}</b></p>`;
-  let cards = '';
-  for (const u of UPGRADES) {
-    const lvl = save.upgrades[u.id] ?? 0;
-    const maxed = lvl >= u.max;
-    const cost = u.cost(lvl);
-    const afford = !maxed && save.cores >= cost;
-    cards += `
-      <div class="upcard${maxed ? ' maxed' : ''}">
-        <div class="upname">${u.name.toUpperCase()}</div>
-        <div class="updesc">${u.desc}</div>
-        <div class="uplvl">LV ${lvl}/${u.max}</div>
-        <button data-upgrade="${u.id}" ${afford ? '' : 'disabled'}>${maxed ? 'MAX' : `${cost} ◆`}</button>
-      </div>`;
-  }
   refs.metaScreen.innerHTML = `
-    <div class="metainner">
+    <div class="metainner wide">
       ${head}
-      ${stats}
-      <div class="upgrid">${cards}</div>
+      ${renderTree(save)}
       <button class="launch" data-launch>LAUNCH RUN</button>
       <div class="metanav">
         <button class="linkbtn" data-view="menu">MENU</button>

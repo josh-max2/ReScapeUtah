@@ -524,7 +524,15 @@ export function updateEnemies(g: Game, dt: number): void {
     const gdx = e.x[i] - GOAL_X;
     const gdy = e.y[i] - GOAL_Y;
     if (gdx * gdx + gdy * gdy < GOAL_R2) {
-      g.baseHp -= t.leak;
+      // Contingency: one otherwise-lethal leak per run is survived at 1 HP.
+      // Checked BEFORE the subtraction so it cannot be skipped by a big hit.
+      if (g.contingencyLeft && g.baseHp - t.leak <= 0) {
+        g.contingencyLeft = false;
+        g.baseHp = 1;
+      } else {
+        g.baseHp -= t.leak;
+      }
+      g.gold += g.mods.leakRefund;   // Insurance
       e.hp[i] = 0;
       e.leaked[i] = 1;
     }

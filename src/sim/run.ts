@@ -28,6 +28,8 @@ export function createGame(mods: MetaMods): Game {
     wave: 0,
     gold: 0,
     baseHp: 1,
+    strikeCharges: 1,
+    contingencyLeft: false,
     baseMaxHp: 1,
     runCores: 0,
     towers: [],
@@ -75,6 +77,8 @@ export function startRun(g: Game, mods: MetaMods, bankedGold = 0): void {
   g.baseMaxHp = mods.baseHp;
   g.baseHp = mods.baseHp;
   g.runCores = 0;
+  g.strikeCharges = mods.strikeCharges;
+  g.contingencyLeft = mods.contingency;
   g.towers = [];
   g.towerGrid.fill(-1);
   g.enemies.clear();
@@ -102,30 +106,32 @@ export function startRun(g: Game, mods: MetaMods, bankedGold = 0): void {
 }
 
 export function castStrike(g: Game, x: number, y: number): boolean {
-  // Wave-only: a misfire during the build phase would waste the whole cooldown.
-  if (g.strikeCd > 0 || g.phase !== 'running') return false;
+  // Second Wind banks charges; the cooldown only blocks when none are left.
+  if (g.strikeCharges <= 0 || g.phase !== 'running') return false;
   const e = g.enemies;
-  const r2 = STRIKE_RADIUS * STRIKE_RADIUS;
+  const R = STRIKE_RADIUS + g.mods.strikeRadiusAdd;
+  const r2 = R * R;
   const dmg = STRIKE_DMG * g.mods.dmgMul;
-  g.hash.query(x, y, STRIKE_RADIUS, (j) => {
+  g.hash.query(x, y, R, (j) => {
     if (e.hp[j] <= 0) return;
     const dx = e.x[j] - x, dy = e.y[j] - y;
     if (dx * dx + dy * dy <= r2) dealHit(g, j, dmg);
   });
   // The strike is the player's own hand — it should visibly part the horde.
-  shove(g, x, y, STRIKE_RADIUS * 2.2, 620);
-  g.effects.push({ kind: 'shock', x, y, r: STRIKE_RADIUS * 2.2, t: 0, ttl: 0.42, color: '#fff3c4' });
-  g.effects.push({ kind: 'boom', x, y, r: STRIKE_RADIUS, t: 0, ttl: 0.5, color: '#ffd977' });
-  g.effects.push({ kind: 'flash', x, y, r: STRIKE_RADIUS * 0.9, t: 0, ttl: 0.25, color: '#fff3c4' });
+  shove(g, x, y, R * 2.2, 620);
+  g.effects.push({ kind: 'shock', x, y, r: R * 2.2, t: 0, ttl: 0.42, color: '#fff3c4' });
+  g.effects.push({ kind: 'boom', x, y, r: R, t: 0, ttl: 0.5, color: '#ffd977' });
+  g.effects.push({ kind: 'flash', x, y, r: R * 0.9, t: 0, ttl: 0.25, color: '#fff3c4' });
   for (let s = 0; s < 5; s++) {
     g.effects.push({
       kind: 'smoke',
-      x: x + (Math.random() - 0.5) * STRIKE_RADIUS,
-      y: y + (Math.random() - 0.5) * STRIKE_RADIUS,
+      x: x + (Math.random() - 0.5) * R,
+      y: y + (Math.random() - 0.5) * R,
       r: 12 + Math.random() * 16, t: 0, ttl: 1.2, color: '#c9c2b8',
     });
   }
-  g.strikeCd = g.mods.strikeCdMax;
+  g.strikeCharges--;
+  if (g.strikeCd <= 0) g.strikeCd = g.mods.strikeCdMax;
   return true;
 }
 
@@ -185,7 +191,9 @@ function sweepDeaths(g: Game): boolean {
       });
     }
     if (e.leaked[i] === 0) {
-      g.gold += def.gold * g.runFx.goldMul;
+      // Titan Bounty pays double on titans (type 7) and every boss (8+).
+      const big = e.type[i] >= 7 ? g.mods.bossGoldMul : 1;
+      g.gold += def.gold * g.runFx.goldMul * g.mods.goldKillMul * big;
       g.runCores += def.cores;
       g.kills++;
       if (g.deaths.length < 1200) {
@@ -202,7 +210,11 @@ function sweepDeaths(g: Game): boolean {
 
 export function endRun(g: Game, save: SaveData, _won = false): void {
   g.phase = 'lost';
-  save.cores += Math.floor(g.runCores);
+  // Futures pays for time survived; Holdings Co. converts the unspent bank.
+  const chips = g.runCores
+    + g.mods.chipsPerMin * (g.runT / 60)
+    + g.mods.bankChips * g.gold;
+  save.cores += Math.floor(chips);
   // Money survives the run. This is the progression hook now: you come back
   // with what you had, so the next attempt starts from a better place.
   save.gold = Math.floor(g.gold);
@@ -285,6 +297,15 @@ export function tick(g: Game, save: SaveData, dt: number): void {
     // Surviving a stage still pays, on the same geometric curve as the old
     // wave-clear bounty — the economy is unchanged, only its cadence is.
     g.runCores += 5 + g.wave;
-    g.gold += 40 * Math.pow(1.2, g.wave - 2);
+    g.gold += 40 * Math.pow(1.2, g.wave - 2) * g.mods.bountyMul;
+    // Banked Salvage: interest on money you did NOT spend, which is the whole
+    // tycoon pull — holding a reserve becomes a real alternative to buying.
+    if (g.mods.interest > 0) g.gold += g.gold * g.mods.interest;
+  }
+
+  // Second Wind recharges toward the cap rather than a single slot.
+  if (g.strikeCharges < g.mods.strikeCharges && g.strikeCd <= 0) {
+    g.strikeCharges++;
+    if (g.strikeCharges < g.mods.strikeCharges) g.strikeCd = g.mods.strikeCdMax;
   }
 }
