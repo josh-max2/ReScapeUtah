@@ -7,6 +7,7 @@ import { SpatialHash } from './sim/spatial';
 import type { Tower } from './sim/towers';
 import type { FlowSpawner } from './sim/waves';
 import type { MetaMods } from './meta/upgrades';
+import type { TileKind } from './sim/tiles';
 import type { TowerKind } from './defs';
 import type { TypeMods, RunFx } from './sim/cards';
 
@@ -68,6 +69,10 @@ export interface Game {
   routes: FlowField[];
   /** Sim-seconds since the congestion field was last rebuilt. */
   flowAcc: number;
+  /** Tiles the player has drafted into the map this run. */
+  tiles: { kind: TileKind; x: number; y: number }[];
+  /** The three tiles currently on offer, or null between surges. */
+  tileOffer: TileKind[] | null;
   hash: SpatialHash;
   spawner: FlowSpawner | null;
   effects: Effect[];

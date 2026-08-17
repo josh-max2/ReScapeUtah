@@ -10,6 +10,7 @@ import type { Game } from '../state';
 import type { SaveData, Settings } from '../meta/save';
 import { renderTree, setSelectedNode } from './tree';
 import { TRACKS } from '../sim/terrain';
+import { TILE_DEFS } from '../sim/tiles';
 import { STEPS, type CoachStep } from './coach';
 
 const STEP_IDS = STEPS.map((s) => s.id);
@@ -25,6 +26,7 @@ export interface HudCallbacks {
   buyUpgrade(id: string): void;
   respec(): void;
   skipCoaching(): void;
+  takeTile(kind: string): void;
   selectTrack(id: string): void;
   launchRun(): void;
   pickCard(id: string | null): void;
@@ -42,6 +44,7 @@ interface HudRefs {
   killsEl: HTMLElement;
   coresEl: HTMLElement;
   coach: HTMLElement;
+  draft: HTMLElement;
   towerBtns: Map<TowerKind, HTMLButtonElement>;
   strikeBtn: HTMLButtonElement;
   strikeCd: HTMLElement;
@@ -127,6 +130,15 @@ export function initHud(root: HTMLElement, cb: HudCallbacks): HTMLElement {
   coach.style.display = 'none';
   coach.addEventListener('click', (ev) => {
     if ((ev.target as HTMLElement).closest('[data-skip]')) cb.skipCoaching();
+  });
+
+  // Tile draft. Non-blocking on purpose: the flow never stops, so an offer
+  // sits there until it is used or the next surge replaces it.
+  const draft = el('div', 'panel tiledraft', hud);
+  draft.style.display = 'none';
+  draft.addEventListener('click', (ev) => {
+    const b = (ev.target as HTMLElement).closest('[data-tile]');
+    if (b) cb.takeTile(b.getAttribute('data-tile')!);
   });
 
   const ctl = el('div', 'panel ctl', hud);
@@ -215,7 +227,7 @@ export function initHud(root: HTMLElement, cb: HudCallbacks): HTMLElement {
   });
 
   refs = {
-    waveEl, hpFill, hpText, goldEl, killsEl, coresEl, coach,
+    waveEl, hpFill, hpText, goldEl, killsEl, coresEl, coach, draft,
     towerBtns, strikeBtn, strikeCd, speedBtn, speedVal, metaScreen,
     perkScreen, inspect, bossBar,
   };
@@ -427,8 +439,32 @@ export function setCoachStep(step: CoachStep | null): void {
 }
 let coachDirty = true;
 
+let draftKey = '';
+
 export function updateHud(g: Game, save: SaveData, ui: UiState): void {
   if (!refs) return;
+  // Tile draft panel, rebuilt only when the offer or the pick changes.
+  const key = `${(g.tileOffer ?? []).join(',')}|${ui.placingTile ?? ''}`;
+  if (key !== draftKey) {
+    draftKey = key;
+    const offer = g.tileOffer;
+    refs.draft.style.display = offer && offer.length ? '' : 'none';
+    if (offer && offer.length) {
+      const cards = offer.map((k) => {
+        const d = TILE_DEFS[k];
+        const on = ui.placingTile === k;
+        return `<button class="tilecard${on ? ' on' : ''}" data-tile="${k}">
+          <div class="tkn">${d.name}</div>
+          <div class="tkd">${d.desc}</div>
+        </button>`;
+      }).join('');
+      refs.draft.innerHTML =
+        `<div class="tkhead">${ui.placingTile
+          ? 'CLICK THE MAP TO PLACE · ESC CANCELS'
+          : 'SURGE ' + g.wave + ' — RESHAPE THE TRACK'}</div>` +
+        `<div class="tkrow">${cards}</div>`;
+    }
+  }
   if (coachDirty) {
     coachDirty = false;
     refs.coach.style.display = coachStep ? '' : 'none';

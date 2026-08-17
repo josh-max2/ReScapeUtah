@@ -379,6 +379,40 @@ Curve as of this pass: poor dies ~w8, strong ~w10, with an EMPTY meta tree.
 That is the intended roguelite starting point — the skill tree is meant to
 carry the rest. Re-measure rather than reasoning about balance from the code.
 
+## DRAFTED TILES — the map is no longer fixed (2026-08-17)
+
+Every surge offers three pieces (`sim/tiles.ts`); taking one lets the player
+edit the track. Non-blocking, because the flow never stops — an offer sits
+there until it is used or the next surge replaces it. One tile per offer.
+
+The three do crowd SHAPE, not stats, which is the vocabulary fixed-angle towers
+want to play against: ISLAND (a rock in the road — the flow splits, and rocks
+are where weapons mount) · NARROWS (pinches from both sides; everything bunches
+through the gap) · BYPASS (carves a new way through wall).
+
+**`terrain.ts` is no longer built-once.** That sentence in its header used to be
+the whole contract. What a tile placement now has to keep in step:
+1. `open4` (the fine road mask) — stamped directly.
+2. `distField` — `rebuildDerived()`. This is what wall repel, collision and
+   projection read; skip it and cars collide with walls that are gone.
+3. The COARSE walk mask — `buildWalkMask()`, then assigned to EVERY route
+   field, which each hold their own reference.
+4. `mapPixels` + `invalidateTerrain()` — the terrain art is pre-rendered from
+   the IMAGE, not from the road mask, so without this the picture keeps showing
+   the old track while cars drive the new one. Repaint only the terrain:
+   nulling it and letting `ensureAssets` run rebuilds every car sprite too.
+5. `recomputeFields()` — also bumps `field.version`, the route-preview cache key.
+
+**The rule that makes it safe:** a tile is stamped onto a snapshot, checked for
+a spawn->goal route on the coarse mask, and ROLLED BACK if the track no longer
+connects. A sealed map mid-run is unrecoverable. `scripts/tiles.py` forces 117
+islands in (road 1814 -> 812 cells) and asserts the track never cuts.
+
+**Terrain is module state; tiles are run state.** `startRun` calls
+`resetTerrain()` AND re-derives the walk mask — restoring the fine mask alone
+leaves every route holding the last run's rocks, which is exactly the bug the
+harness caught.
+
 ## ROUTE CHOICE — the horde splits instead of queueing (2026-08-17)
 
 Owner's complaint: every car took the same line, bunched up, crawled, and only

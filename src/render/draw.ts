@@ -12,6 +12,7 @@ import {
 import type { Game } from '../state';
 import { LOD_LIMIT, type Settings } from '../meta/save';
 import { canPlace, type Tower } from '../sim/towers';
+import { TILE_DEFS, tileAllowed, type TileKind } from '../sim/tiles';
 import { drawTowerBody } from './towerArt';
 import {
   buildTerrain, buildVignette, buildFireGlow, buildSmoke, buildCarSprites,
@@ -19,6 +20,8 @@ import {
 } from './sprites';
 
 export interface UiState {
+  /** Tile the player has taken from the draft and is now positioning. */
+  placingTile: TileKind | null;
   placing: TowerKind | null;
   strikeArmed: boolean;
   mouseX: number;
@@ -42,6 +45,15 @@ let lastRunId = -1;
 
 const CAR_Q = CAR_DIRS / (Math.PI * 2);
 const TAU = Math.PI * 2;
+
+/**
+ * Drop the pre-rendered terrain so the next frame repaints it. Called when a
+ * drafted tile edits the map — otherwise the picture keeps showing the old
+ * track while the cars drive the new one.
+ */
+export function invalidateTerrain(): void {
+  terrain = null;
+}
 
 function ensureAssets(): void {
   if (terrain) return;
@@ -389,6 +401,36 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, ui: UiState): voi
   // The tower being aimed right now, bright and live.
   if (ui.aiming >= 0 && ui.aiming < g.towers.length) {
     drawAim(ctx, g.towers[ui.aiming], 0.95);
+  }
+
+  // ---- Drafted tile ghost ----
+  // Shows the footprint and whether it is legal HERE, because a tile edits the
+  // map permanently and a misplaced rock cannot be sold back.
+  if (ui.placingTile && ui.mouseIn) {
+    const def = TILE_DEFS[ui.placingTile];
+    const ok = tileAllowed(g, ui.placingTile, ui.mouseX, ui.mouseY);
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.strokeStyle = ok ? PAL.cyan : '#e06052';
+    ctx.fillStyle = ok ? 'rgba(121,214,208,0.16)' : 'rgba(224,96,82,0.16)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([7, 6]);
+    if (ui.placingTile === 'narrows') {
+      // Draw what it actually stamps: two nubs, not one disc.
+      for (const sgn of [-1, 1]) {
+        ctx.beginPath();
+        ctx.ellipse(ui.mouseX, ui.mouseY + sgn * def.r * 0.66, def.r * 0.8,
+          def.r * 0.34, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+    } else {
+      ctx.beginPath();
+      ctx.arc(ui.mouseX, ui.mouseY, def.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   // Selected tower: ring + its range, so inspecting shows what it covers.

@@ -123,25 +123,14 @@ the track is the shot.
 
 ## Phase 4 — the feature that makes it yours
 
-### 9. Procedural tile drafting (Rogue Tower style)
-**Why after the loop is solid:** it is the strongest identity idea raised, and
-also the **largest technical risk on this list** — worth doing properly rather
-than on top of a shaky core.
-**Know:** the map is currently a painted PNG classified once at load, and
-`terrain.ts` is documented as "the single source of map truth". Tile drafting
-means the map becomes **composable at runtime**, which is a real change to that
-file's contract.
-**Know:** adding a tile changes terrain, so the walk mask AND the chamfer
-distance field must rebuild — both are currently built once in `initTerrain()`.
-The flow field only recomputes when towers change; it will need a terrain hook.
-The route-preview cache is keyed on `field.version` and will need invalidating.
-**Know:** tiles must be validated on draft — a tile that seals the route or
-strands a pocket has to be rejected before it is offered.
-**Design steer:** tiles that split, condense, or branch the flow are the ones
-worth having. That is a crowd-shaping vocabulary, which is what the fixed-angle
-towers want to play against.
-
----
+### 9. ~~Procedural tile drafting~~ — DONE 2026-08-17
+Three tiles (ISLAND / NARROWS / BYPASS), offered every surge, non-blocking.
+`terrain.ts` became mutable: a placement re-stamps the fine mask, rebuilds the
+distance field, re-derives the coarse walk mask onto every route field,
+repaints the source pixels + terrain art, and recomputes the routes. Sealing is
+impossible by construction — stamp onto a snapshot, check connectivity, roll
+back. Terrain is module state and tiles are run state, so `startRun` resets
+both. `scripts/tiles.py` covers all of it.
 
 ## Phase 5 — progression
 

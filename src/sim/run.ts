@@ -10,6 +10,9 @@ import { EnemyPool, updateEnemies, separate } from './enemies';
 import { isOpen } from './terrain';
 import { FlowField } from './flowfield';
 import { ROUTES, recomputeFields, tickRouting } from './routing';
+import { rollDraft } from './tiles';
+import { resetTerrain, buildWalkMask } from './terrain';
+import { invalidateTerrain } from '../render/draw';
 import { SpatialHash } from './spatial';
 import { updateTowers, shove } from './combat';
 import { dealHit } from './damage';
@@ -49,6 +52,8 @@ export function createGame(mods: MetaMods): Game {
     field: primary,
     routes,
     flowAcc: 0,
+    tiles: [],
+    tileOffer: null,
     hash: new SpatialHash(W, H, 16, MAX_ENEMIES),
     spawner: null,
     effects: [],
@@ -90,6 +95,18 @@ export function startRun(g: Game, mods: MetaMods, bankedGold = 0): void {
   g.baseMaxHp = mods.baseHp;
   g.baseHp = mods.baseHp;
   g.runCores = 0;
+  // Drafted tiles are RUN state, but the terrain they edit is module state
+  // built once at boot. Without this, run two starts on run one's map.
+  g.tiles = [];
+  g.tileOffer = null;
+  resetTerrain();
+  invalidateTerrain();
+  // resetTerrain restores the fine mask and the distance field, but the COARSE
+  // walk mask is derived from it and the route fields hold their own reference
+  // — without re-deriving it here, run two routes on run one's rocks.
+  const walk = buildWalkMask();
+  g.field.walk = walk;
+  for (const f of g.routes) f.walk = walk;
   g.strikeCharges = mods.strikeCharges;
   g.contingencyLeft = mods.contingency;
   g.towers = [];
@@ -309,6 +326,10 @@ export function tick(g: Game, save: SaveData, dt: number): void {
   g.wave = stageAt(g.runT);
   if (g.wave !== prevStage) {
     g.enemies.hpMul = waveHpMul(g.wave);
+    // A fresh draft every surge. It REPLACES the last one rather than queueing
+    // — an offer you ignored is an offer you did not want, and stacking them
+    // would turn a light decision into a backlog.
+    g.tileOffer = rollDraft();
     // Surviving a stage still pays, on the same geometric curve as the old
     // wave-clear bounty — the economy is unchanged, only its cadence is.
     g.runCores += 5 + g.wave;

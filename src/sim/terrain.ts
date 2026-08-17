@@ -150,6 +150,36 @@ export async function initTerrain(): Promise<void> {
     GOAL_R2 = GOAL_R * GOAL_R;
   }
 
+  // Keep a pristine copy. Drafted tiles edit the map in place, and both of
+  // these are module state built once at boot — without a baseline, the next
+  // run would inherit the last run's rocks.
+  pristineOpen = open4.slice();
+  pristinePixels = data.slice();
+  rebuildDerived();
+}
+
+let pristineOpen: Uint8Array | null = null;
+let pristinePixels: Uint8ClampedArray | null = null;
+
+/** Undo every drafted tile: back to the track as painted. */
+export function resetTerrain(): void {
+  if (!pristineOpen || !pristinePixels || !mapPixels) return;
+  open4.set(pristineOpen);
+  mapPixels.set(pristinePixels);
+  rebuildDerived();
+}
+
+/**
+ * Rebuild everything derived from `open4`. Split out of initTerrain because
+ * the map is no longer built once and frozen — drafted tiles edit the terrain
+ * mid-run, and the distance field they feed (wall repel, collision,
+ * projection) has to follow or cars will collide with walls that are gone and
+ * drive through ones that are not.
+ *
+ * ~93k cells x two chamfer passes. Fine on a tile placement; do NOT call it
+ * per frame.
+ */
+export function rebuildDerived(): void {
   // sampleDist: 0 in open field far from walls, rises to PATH_RADIUS at a
   // wall, and keeps rising inside walls (so projection can push back out).
   const dOut = chamfer(false); // distance from walls, valid on road
@@ -159,6 +189,29 @@ export async function initTerrain(): Promise<void> {
       ? Math.max(0, PATH_RADIUS - dOut[i])
       : PATH_RADIUS + dIn[i];
   }
+}
+
+/** Fine-grid geometry, exposed so tiles can edit the map. */
+export const GRID = { W: DF_W, H: DF_H, CELL: DF_CELL };
+
+/** Read/write access to the fine road mask. Editing it REQUIRES rebuildDerived. */
+export function openAt(gx: number, gy: number): number {
+  if (gx < 0 || gy < 0 || gx >= DF_W || gy >= DF_H) return 0;
+  return open4[gy * DF_W + gx];
+}
+
+export function setOpen(gx: number, gy: number, v: 0 | 1): void {
+  if (gx < 0 || gy < 0 || gx >= DF_W || gy >= DF_H) return;
+  open4[gy * DF_W + gx] = v;
+}
+
+/** Snapshot / restore, so a tile can be tried and rolled back if it seals. */
+export function snapshotOpen(): Uint8Array {
+  return open4.slice();
+}
+
+export function restoreOpen(snap: Uint8Array): void {
+  open4.set(snap);
 }
 
 export function isOpen(x: number, y: number): boolean {

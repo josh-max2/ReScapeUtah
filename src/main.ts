@@ -4,7 +4,7 @@ import {
   W, H, DT, CELL, COLS, ROWS, WAVES_PER_RUN, TOWER_KINDS, TowerKind, clamp,
   CARDS_ENABLED, AIM_MODE, TOWER_DEFS,
 } from './defs';
-import { initTerrain, pointOnPath, PATH_RADIUS } from './sim/terrain';
+import { initTerrain, pointOnPath, PATH_RADIUS, sampleDist } from './sim/terrain';
 import { initArt } from './render/sprites';
 
 // The map is an image and the terrain is textured — both must load first.
@@ -20,6 +20,7 @@ import { CARDS, playModCard, playStrikeCard, playInstantCard } from './sim/cards
 import { initHand, updateHand } from './ui/hand';
 import { initHud, updateHud, markMetaDirty, setCoachStep, HudCallbacks } from './ui/hud';
 import { newCoach, updateCoach, CoachState } from './ui/coach';
+import { placeTile, type TileKind } from './sim/tiles';
 import { routeEta } from './sim/routing';
 import { render, UiState } from './render/draw';
 import './style.css';
@@ -31,6 +32,7 @@ let coach: CoachState | null = null;
 
 const ui: UiState = {
   placing: null,
+  placingTile: null,
   strikeArmed: false,
   mouseX: 0,
   mouseY: 0,
@@ -115,6 +117,12 @@ const cb: HudCallbacks = {
     save.tree = {};
     persist(save);
     markMetaDirty();
+  },
+  takeTile(kind: string) {
+    if (!game.tileOffer?.includes(kind as TileKind)) return;
+    ui.placingTile = kind as TileKind;
+    ui.placing = null;
+    ui.strikeArmed = false;
   },
   selectTrack(id: string) {
     if (save.track === id) return;
@@ -241,6 +249,15 @@ canvas.addEventListener('click', (ev) => {
     commitAim();
     return;
   }
+  if (ui.placingTile) {
+    // placeTile refuses and rolls the map back if the result would cut the
+    // track, so a failed click is a no-op rather than a broken run.
+    if (placeTile(game, ui.placingTile, p.x, p.y)) {
+      game.tileOffer = null;   // one tile per offer
+      ui.placingTile = null;
+    }
+    return;
+  }
   if (ui.strikeArmed) {
     if (castStrike(game, p.x, p.y)) ui.strikeArmed = false;
     return;
@@ -293,6 +310,7 @@ window.addEventListener('keydown', (ev) => {
     // than binning it. Right-click is the destructive cancel.
     if (ui.aiming >= 0) commitAim();
     ui.placing = null;
+    ui.placingTile = null;
     ui.strikeArmed = false;
   }
 });
@@ -348,6 +366,10 @@ if (demoParam !== null) {
   // Harnesses mutate `save` directly to stage a state; without this the meta
   // screen keeps showing the stale render and the test reads the old DOM.
   refreshMeta: () => markMetaDirty(),
+  // Tile drafting probes for scripts/tiles.py.
+  placeTile: (kind: TileKind, x: number, y: number) => placeTile(game, kind, x, y),
+  sampleDist,
+  routeOpen: () => !game.field.sealed,
   // Live route ETAs, so the pathing harness can see WHY cars chose a route.
   routeEta,
   tick: (dt: number) => tick(game, save, dt),

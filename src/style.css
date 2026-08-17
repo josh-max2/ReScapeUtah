@@ -1135,3 +1135,49 @@ body,
   background: var(--cyan);
   border-radius: 4px;
 }
+
+/* ---- tile draft ----
+   Top-left under the surge readout, deliberately small: it is an offer, not an
+   interruption. The flow keeps running while it is on screen. */
+.tiledraft {
+  top: 118px;
+  left: 14px;
+  width: 268px;
+  padding: 10px 12px 12px;
+  pointer-events: auto;
+}
+
+.tiledraft .tkhead {
+  font-size: 8.5px;
+  letter-spacing: 0.2em;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.tiledraft .tkrow { display: flex; flex-direction: column; gap: 6px; }
+
+.tilecard {
+  display: block;
+  width: 100%;
+  padding: 7px 9px 8px;
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--panel-line);
+  border-radius: 7px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.tilecard:hover { border-color: rgba(255, 255, 255, 0.3); }
+.tilecard.on { border-color: var(--cyan); background: rgba(121, 214, 208, 0.1); }
+
+.tilecard .tkn {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  margin-bottom: 2px;
+}
+
+.tilecard .tkd { font-size: 10px; line-height: 1.35; color: var(--ink-dim); }
