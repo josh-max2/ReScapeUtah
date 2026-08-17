@@ -379,6 +379,26 @@ Curve as of this pass: poor dies ~w8, strong ~w10, with an EMPTY meta tree.
 That is the intended roguelite starting point — the skill tree is meant to
 carry the rest. Re-measure rather than reasoning about balance from the code.
 
+## IS THE CLEAR REACHABLE? Yes — measured 2026-08-17
+
+Worth checking, because a clear condition and a whole token economy were built
+on surviving surge 21 while bots were dying at 13-16. Same bot, same level, the
+only difference being the meta tree:
+
+    EMPTY tree      dies at surge 16
+    INVESTED tree   alive at surge 24 (capped there), fort 576/760, 148 towers
+
+So the tree is what carries you to the clear, which is exactly the intended
+roguelite shape: an empty tree is the STARTING point, not the yardstick. Judge
+balance changes against an invested tree as well as an empty one — an
+empty-tree death is not evidence the game is too hard.
+
+Two notes from that run. The gold sink holds but is not airtight: 5,311 left
+over rather than the old 33,000, because an invested Holdings line out-earns
+even escalating prices. And `g.rescues` hit 1,227, which is the alarm making
+real noise at 148 towers on a heavily tiled map — worth a look before it gets
+blamed on something else.
+
 ## HARDCORE — a different fight, not a bigger one (2026-08-17)
 
 The replay problem: once a level was cleared and perfected it paid nothing ever
