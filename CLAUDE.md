@@ -443,9 +443,20 @@ clock than sim-seconds/10 suggests — that is what timed difficulty.py out.
 **Never edit src/ while a Playwright harness is running.** The vite dev server
 hot-reloads the page and the run dies with "Execution context was destroyed".
 
-STILL OPEN: the gold sink. That run finished holding 33,000 unspent gold with
-nothing to buy — the economy stops meaning anything around minute five, and
-neither directive covered it.
+THE GOLD SINK — addressed 2026-08-17 by ESCALATING TOWER PRICES. Each tower of
+a kind costs `1.12^owned` more than the base (40 -> 45 -> 50 ... 139 by the
+twelfth autocannon). Flat prices meant gold compounded off kills while defence
+cost the same per unit, so a run finished holding 33,000 unspent gold behind 49
+identical autocannons. Escalation is PER KIND, not per total: the intent is to
+push roster variety, not to cap the size of a defence — and it finally gives
+the other nine weapons a reason to exist.
+
+`Tower.paid` records what each one actually cost. Refunds and the aim-cancel
+both read it, because with escalation the "current price" is the price of the
+NEXT one and refunding at that would print money on repeated buy/sell. The
+command bar shows the live price for the same reason a static number would be
+wrong the moment you own two of something. (Owner rejected pricing TILES as the
+sink — they stay free.)
 
 ## DRAFTED TILES — the map is no longer fixed (2026-08-17)
 

@@ -8,6 +8,7 @@ import {
 import { towerStats } from '../sim/towers';
 import type { Game } from '../state';
 import type { SaveData, Settings } from '../meta/save';
+import { towerCost } from '../sim/towers';
 import { renderTree, setSelectedNode } from './tree';
 import { LEVELS } from '../sim/terrain';
 import { TILE_DEFS } from '../sim/tiles';
@@ -297,7 +298,9 @@ function renderInspect(g: Game): void {
       </button>`;
     }).join('');
   }
-  const refund = Math.floor((def.cost + (t.upg ? opts?.[t.upg - 1].cost ?? 0 : 0)) * 0.6);
+  // Refund is off what this tower PAID, not the list price and not the current
+  // price of the next one.
+  const refund = Math.floor((t.paid + (t.upg ? opts?.[t.upg - 1].cost ?? 0 : 0)) * 0.6);
   refs.inspect.innerHTML = `
     <div class="inshead">${def.name.toUpperCase()}
       <button class="insx" data-close>×</button></div>
@@ -566,8 +569,13 @@ export function updateHud(g: Game, save: SaveData, ui: UiState): void {
   }
 
   for (const [kind, btn] of refs.towerBtns) {
-    const def = TOWER_DEFS[kind];
-    btn.disabled = !inRun || g.gold < def.cost;
+    // Prices escalate per kind, so the bar has to show the LIVE price of the
+    // next one. A static number would be quietly wrong the moment you own two
+    // of something — the same class of lie as the speed readout.
+    const price = towerCost(g, kind);
+    const cell = btn.querySelector('.tcost');
+    if (cell && cell.textContent !== String(price)) cell.textContent = String(price);
+    btn.disabled = !inRun || g.gold < price;
     btn.classList.toggle('sel', ui.placing === kind);
   }
 

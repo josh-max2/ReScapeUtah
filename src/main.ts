@@ -70,9 +70,10 @@ function cancelAim(): void {
   ui.aiming = -1;
   const t = game.towers[ti];
   if (!t || t.armed) return;
-  // Refund what was actually PAID, not the list price — Workshop Tools
-  // discounts the build, and refunding the sticker price would print money.
-  game.gold += towerCost(game, t.kind);
+  // Refund what this tower actually PAID. Prices escalate per kind and meta
+  // discounts apply, so neither the list price nor the current price is what
+  // changed hands — either would print money on repeated place-and-cancel.
+  game.gold += t.paid;
   destroyTower(game, ti);
 }
 
@@ -382,6 +383,9 @@ if (demoParam !== null) {
   // Tile drafting probes for scripts/tiles.py.
   placeTile: (kind: TileKind, x: number, y: number) => placeTile(game, kind, x, y),
   sampleDist,
+  // Economy probes for scripts/econ checks.
+  towerCost: (k: TowerKind) => towerCost(game, k),
+  sell: (i: number) => sellTower(game, i),
   routeOpen: () => !game.field.sealed,
   // Live route ETAs, so the pathing harness can see WHY cars chose a route.
   routeEta,

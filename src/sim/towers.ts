@@ -41,6 +41,12 @@ export interface Tower {
   armed: boolean;
   /** True once the player has actually swung the angle — the coach reads it. */
   aimMoved: boolean;
+  /**
+   * What this tower actually COST when it was built. Prices escalate per kind,
+   * so the current price is the price of the NEXT one — refunding at that would
+   * pay back more than was ever paid, and repeated buy/sell would print money.
+   */
+  paid: number;
 }
 
 /**
@@ -117,9 +123,28 @@ export function towerStats(t: Tower, m?: MetaMods) {
 const ENERGY: ReadonlySet<TowerKind> = new Set(['flame', 'tesla', 'lattice']);
 
 /** What this tower costs to build right now, meta discounts included. */
+/**
+ * Price of the NEXT tower of this kind.
+ *
+ * Each one of a kind costs more than the last. Measured 2026-08-17: with flat
+ * prices, gold compounds off kills while defence costs the same per unit, so a
+ * 7-minute run finished holding 33,000 unspent gold behind 49 identical
+ * autocannons — the economy stopped meaning anything around minute five and
+ * the roster had no reason to exist. Escalation drains gold all run AND makes
+ * leaning on one weapon progressively worse, which is what finally makes the
+ * other nine worth buying.
+ *
+ * PER KIND, not per total: the intent is to push variety, not to cap the size
+ * of a defence. Rate is provisional pending playtest.
+ */
+export const COST_STEP = 1.12;
+
 export function towerCost(g: Game, kind: TowerKind): number {
+  let owned = 0;
+  for (const t of g.towers) if (t.kind === kind) owned++;
   return Math.max(1, Math.round(
-    TOWER_DEFS[kind].cost * g.mods.costMul * g.mods.kind[kind].costMul));
+    TOWER_DEFS[kind].cost * g.mods.costMul * g.mods.kind[kind].costMul
+    * Math.pow(COST_STEP, owned)));
 }
 
 export function canPlace(g: Game, cx: number, cy: number, kind: TowerKind): boolean {
@@ -169,6 +194,7 @@ export function placeTower(g: Game, kind: TowerKind, cx: number, cy: number): nu
     aimY: 0,
     armed: true,
     aimMoved: false,
+    paid: price,
   };
   t.aim = defaultAim(g, t.x, t.y);
   // Point weapons default to a spot down-flow inside their band.
@@ -212,7 +238,7 @@ export function sellTower(g: Game, ti: number): number {
   if (!t) return 0;
   const def = TOWER_DEFS[t.kind];
   const opt = t.upg ? TOWER_UPGRADES[t.kind]?.[t.upg - 1] : undefined;
-  const paid = towerCost(g, t.kind) + (opt?.cost ?? 0);
+  const paid = t.paid + (opt?.cost ?? 0);
   const refund = Math.floor(paid * g.mods.sellMul);
   g.gold += refund;
   destroyTower(g, ti);
