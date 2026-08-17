@@ -134,11 +134,11 @@ both. `scripts/tiles.py` covers all of it.
 
 ## Phase 5 — progression
 
-### 10. Level select + upgrades as their own destination
-**Know:** the front end is already a three-view router (`menu` / `hangar` /
-`options`) inside one overlay element — adding views is cheap and low-risk.
-**Know:** per-level progress is a save shape change: bump to **v3** and add a
-migration. v1→v2 is the worked example.
+### 10. ~~Level select + upgrades as their own destination~~ — DONE 2026-08-17
+One map is one level. Level select is its own metascreen view with numbered
+cards, clear/perfect badges and running totals; upgrades are the constellation
+in the hangar. Clearing a level is a milestone inside a run that keeps going,
+and pays tokens. Adding a level is: paint a PNG, add a row to `LEVELS`.
 
 ### 11. The skill tree — build a SUBSET
 **Know:** 238 nodes are designed. **Do not build them all.** Ship ~40–60 —
@@ -156,11 +156,10 @@ nodes silently do nothing. This has bitten before.
 
 ## Phase 6 — content, balance, polish
 
-### 12. More maps
-**Know:** the pipeline is drop-a-PNG (white road, black wall, red spawn, green
-goal). There is exactly one. Each needs the area-coverage classifier to keep
-narrow strands connected, and harnesses must stay map-agnostic via
-`scripts/maplib.py` — they already are.
+### 12. ~~More maps~~ — DONE 2026-08-17 (and ongoing by design)
+Five levels: THE CLAW, DELTA, COIL, BASIN, CHICANE. `art/gen_maps.py` is the
+recipe, `scripts/maps.py` auto-discovers and validates every one. More get
+added as the project goes — that is the standing plan, not a finished task.
 
 ### 13. ~~Tower cost curve~~ — DONE 2026-08-17, premise was wrong
 **Outcome:** there is no inversion. Measured with the new `scripts/shootout.py`

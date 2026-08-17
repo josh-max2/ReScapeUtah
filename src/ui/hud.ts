@@ -9,7 +9,7 @@ import { towerStats } from '../sim/towers';
 import type { Game } from '../state';
 import type { SaveData, Settings } from '../meta/save';
 import { renderTree, setSelectedNode } from './tree';
-import { TRACKS } from '../sim/terrain';
+import { LEVELS } from '../sim/terrain';
 import { TILE_DEFS } from '../sim/tiles';
 import { STEPS, type CoachStep } from './coach';
 
@@ -27,7 +27,7 @@ export interface HudCallbacks {
   respec(): void;
   skipCoaching(): void;
   takeTile(kind: string): void;
-  selectTrack(id: string): void;
+  selectLevel(id: string): void;
   launchRun(): void;
   pickCard(id: string | null): void;
   upgradeSelected(branch: 1 | 2): void;
@@ -69,7 +69,7 @@ let hudRoot: HTMLElement | null = null;
  *   hangar  - between-run upgrades + LAUNCH RUN
  *   options - settings
  */
-type MenuView = 'menu' | 'hangar' | 'options' | 'tracks';
+type MenuView = 'menu' | 'hangar' | 'options' | 'levels';
 let view: MenuView = 'menu';
 let backTo: MenuView = 'menu';   // where OPTIONS was opened from
 
@@ -187,8 +187,8 @@ export function initHud(root: HTMLElement, cb: HudCallbacks): HTMLElement {
     const target = (ev.target as HTMLElement).closest('button');
     if (!target) return;
     if (target.hasAttribute('data-respec')) { cb.respec(); return; }
-    const track = target.getAttribute('data-track');
-    if (track) { cb.selectTrack(track); return; }
+    const level = target.getAttribute('data-level');
+    if (level) { cb.selectLevel(level); return; }
     const up = target.getAttribute('data-upgrade');
     const nav = target.getAttribute('data-view');
     const set = target.getAttribute('data-set');
@@ -369,6 +369,7 @@ function renderOptions(save: SaveData): string {
 }
 
 function renderMenu(save: SaveData): string {
+  const p = levelProgress(save);
   return `
     <div class="metainner menuview">
       <h1 class="gametitle">SWARM</h1>
@@ -377,33 +378,51 @@ function renderMenu(save: SaveData): string {
         <button class="launch" data-view="hangar">PLAY</button>
         <button class="launch ghost" data-view="options">OPTIONS</button>
       </div>
-      <p class="meta-stats">CHIPS <b>${save.cores} ◆</b> · LONGEST HELD
+      <p class="meta-stats">LEVELS <b>${p.clear}/${p.total}</b>
+        · TOKENS <b>${save.tokens} ★</b> · CHIPS <b>${save.cores} ◆</b>
+        · LONGEST HELD
         <b>${Math.floor((save.bestTime ?? 0) / 60)}:${String((save.bestTime ?? 0) % 60).padStart(2, '0')}</b></p>
     </div>`;
 }
 
-function renderTracks(save: SaveData): string {
+/** Cleared / perfect totals — the chase has to be countable to exist. */
+export function levelProgress(save: SaveData): { clear: number; perfect: number; total: number } {
+  let clear = 0, perfect = 0;
+  for (const l of LEVELS) {
+    const rec = save.clears?.[l.id];
+    if (rec?.clear) clear++;
+    if (rec?.perfect) perfect++;
+  }
+  return { clear, perfect, total: LEVELS.length };
+}
+
+function renderLevels(save: SaveData): string {
   let cards = '';
-  for (const t of TRACKS) {
-    const on = save.track === t.id;
-    const rec = save.clears?.[t.id];
+  LEVELS.forEach((l, i) => {
+    const on = save.track === l.id;
+    const rec = save.clears?.[l.id];
     const badge = rec?.perfect ? '<div class="tkclear perfect">PERFECT ★★</div>'
       : rec?.clear ? '<div class="tkclear">CLEARED ★</div>' : '';
     cards += `
-      <button class="trackcard${on ? ' on' : ''}" data-track="${t.id}">
-        <img src="/maps/${t.id}.png" alt="" />
+      <button class="trackcard${on ? ' on' : ''}" data-level="${l.id}">
+        <img src="/maps/${l.id}.png" alt="" />
         ${badge}
-        <div class="tkname">${t.name}</div>
-        <div class="tkblurb">${t.blurb}</div>
+        <div class="tknum">LEVEL ${i + 1}</div>
+        <div class="tkname">${l.name}</div>
+        <div class="tkblurb">${l.blurb}</div>
         ${on ? '<div class="tkon">SELECTED</div>' : ''}
       </button>`;
-  }
+  });
+  const p = levelProgress(save);
   return `
     <div class="metainner wide">
-      <h2>TRACKS</h2>
-      <p>Every track is one unbroken flow. Survive past the final surge to clear
-        it — once for a token, and once more without losing a single point of
-        fort health for a second.</p>
+      <h2>LEVELS</h2>
+      <p>Each level is one unbroken flow. Survive past the final surge to clear
+        it — a token for the clear, and a second for clearing it without losing
+        a single point of fort health.</p>
+      <p class="meta-stats">CLEARED <b>${p.clear}/${p.total}</b>
+        · PERFECT <b>${p.perfect}/${p.total}</b>
+        · TOKENS <b>${save.tokens} ★</b></p>
       <div class="trackgrid">${cards}</div>
       <div class="metanav">
         <button class="linkbtn" data-view="hangar">BACK</button>
@@ -418,7 +437,7 @@ function renderMeta(g: Game, save: SaveData): void {
   if (g.phase === 'lost') view = 'hangar';
   if (view === 'menu') { refs.metaScreen.innerHTML = renderMenu(save); return; }
   if (view === 'options') { refs.metaScreen.innerHTML = renderOptions(save); return; }
-  if (view === 'tracks') { refs.metaScreen.innerHTML = renderTracks(save); return; }
+  if (view === 'levels') { refs.metaScreen.innerHTML = renderLevels(save); return; }
   let head = '';
   if (g.phase === 'lost') {
     const m = Math.floor(g.runT / 60), sec = Math.floor(g.runT % 60);
@@ -439,8 +458,8 @@ function renderMeta(g: Game, save: SaveData): void {
       <button class="launch" data-launch>LAUNCH RUN</button>
       <div class="metanav">
         <button class="linkbtn" data-view="menu">MENU</button>
-        <button class="linkbtn" data-view="tracks">TRACK · ${
-          TRACKS.find((t) => t.id === save.track)?.name ?? 'THE CLAW'}</button>
+        <button class="linkbtn" data-view="levels">LEVEL · ${
+          LEVELS.find((l) => l.id === save.track)?.name ?? 'THE CLAW'}</button>
         <button class="linkbtn" data-view="options">OPTIONS</button>
       </div>
     </div>`;

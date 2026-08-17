@@ -379,6 +379,23 @@ Curve as of this pass: poor dies ~w8, strong ~w10, with an EMPTY meta tree.
 That is the intended roguelite starting point — the skill tree is meant to
 carry the rest. Re-measure rather than reasoning about balance from the code.
 
+## LEVELS — one map is one level (owner-directed 2026-08-17)
+
+`LEVELS` in `sim/terrain.ts` is the list, in play order, and it GROWS as maps
+are painted. Adding one is two steps and nothing else:
+1. paint `public/maps/<id>.png` (or add a function to `art/gen_maps.py`),
+2. add a row to `LEVELS`.
+
+Everything downstream keys off `id`, so the clear ledger, the token awards, the
+level-select cards and the numbering all pick a new level up for free.
+`scripts/maps.py` DISCOVERS the list from `window.__swarm.levels` rather than
+hardcoding it — a hardcoded list would have kept passing while an unplayable
+new level shipped. Adding CHICANE as level 5 was the test of that: the
+validator found it and checked it without being told.
+
+The save key is still `track`, deliberately — renaming a persisted field for
+vocabulary costs a migration and buys the player nothing.
+
 ## TOKENS + THE CLEAR (owner-directed 2026-08-17)
 
 Two currencies, deliberately different in what they reward:

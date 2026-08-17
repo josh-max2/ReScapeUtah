@@ -4,7 +4,7 @@ import {
   W, H, DT, CELL, COLS, ROWS, WAVES_PER_RUN, TOWER_KINDS, TowerKind, clamp,
   CARDS_ENABLED, AIM_MODE, TOWER_DEFS,
 } from './defs';
-import { initTerrain, pointOnPath, PATH_RADIUS, sampleDist } from './sim/terrain';
+import { initTerrain, pointOnPath, PATH_RADIUS, sampleDist, LEVELS } from './sim/terrain';
 import { initArt } from './render/sprites';
 
 // The map is an image and the terrain is textured — both must load first.
@@ -131,7 +131,7 @@ const cb: HudCallbacks = {
     ui.placing = null;
     ui.strikeArmed = false;
   },
-  selectTrack(id: string) {
+  selectLevel(id: string) {
     if (save.track === id) return;
     save.track = id;
     persist(save);
@@ -377,6 +377,8 @@ if (demoParam !== null) {
   // Harnesses mutate `save` directly to stage a state; without this the meta
   // screen keeps showing the stale render and the test reads the old DOM.
   refreshMeta: () => markMetaDirty(),
+  // The level list, so the map validator never hardcodes it.
+  levels: LEVELS,
   // Tile drafting probes for scripts/tiles.py.
   placeTile: (kind: TileKind, x: number, y: number) => placeTile(game, kind, x, y),
   sampleDist,

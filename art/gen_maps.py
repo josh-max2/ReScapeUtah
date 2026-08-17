@@ -98,8 +98,26 @@ def basin():
     finish(img, d, "basin")
 
 
+def chicane():
+    """A long gauntlet of alternating kinks. Depth of defence and lane angle
+    both matter, because nothing on it is a straight run."""
+    img = Image.new("RGBA", (W, H), WALL)
+    d = ImageDraw.Draw(img)
+    pts = [(0, H // 2)]
+    x = 220
+    up = True
+    while x < W - 240:
+        pts.append((x, H // 2 + (-190 if up else 190)))
+        x += 210
+        up = not up
+    pts.append((W, H // 2))
+    stroke(d, pts, LANE)
+    finish(img, d, "chicane")
+
+
 if __name__ == "__main__":
     os.makedirs(os.path.abspath(OUT), exist_ok=True)
     delta()
     coil()
     basin()
+    chicane()

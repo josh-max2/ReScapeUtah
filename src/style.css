@@ -1244,3 +1244,12 @@ body,
   color: var(--ink-dim);
   letter-spacing: 0.04em;
 }
+
+.trackcard .tknum {
+  margin: 10px 14px 0;
+  font-size: 8.5px;
+  letter-spacing: 0.2em;
+  color: var(--gold);
+}
+
+.trackcard .tkname { margin-top: 2px; }

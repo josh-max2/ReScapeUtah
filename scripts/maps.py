@@ -1,4 +1,4 @@
-"""Every track must be drivable. A map is an image, so a bad one is a drawing
+"""Every level must be drivable. A map is an image, so a bad one is a drawing
 mistake, not a code bug — and it shows up as cars grinding in a pinch rather
 than as an exception. This loads each track and asserts the horde can actually
 get from the rift to the fort.
@@ -12,7 +12,10 @@ from playwright.sync_api import sync_playwright
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 OUT = ("C:/Users/joshs/AppData/Local/Temp/claude/C--Users-joshs-Desktop-game/"
        "3d8718ef-5b59-4303-9562-1717e7c223c2/scratchpad")
-TRACKS = ["map2", "delta", "coil", "basin"]
+# Discovered from the game, never hardcoded. Levels get added as the project
+# goes, and a hardcoded list here would silently stop covering the new ones —
+# the validator would keep passing while an unplayable level shipped.
+LEVELS: list = []
 FAILS = []
 
 
@@ -29,7 +32,12 @@ with sync_playwright() as p:
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
 
-    for track in TRACKS:
+    page.goto("http://localhost:5173", wait_until="networkidle")
+    time.sleep(1.0)
+    LEVELS.extend(page.evaluate("() => window.__swarm.levels.map((l) => l.id)"))
+    print("discovered", len(LEVELS), "levels:", ", ".join(LEVELS))
+
+    for track in LEVELS:
         page.goto(f"http://localhost:5173/?map={track}", wait_until="networkidle")
         page.evaluate("() => localStorage.clear()")
         page.goto(f"http://localhost:5173/?map={track}", wait_until="networkidle")
@@ -81,4 +89,4 @@ if errors:
 if FAILS:
     print("FAILED:", ", ".join(FAILS))
     sys.exit(1)
-print(f"OK — all {len(TRACKS)} tracks are drivable")
+print(f"OK — all {len(LEVELS)} levels are drivable")

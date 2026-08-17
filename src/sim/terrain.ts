@@ -6,34 +6,46 @@
 
 import { CELL, COLS, ROWS, W, H } from '../defs';
 
-/** Tracks the player can pick between. `id` is what the save stores. */
-export const TRACKS = [
+/**
+ * THE LEVELS. One map is one level (owner-directed 2026-08-17), and the list
+ * grows as maps are painted — adding one is: drop `public/maps/<id>.png`, add a
+ * row here. Everything downstream keys off `id`, so the clear ledger, the token
+ * awards and the level-select screen all pick a new level up for free, and
+ * `scripts/maps.py` discovers the list from the game rather than hardcoding it.
+ *
+ * Order is play order; the display number is the index.
+ */
+export const LEVELS = [
   { id: 'map2', name: 'THE CLAW', blurb: 'Branching canyon. The original.' },
   { id: 'delta', name: 'DELTA', blurb: 'Splits three ways and rejoins.' },
   { id: 'coil', name: 'COIL', blurb: 'One long serpentine. Depth pays.' },
   { id: 'basin', name: 'BASIN', blurb: 'A wide bowl that funnels. AoE shines.' },
+  { id: 'chicane', name: 'CHICANE', blurb: 'Nothing on it is a straight run.' },
 ] as const;
 
 /**
- * Which track to load. Terrain is a top-level-await singleton built once at
- * boot, so the track is chosen BEFORE the module graph settles and changing it
+ * Which level to load. Terrain is a top-level-await singleton built once at
+ * boot, so the level is chosen BEFORE the module graph settles and changing it
  * means a reload — the honest, cheap version. `?map=` wins so harnesses and
- * demo links can pin a track without touching the player's save.
+ * demo links can pin a level without touching the player's save.
+ *
+ * The save key is still `track`: renaming a persisted field for vocabulary
+ * would cost a migration and buy the player nothing.
  */
-function pickTrack(): string {
+function pickLevel(): string {
   try {
     const q = new URLSearchParams(location.search).get('map');
-    if (q && TRACKS.some((t) => t.id === q)) return q;
+    if (q && LEVELS.some((t) => t.id === q)) return q;
     const raw = localStorage.getItem('swarm-td-save');
     const id = raw ? (JSON.parse(raw) as { track?: string }).track : null;
-    if (id && TRACKS.some((t) => t.id === id)) return id;
+    if (id && LEVELS.some((t) => t.id === id)) return id;
   } catch {
-    // Unreadable save or storage: fall through to the default track.
+    // Unreadable save or storage: fall through to the default level.
   }
   return 'map2';
 }
 
-export const MAP_IMAGE = `/maps/${pickTrack()}.png`;
+export const MAP_IMAGE = `/maps/${pickLevel()}.png`;
 
 export const PATH_RADIUS = 40; // clearance cap: this far from a wall = fully clear
 
