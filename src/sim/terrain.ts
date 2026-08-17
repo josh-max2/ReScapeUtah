@@ -6,7 +6,34 @@
 
 import { CELL, COLS, ROWS, W, H } from '../defs';
 
-export const MAP_IMAGE = '/maps/map2.png';
+/** Tracks the player can pick between. `id` is what the save stores. */
+export const TRACKS = [
+  { id: 'map2', name: 'THE CLAW', blurb: 'Branching canyon. The original.' },
+  { id: 'delta', name: 'DELTA', blurb: 'Splits three ways and rejoins.' },
+  { id: 'coil', name: 'COIL', blurb: 'One long serpentine. Depth pays.' },
+  { id: 'basin', name: 'BASIN', blurb: 'A wide bowl that funnels. AoE shines.' },
+] as const;
+
+/**
+ * Which track to load. Terrain is a top-level-await singleton built once at
+ * boot, so the track is chosen BEFORE the module graph settles and changing it
+ * means a reload — the honest, cheap version. `?map=` wins so harnesses and
+ * demo links can pin a track without touching the player's save.
+ */
+function pickTrack(): string {
+  try {
+    const q = new URLSearchParams(location.search).get('map');
+    if (q && TRACKS.some((t) => t.id === q)) return q;
+    const raw = localStorage.getItem('swarm-td-save');
+    const id = raw ? (JSON.parse(raw) as { track?: string }).track : null;
+    if (id && TRACKS.some((t) => t.id === id)) return id;
+  } catch {
+    // Unreadable save or storage: fall through to the default track.
+  }
+  return 'map2';
+}
+
+export const MAP_IMAGE = `/maps/${pickTrack()}.png`;
 
 export const PATH_RADIUS = 40; // clearance cap: this far from a wall = fully clear
 

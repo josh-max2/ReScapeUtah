@@ -9,6 +9,7 @@ import { towerStats } from '../sim/towers';
 import type { Game } from '../state';
 import type { SaveData, Settings } from '../meta/save';
 import { renderTree, setSelectedNode } from './tree';
+import { TRACKS } from '../sim/terrain';
 import { STEPS, type CoachStep } from './coach';
 
 const STEP_IDS = STEPS.map((s) => s.id);
@@ -64,7 +65,7 @@ let hudRoot: HTMLElement | null = null;
  *   hangar  - between-run upgrades + LAUNCH RUN
  *   options - settings
  */
-type MenuView = 'menu' | 'hangar' | 'options';
+type MenuView = 'menu' | 'hangar' | 'options' | 'tracks';
 let view: MenuView = 'menu';
 let backTo: MenuView = 'menu';   // where OPTIONS was opened from
 
@@ -363,6 +364,29 @@ function renderMenu(save: SaveData): string {
     </div>`;
 }
 
+function renderTracks(save: SaveData): string {
+  let cards = '';
+  for (const t of TRACKS) {
+    const on = save.track === t.id;
+    cards += `
+      <button class="trackcard${on ? ' on' : ''}" data-track="${t.id}">
+        <img src="/maps/${t.id}.png" alt="" />
+        <div class="tkname">${t.name}</div>
+        <div class="tkblurb">${t.blurb}</div>
+        ${on ? '<div class="tkon">SELECTED</div>' : ''}
+      </button>`;
+  }
+  return `
+    <div class="metainner wide">
+      <h2>TRACKS</h2>
+      <p>Every track is one unbroken flow. They differ in how the horde arrives.</p>
+      <div class="trackgrid">${cards}</div>
+      <div class="metanav">
+        <button class="linkbtn" data-view="hangar">BACK</button>
+      </div>
+    </div>`;
+}
+
 function renderMeta(g: Game, save: SaveData): void {
   if (!refs) return;
   // A finished run always lands on the hangar so the result is never hidden
@@ -370,6 +394,7 @@ function renderMeta(g: Game, save: SaveData): void {
   if (g.phase === 'lost') view = 'hangar';
   if (view === 'menu') { refs.metaScreen.innerHTML = renderMenu(save); return; }
   if (view === 'options') { refs.metaScreen.innerHTML = renderOptions(save); return; }
+  if (view === 'tracks') { refs.metaScreen.innerHTML = renderTracks(save); return; }
   let head = '';
   if (g.phase === 'lost') {
     const m = Math.floor(g.runT / 60), sec = Math.floor(g.runT % 60);
@@ -386,6 +411,8 @@ function renderMeta(g: Game, save: SaveData): void {
       <button class="launch" data-launch>LAUNCH RUN</button>
       <div class="metanav">
         <button class="linkbtn" data-view="menu">MENU</button>
+        <button class="linkbtn" data-view="tracks">TRACK · ${
+          TRACKS.find((t) => t.id === save.track)?.name ?? 'THE CLAW'}</button>
         <button class="linkbtn" data-view="options">OPTIONS</button>
       </div>
     </div>`;

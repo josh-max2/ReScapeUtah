@@ -116,9 +116,14 @@ const cb: HudCallbacks = {
     markMetaDirty();
   },
   selectTrack(id: string) {
+    if (save.track === id) return;
     save.track = id;
     persist(save);
-    markMetaDirty();
+    // Terrain is a top-level-await singleton built once at boot — the walk
+    // mask, the distance field and the flow field all derive from it. Swapping
+    // the track means starting the module graph over, so reload rather than
+    // pretending the map can change underneath a live run.
+    location.reload();
   },
   skipCoaching() {
     coach = null;

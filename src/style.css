@@ -1053,3 +1053,69 @@ body,
   letter-spacing: 0.18em;
   opacity: 0.6;
 }
+
+/* ---- track select ---- */
+.trackgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin: 18px 0 22px;
+}
+
+.trackcard {
+  position: relative;
+  display: block;
+  padding: 0 0 12px;
+  font: inherit;
+  color: var(--ink);
+  text-align: left;
+  background: var(--panel-flat);
+  border: 1px solid var(--panel-line);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: border-color 0.12s ease, transform 0.12s ease;
+}
+
+.trackcard:hover { border-color: rgba(255, 255, 255, 0.28); transform: translateY(-2px); }
+.trackcard.on { border-color: var(--cyan); }
+
+.trackcard img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  /* The source PNG is the paint mask itself: white road on black wall, with
+     the spawn and goal marks. Tint it warm so it reads like the field — do NOT
+     invert, which renders the track as a photo negative with the road darker
+     than the walls, the opposite of what the player sees in game. */
+  filter: sepia(0.65) saturate(1.5) hue-rotate(-14deg) brightness(0.86) contrast(1.05);
+  border-bottom: 1px solid var(--panel-line);
+}
+
+.trackcard .tkname {
+  margin: 10px 14px 3px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.trackcard .tkblurb {
+  margin: 0 14px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ink-dim);
+}
+
+.trackcard .tkon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 3px 8px;
+  font-size: 8.5px;
+  letter-spacing: 0.18em;
+  color: var(--bg);
+  background: var(--cyan);
+  border-radius: 4px;
+}
