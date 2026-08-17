@@ -379,6 +379,36 @@ Curve as of this pass: poor dies ~w8, strong ~w10, with an EMPTY meta tree.
 That is the intended roguelite starting point — the skill tree is meant to
 carry the rest. Re-measure rather than reasoning about balance from the code.
 
+## ENEMY READABILITY — one silhouette per archetype (2026-08-17)
+
+A playtest at 1,700 alive could not tell a runner from a hauler from a
+splitter: the horde was a green soup, and every bit of archetype design was
+invisible at the density the game actually runs at. The player could not answer
+"what am I fighting?", so they could not answer "what should I build?".
+
+Note what the enemies actually ARE on screen: `draw.ts` renders BATCHED DISCS
+per type, not the car sprites in `buildCarSprites` — the sprite path is left
+over from the car movement model. Four similar greens as identical circles is
+exactly what it looked like.
+
+Hue cannot fix it. The design contract reserves red for damage and cyan for
+interaction, so the mass has to stay green. SHAPE is the cue that survives at
+3-11px: swarmer disc · runner triangle (points where it is going) · hauler slab
+· splitter diamond · shielder hex · mender cross · titan big amber disc. The
+switch is per TYPE, outside the per-enemy loop, so each shape still batches into
+one path and one fill.
+
+The rim is now a STROKE of the body path rather than a filled circle behind it,
+so it follows each silhouette for free — and it is skipped for `r < 5`, because
+paying a stroke for every one of ten thousand mites is invisible at 3px.
+
+COST, measured: at 6,000 alive — where a real run now peaks — 38% of frame
+budget (sim 3.9ms + render 2.5ms). At 2,000 it is FASTER than the old code
+(0.72ms vs 0.86ms) because the separate rim pass is gone. At 10,000 it is
+dearer (render 3.3ms -> 6.2ms, isolated by rendering all-discs on the same
+build). 10k is headroom, not the operating point; `profile.py` now measures
+6,000 as well, because that is where the game lives.
+
 ## LEVELS — one map is one level (owner-directed 2026-08-17)
 
 `LEVELS` in `sim/terrain.ts` is the list, in play order, and it GROWS as maps

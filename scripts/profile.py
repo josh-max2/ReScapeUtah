@@ -31,7 +31,10 @@ with sync_playwright() as p:
     page.on("pageerror", lambda x: errors.append(str(x)))
     page.goto("http://localhost:5173/?demo=1", wait_until="networkidle")
     time.sleep(1.0)
-    for n in (2000, 10000, 20000):
+    # 6000 is the density that actually matters: after the surge-10 toughness
+    # curve landed, a real run peaks around 5-6k alive. 10k and 20k are headroom
+    # probes, not the operating point.
+    for n in (2000, 6000, 10000, 20000):
         print(n, "->", page.evaluate(PROBE, n))
     browser.close()
     print("PAGE ERRORS:", errors[:10] if errors else "none")

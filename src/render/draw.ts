@@ -43,6 +43,22 @@ let auraHeal: HTMLCanvasElement | null = null;
 let ground: GroundLayer | null = null;
 let lastRunId = -1;
 
+/**
+ * One silhouette per archetype, indexed by ENEMY_TYPE. Shape is the only cue
+ * that survives at 3-11px in a palette where the whole horde must stay green.
+ * Index 6 is the retired Wrecker; it keeps a slot so nothing renumbers.
+ */
+const BODY_SHAPE: readonly string[] = [
+  'disc',      // 0 swarmer — the baseline everything else is read against
+  'triangle',  // 1 runner
+  'slab',      // 2 hauler
+  'diamond',   // 3 splitter
+  'hex',       // 4 shielder
+  'cross',     // 5 mender
+  'disc',      // 6 wrecker (retired)
+  'disc',      // 7 titan — size and amber already separate it
+];
+
 const CAR_Q = CAR_DIRS / (Math.PI * 2);
 const TAU = Math.PI * 2;
 
@@ -507,34 +523,95 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, ui: UiState): voi
   for (let tt = 0; tt < ENEMY_TYPES.length; tt++) {
     const def = ENEMY_TYPES[tt];
     let any = false;
-    // Dark rim so overlapping bodies still read as separate discs. Dropped
-    // under LOD: at that many agents the rim is a sub-pixel detail nobody can
-    // resolve, and it is half the path cost of the whole enemy pass.
-    if (!lod) {
-      ctx.beginPath();
-      for (let i = 0; i < e.n; i++) {
-        if (e.type[i] !== tt) continue;
-        const r = def.r * SIZE_MULS[e.size[i]];
-        ctx.moveTo(e.x[i] + r + 1.2, e.y[i]);
-        ctx.arc(e.x[i], e.y[i], r + 1.2, 0, TAU);
-        any = true;
-      }
-      if (!any) continue;
-      ctx.fillStyle = '#14180d';
-      ctx.fill();
-    } else {
-      for (let i = 0; i < e.n; i++) { if (e.type[i] === tt) { any = true; break; } }
-      if (!any) continue;
-    }
+    for (let i = 0; i < e.n; i++) { if (e.type[i] === tt) { any = true; break; } }
+    if (!any) continue;
+    // ---- BODY: one SHAPE per archetype ----
+    // The horde is four similar greens, and as identical discs they were an
+    // unreadable soup at the density the game actually runs at — every bit of
+    // archetype design was invisible to the player. Hue cannot fix it: the
+    // design contract reserves red for damage and cyan for interaction, so the
+    // mass has to stay green. SHAPE survives at 3-11px where hue does not.
+    // The switch is per TYPE, outside the per-enemy loop, so each shape still
+    // batches into one path and one fill exactly as the discs did.
     ctx.beginPath();
-    for (let i = 0; i < e.n; i++) {
-      if (e.type[i] !== tt) continue;
-      const r = def.r * SIZE_MULS[e.size[i]];
-      ctx.moveTo(e.x[i] + r, e.y[i]);
-      ctx.arc(e.x[i], e.y[i], r, 0, TAU);
+    switch (BODY_SHAPE[tt]) {
+      case 'triangle':  // runner — a dart, and it points where it is going
+        for (let i = 0; i < e.n; i++) {
+          if (e.type[i] !== tt) continue;
+          const r = def.r * SIZE_MULS[e.size[i]] * 1.45;
+          const hx = Math.cos(e.heading[i]), hy = Math.sin(e.heading[i]);
+          ctx.moveTo(e.x[i] + hx * r, e.y[i] + hy * r);
+          ctx.lineTo(e.x[i] - hx * r * 0.65 - hy * r * 0.62,
+                     e.y[i] - hy * r * 0.65 + hx * r * 0.62);
+          ctx.lineTo(e.x[i] - hx * r * 0.65 + hy * r * 0.62,
+                     e.y[i] - hy * r * 0.65 - hx * r * 0.62);
+          ctx.closePath();
+        }
+        break;
+      case 'slab':      // hauler — blunt and rectangular, reads as heavy
+        for (let i = 0; i < e.n; i++) {
+          if (e.type[i] !== tt) continue;
+          const r = def.r * SIZE_MULS[e.size[i]] * 0.92;
+          ctx.rect(e.x[i] - r, e.y[i] - r, r * 2, r * 2);
+        }
+        break;
+      case 'diamond':   // splitter — a body already scored to come apart
+        for (let i = 0; i < e.n; i++) {
+          if (e.type[i] !== tt) continue;
+          const r = def.r * SIZE_MULS[e.size[i]] * 1.25;
+          ctx.moveTo(e.x[i], e.y[i] - r);
+          ctx.lineTo(e.x[i] + r, e.y[i]);
+          ctx.lineTo(e.x[i], e.y[i] + r);
+          ctx.lineTo(e.x[i] - r, e.y[i]);
+          ctx.closePath();
+        }
+        break;
+      case 'hex':       // shielder — faceted, like the bubble it carries
+        for (let i = 0; i < e.n; i++) {
+          if (e.type[i] !== tt) continue;
+          const r = def.r * SIZE_MULS[e.size[i]] * 1.12;
+          for (let k = 0; k < 6; k++) {
+            const a = (k / 6) * TAU;
+            const px = e.x[i] + Math.cos(a) * r, py = e.y[i] + Math.sin(a) * r;
+            if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+        }
+        break;
+      case 'cross':     // mender — a plus, the one shape nothing else uses
+        for (let i = 0; i < e.n; i++) {
+          if (e.type[i] !== tt) continue;
+          const r = def.r * SIZE_MULS[e.size[i]] * 1.15;
+          const a = r * 0.40;
+          ctx.rect(e.x[i] - a, e.y[i] - r, a * 2, r * 2);
+          ctx.rect(e.x[i] - r, e.y[i] - a, r * 2, a * 2);
+        }
+        break;
+      default:          // swarmer, titan, bosses — the baseline disc
+        for (let i = 0; i < e.n; i++) {
+          if (e.type[i] !== tt) continue;
+          const r = def.r * SIZE_MULS[e.size[i]];
+          ctx.moveTo(e.x[i] + r, e.y[i]);
+          ctx.arc(e.x[i], e.y[i], r, 0, TAU);
+        }
     }
     ctx.fillStyle = def.color;
     ctx.fill();
+    // Dark rim so overlapping bodies still read as separate. STROKING the body
+    // path rather than filling a circle behind it means the rim follows each
+    // silhouette for free — a disc rim behind a slab or a cross just looked
+    // broken. Dropped under LOD, where it is a sub-pixel detail nobody can
+    // resolve and a real slice of the enemy pass.
+    // Only the BIG bodies get it. Swarmers and runners are the bulk of the
+    // count, and at 3px a 1.8px rim is half the body — paying a stroke for
+    // every one of ten thousand mites doubled the render pass for a detail
+    // that is not visible. They read fine as dark green on tan road.
+    if (!lod && def.r >= 5) {
+      ctx.strokeStyle = '#14180d';
+      ctx.lineWidth = 1.8;
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+    }
     // A facing pip on the big bodies only — cheap, and it keeps bosses and
     // titans readable without reintroducing per-agent rotation.
     if (!lod && def.r >= 6) {
