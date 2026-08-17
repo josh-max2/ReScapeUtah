@@ -1253,3 +1253,44 @@ body,
 }
 
 .trackcard .tkname { margin-top: 2px; }
+
+/* ---- hardcore switch ---- */
+.hcswitch {
+  display: block;
+  width: min(560px, 92%);
+  margin: 0 auto 6px;
+  padding: 10px 16px 12px;
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+  background: var(--panel-flat);
+  border: 1px solid var(--panel-line);
+  border-radius: 9px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.hcswitch:hover { border-color: rgba(255, 255, 255, 0.28); }
+.hcswitch.on { border-color: var(--health); background: rgba(212, 61, 46, 0.1); }
+
+.hcswitch .hcname {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  margin-bottom: 3px;
+}
+
+.hcswitch.on .hcname { color: var(--health); }
+
+.hcswitch .hcdesc {
+  display: block;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--ink-dim);
+}
+
+.launch.hc {
+  background: linear-gradient(180deg, #e8695a, #c8392c);
+  color: #fff4f0;
+}

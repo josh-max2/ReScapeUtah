@@ -56,14 +56,20 @@ export interface SaveData {
    * perfect clear only — without this, replaying the easiest track mints
    * tokens forever.
    */
-  clears: Record<string, { clear: boolean; perfect: boolean }>;
+  clears: Record<string, {
+    clear: boolean; perfect: boolean;
+    /** Hardcore is a separate pair of awards on the same level. */
+    hcClear?: boolean; hcPerfect?: boolean;
+  }>;
+  /** Launch the next run on hardcore. */
+  hardcore: boolean;
   bestWave: number;
   wins: number;
   settings: Settings;
 }
 
 const KEY = 'swarm-td-save';
-const VERSION = 5;
+const VERSION = 6;
 
 const DEFAULTS: SaveData = {
   version: VERSION,
@@ -75,6 +81,7 @@ const DEFAULTS: SaveData = {
   taught: false,
   tokens: 0,
   clears: {},
+  hardcore: false,
   bestWave: 0,
   wins: 0,
   settings: { ...DEFAULT_SETTINGS },
@@ -154,6 +161,9 @@ export function loadSave(): SaveData {
       // had no notion of clearing anything to record.
       tokens: typeof data.tokens === 'number' ? data.tokens : 0,
       clears: data.clears && typeof data.clears === 'object' ? data.clears : {},
+      // v5 -> v6: hardcore did not exist. Existing clears keep their normal
+      // awards and simply have the hardcore pair still to earn.
+      hardcore: data.hardcore === true,
       bestWave: typeof data.bestWave === 'number' ? data.bestWave : 0,
       wins: typeof data.wins === 'number' ? data.wins : 0,
       settings: readSettings(data.settings),

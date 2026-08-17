@@ -180,6 +180,13 @@ with sync_playwright() as p:
           f"{spend} -> spent to {mid} -> back to {after['cores']}, {after['ranks']} ranks left")
 
     # ---- 5. a v3 save migrates without confiscating anything ----
+    # Read the CURRENT save version from a clean load rather than pinning a
+    # number: the point of the check is that a migration lands on whatever is
+    # current, and pinning means editing this test on every bump.
+    page.evaluate("() => localStorage.clear()")
+    page.reload(wait_until="networkidle")
+    time.sleep(0.8)
+    CURRENT_V = page.evaluate("() => window.__swarm.save.version")
     mig = page.evaluate(
         """() => {
              localStorage.setItem('swarm-td-save', JSON.stringify({
@@ -198,8 +205,8 @@ with sync_playwright() as p:
         "           bestTime: s.bestTime, tree: Object.keys(s.tree).length }; }"
     )
     # dmg 3 = 12+18+27=57, hp 2 = 10+15=25, gold 1 = 10  ->  92 refunded on top of 10
-    check("v3 -> v5 refunds the old flat upgrades",
-          after_mig["v"] == 5 and after_mig["cores"] == 102
+    check(f"v3 -> v{CURRENT_V} refunds the old flat upgrades",
+          after_mig["v"] == CURRENT_V and after_mig["cores"] == 102
           and after_mig["gold"] == 500 and after_mig["tree"] == 0, after_mig)
 
     browser.close()

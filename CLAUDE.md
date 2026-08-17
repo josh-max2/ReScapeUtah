@@ -379,6 +379,30 @@ Curve as of this pass: poor dies ~w8, strong ~w10, with an EMPTY meta tree.
 That is the intended roguelite starting point — the skill tree is meant to
 carry the rest. Re-measure rather than reasoning about balance from the code.
 
+## HARDCORE — a different fight, not a bigger one (2026-08-17)
+
+The replay problem: once a level was cleared and perfected it paid nothing ever
+again. Hardcore is a second pair of awards on the same level, so a level is
+worth four tokens and a cleared one still has something to give.
+
+It shifts the COMPOSITION: `waveMix(wave + HARDCORE_SHIFT)`, so the horde
+arrives five surges ahead of itself and you meet splitters, shielders and
+menders while you are still poor. Aura carriers get a raised cap (raised, not
+removed — the cap exists so 470 bubbles do not cost 50fps). The answer is a
+different BUILD, not more of the same one, which is what the roster and the new
+silhouettes are for.
+
+**Composition alone made it EASIER, and this is the trap to remember.** Measured
+with the same bot: hardcore held 7:09 against normal's 6:05. Budget buys COST,
+not bodies, so shifting to elites means FEWER units arrive — and elites pay far
+more gold per kill (hauler 4.5 vs swarmer 0.8), so the player simply out-earned
+the harder mix. `HARDCORE_RATE` (1.45) thickens the stream to compensate. After:
+hardcore 5:11 to surge 13, normal 6:02 to surge 16, with normal unchanged so
+the comparison is clean.
+
+Save **v6**. The migration tests in `tree.py` and `menu.py` now READ the current
+version instead of pinning it — they had to be edited on every bump otherwise.
+
 ## ENEMY READABILITY — one silhouette per archetype (2026-08-17)
 
 A playtest at 1,700 alive could not tell a runner from a hauler from a

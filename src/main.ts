@@ -132,6 +132,11 @@ const cb: HudCallbacks = {
     ui.placing = null;
     ui.strikeArmed = false;
   },
+  toggleHardcore() {
+    save.hardcore = !save.hardcore;
+    persist(save);
+    markMetaDirty();
+  },
   selectLevel(id: string) {
     if (save.track === id) return;
     save.track = id;
@@ -150,7 +155,7 @@ const cb: HudCallbacks = {
   },
   launchRun() {
     // Money persists: come back with the bank you died holding.
-    startRun(game, computeMods(save.tree), save.gold);
+    startRun(game, computeMods(save.tree), save.gold, save.hardcore);
     // Coaching runs on the first launch only, inside the live flow — the game
     // never pauses to teach, because the thing being taught is what to do
     // while it is running.

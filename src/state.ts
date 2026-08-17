@@ -75,6 +75,8 @@ export interface Game {
   achievedSpeed: number;
   /** Sim-seconds since the congestion field was last rebuilt. */
   flowAcc: number;
+  /** Running this level on HARDCORE — a shifted wave mix, not bigger numbers. */
+  hardcore: boolean;
   /** Cleared the track this run (survived past the final surge). */
   cleared: boolean;
   /** Cleared it without the fort taking a single point of damage. */

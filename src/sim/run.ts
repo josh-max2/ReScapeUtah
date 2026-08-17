@@ -53,6 +53,7 @@ export function createGame(mods: MetaMods): Game {
     routes,
     achievedSpeed: 1,
     flowAcc: 0,
+    hardcore: false,
     cleared: false,
     clearPerfect: false,
     clearTokens: 0,
@@ -88,8 +89,9 @@ export function createGame(mods: MetaMods): Game {
   return g;
 }
 
-export function startRun(g: Game, mods: MetaMods, bankedGold = 0): void {
+export function startRun(g: Game, mods: MetaMods, bankedGold = 0, hardcore = false): void {
   g.mods = mods;
+  g.hardcore = hardcore;
   // No build phase: the flow starts immediately and you build inside it.
   g.phase = 'running';
   g.wave = 1;
@@ -155,8 +157,15 @@ function awardClear(g: Game, save: SaveData): number {
   if (!g.tokenEligible) return 0;
   const rec = save.clears[save.track] ?? { clear: false, perfect: false };
   let gained = 0;
-  if (!rec.clear) { rec.clear = true; gained++; }
-  if (g.clearPerfect && !rec.perfect) { rec.perfect = true; gained++; }
+  // Hardcore is a SEPARATE pair on the same level, so a level is worth four
+  // tokens in total and a cleared level still has something left to give.
+  if (g.hardcore) {
+    if (!rec.hcClear) { rec.hcClear = true; gained++; }
+    if (g.clearPerfect && !rec.hcPerfect) { rec.hcPerfect = true; gained++; }
+  } else {
+    if (!rec.clear) { rec.clear = true; gained++; }
+    if (g.clearPerfect && !rec.perfect) { rec.perfect = true; gained++; }
+  }
   save.clears[save.track] = rec;
   save.tokens += gained;
   save.wins++;

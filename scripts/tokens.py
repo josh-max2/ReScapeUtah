@@ -130,6 +130,29 @@ with sync_playwright() as p:
           bought["rank"] == 1 and bought["tokens"] == 0,
           bought)
 
+    # ---- 4b. HARDCORE is a separate pair of awards on the same level ----
+    page.evaluate("() => { const g = window.__swarm.game; g.baseHp = 0; }")
+    time.sleep(0.6)
+    page.evaluate("() => { const s = window.__swarm.save;"
+                  "  s.tokens = 0; s.hardcore = true; window.__swarm.refreshMeta(); }")
+    time.sleep(0.3)
+    hc = run_to_clear(page, 200)
+    check("a hardcore clear pays even on a level already cleared",
+          hc["cleared"] and hc["got"] == 1 and tokens(page) == 1,
+          {"awarded": hc["got"], "held": tokens(page)})
+    ledger = page.evaluate("() => window.__swarm.save.clears['map2']")
+    check("the hardcore award is a separate ledger slot",
+          ledger.get("clear") is True and ledger.get("hcClear") is True
+          and ledger.get("hcPerfect") in (None, False), ledger)
+    # and the composition really is shifted, not just tougher numbers
+    shift = page.evaluate(
+        "() => ({ normal: window.__swarm.waveMix(2, false).label,"
+        "          hardcore: window.__swarm.waveMix(2, true).label })"
+    )
+    check("hardcore changes WHAT arrives, not just how much",
+          shift["hardcore"] != shift["normal"], shift)
+    page.evaluate("() => { window.__swarm.save.hardcore = false; }")
+
     # ---- 5. a demo run must not mint tokens ----
     page.goto("http://localhost:5173/?demo=19", wait_until="networkidle")
     time.sleep(1.2)
@@ -144,8 +167,9 @@ with sync_playwright() as p:
     # ---- 6. v4 saves migrate cleanly ----
     page.evaluate(
         """() => localStorage.setItem('swarm-td-save', JSON.stringify({
-             version: 4, cores: 40, gold: 90, bestTime: 200, tree: { requisition: 2 },
-             track: 'map2', taught: true, bestWave: 9, wins: 0,
+             version: 5, cores: 40, gold: 90, bestTime: 200, tree: { requisition: 2 },
+             track: 'map2', taught: true, bestWave: 9, wins: 0, tokens: 3,
+             clears: { map2: { clear: true, perfect: false } },
            }))"""
     )
     page.goto("http://localhost:5173", wait_until="networkidle")
@@ -155,8 +179,10 @@ with sync_playwright() as p:
         "  return { v: s.version, tokens: s.tokens, clears: s.clears,"
         "           cores: s.cores, tree: s.tree.requisition }; }"
     )
-    check("v4 -> v5 defaults tokens without touching progress",
-          mig["v"] == 5 and mig["tokens"] == 0 and mig["clears"] == {}
+    check("v5 -> v6 keeps tokens and clears, leaving hardcore still to earn",
+          mig["v"] == 6 and mig["tokens"] == 3
+          and mig["clears"].get("map2", {}).get("clear") is True
+          and mig["clears"].get("map2", {}).get("hcClear") in (None, False)
           and mig["cores"] == 40 and mig["tree"] == 2, mig)
 
     browser.close()

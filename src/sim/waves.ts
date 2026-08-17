@@ -19,7 +19,34 @@ export interface WaveMix {
   weights: Partial<Record<number, number>>;
 }
 
-export function waveMix(wave: number): WaveMix {
+/**
+ * HARDCORE: the wave you would have met this many surges later, arriving now.
+ *
+ * Deliberately a COMPOSITION shift rather than an HP multiplier. Multiplying
+ * health gives the same run with bigger numbers — and the surge-10 toughness
+ * curve already does that. Shifting the mix means you meet splitters,
+ * shielders and menders while you are still poor, so the answer is a different
+ * BUILD, not more of the same one. It also carries its own toughness for free,
+ * since a hauler is thirty times a swarmer.
+ */
+export const HARDCORE_SHIFT = 5;
+
+/**
+ * Hardcore also thickens the stream, and it HAS to.
+ *
+ * Measured: the composition shift alone made hardcore EASIER — held 7:09
+ * against 6:05 for the same bot. Budget buys COST, not bodies, so shifting to
+ * elites means fewer units arrive, and elites pay far more gold per kill
+ * (hauler 4.5 vs swarmer 0.8). The player simply out-earned the harder mix.
+ * The shift decides WHAT you fight; this decides that there is more of it.
+ */
+export const HARDCORE_RATE = 1.45;
+
+export function waveMix(wave: number, hardcore = false): WaveMix {
+  if (hardcore) {
+    const m = waveMix(Math.min(wave + HARDCORE_SHIFT, WAVES_PER_RUN), false);
+    return { label: `${m.label}+`, weights: m.weights };
+  }
   if (isBossWave(wave)) {
     return { label: 'BOSS', weights: { [SWARMER]: 0.55, [HAULER]: 0.25, [RUNNER]: 0.2 } };
   }
@@ -57,8 +84,10 @@ export function waveMix(wave: number): WaveMix {
  * the count), so a wave-scaled hard cap keeps them rare and keeps the aura
  * pass cheap at horde scale.
  */
-function auraCap(wave: number, cut = 0): number {
-  return Math.max(0, 4 + Math.floor(wave * 0.7) - cut);
+function auraCap(wave: number, cut = 0, hardcore = false): number {
+  // Hardcore allows more aura carriers. They are elites and the cap exists to
+  // stop 470 bubbles costing 50fps, so this raises it rather than removing it.
+  return Math.max(0, 4 + Math.floor(wave * 0.7) + (hardcore ? 3 : 0) - cut);
 }
 
 /**
@@ -225,14 +254,14 @@ export function stageAt(runT: number): number {
  * stage, so the pressure curve is the one the difficulty harness was tuned
  * against — just delivered continuously instead of in bursts.
  */
-export function flowRate(runT: number): number {
+export function flowRate(runT: number, hardcore = false): number {
   const stage = stageAt(runT);
   // Blend across the stage boundary so the stream thickens smoothly rather
   // than stepping every 24 seconds.
   const f = (runT % STAGE_SECS) / STAGE_SECS;
   const a = waveBudget(stage) / STAGE_SECS;
   const b = waveBudget(stage + 1) / STAGE_SECS;
-  return a + (b - a) * f;
+  return (a + (b - a) * f) * (hardcore ? HARDCORE_RATE : 1);
 }
 
 /** Stages at which a boss joins the flow. */
@@ -267,9 +296,9 @@ export class FlowSpawner {
       this.spawnOne(g, TITAN);
     }
 
-    g.spawnAcc += flowRate(g.runT) * dt;
-    const mix = waveMix(Math.min(stage, WAVES_PER_RUN));
-    const cap = auraCap(stage, g.mods.auraCut);
+    g.spawnAcc += flowRate(g.runT, g.hardcore) * dt;
+    const mix = waveMix(Math.min(stage, WAVES_PER_RUN), g.hardcore);
+    const cap = auraCap(stage, g.mods.auraCut, g.hardcore);
     let guard = 0;
     while (g.spawnAcc > 0 && guard++ < 400) {
       let type = pickType(mix);

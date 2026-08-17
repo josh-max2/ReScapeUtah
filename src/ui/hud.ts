@@ -11,6 +11,7 @@ import type { SaveData, Settings } from '../meta/save';
 import { towerCost } from '../sim/towers';
 import { renderTree, setSelectedNode } from './tree';
 import { LEVELS } from '../sim/terrain';
+import { HARDCORE_SHIFT } from '../sim/waves';
 import { TILE_DEFS } from '../sim/tiles';
 import { STEPS, type CoachStep } from './coach';
 
@@ -29,6 +30,7 @@ export interface HudCallbacks {
   skipCoaching(): void;
   takeTile(kind: string): void;
   selectLevel(id: string): void;
+  toggleHardcore(): void;
   launchRun(): void;
   pickCard(id: string | null): void;
   upgradeSelected(branch: 1 | 2): void;
@@ -188,6 +190,7 @@ export function initHud(root: HTMLElement, cb: HudCallbacks): HTMLElement {
     const target = (ev.target as HTMLElement).closest('button');
     if (!target) return;
     if (target.hasAttribute('data-respec')) { cb.respec(); return; }
+    if (target.hasAttribute('data-hardcore')) { cb.toggleHardcore(); return; }
     const level = target.getAttribute('data-level');
     if (level) { cb.selectLevel(level); return; }
     const up = target.getAttribute('data-upgrade');
@@ -389,14 +392,17 @@ function renderMenu(save: SaveData): string {
 }
 
 /** Cleared / perfect totals — the chase has to be countable to exist. */
-export function levelProgress(save: SaveData): { clear: number; perfect: number; total: number } {
-  let clear = 0, perfect = 0;
+export function levelProgress(
+  save: SaveData,
+): { clear: number; perfect: number; hc: number; total: number } {
+  let clear = 0, perfect = 0, hc = 0;
   for (const l of LEVELS) {
     const rec = save.clears?.[l.id];
     if (rec?.clear) clear++;
     if (rec?.perfect) perfect++;
+    if (rec?.hcClear) hc++;
   }
-  return { clear, perfect, total: LEVELS.length };
+  return { clear, perfect, hc, total: LEVELS.length };
 }
 
 function renderLevels(save: SaveData): string {
@@ -404,8 +410,12 @@ function renderLevels(save: SaveData): string {
   LEVELS.forEach((l, i) => {
     const on = save.track === l.id;
     const rec = save.clears?.[l.id];
-    const badge = rec?.perfect ? '<div class="tkclear perfect">PERFECT ★★</div>'
-      : rec?.clear ? '<div class="tkclear">CLEARED ★</div>' : '';
+    // Four awards per level: clear, perfect, and the same pair on hardcore.
+    const stars = (rec?.clear ? 1 : 0) + (rec?.perfect ? 1 : 0)
+      + (rec?.hcClear ? 1 : 0) + (rec?.hcPerfect ? 1 : 0);
+    const badge = stars > 0
+      ? `<div class="tkclear${rec?.hcClear ? ' perfect' : ''}">${'★'.repeat(stars)}${'☆'.repeat(4 - stars)}</div>`
+      : '';
     cards += `
       <button class="trackcard${on ? ' on' : ''}" data-level="${l.id}">
         <img src="/maps/${l.id}.png" alt="" />
@@ -417,15 +427,23 @@ function renderLevels(save: SaveData): string {
       </button>`;
   });
   const p = levelProgress(save);
+  const hc = save.hardcore;
   return `
     <div class="metainner wide">
       <h2>LEVELS</h2>
       <p>Each level is one unbroken flow. Survive past the final surge to clear
         it — a token for the clear, and a second for clearing it without losing
-        a single point of fort health.</p>
+        a single point of fort health. Hardcore pays the same pair again.</p>
       <p class="meta-stats">CLEARED <b>${p.clear}/${p.total}</b>
         · PERFECT <b>${p.perfect}/${p.total}</b>
+        · HARDCORE <b>${p.hc}/${p.total}</b>
         · TOKENS <b>${save.tokens} ★</b></p>
+      <button class="hcswitch${hc ? ' on' : ''}" data-hardcore>
+        <span class="hcname">HARDCORE ${hc ? 'ON' : 'OFF'}</span>
+        <span class="hcdesc">The horde arrives ${HARDCORE_SHIFT} surges ahead of
+          itself — splitters, shielders and menders while you are still poor.
+          Not bigger numbers: a different fight.</span>
+      </button>
       <div class="trackgrid">${cards}</div>
       <div class="metanav">
         <button class="linkbtn" data-view="hangar">BACK</button>
@@ -458,7 +476,8 @@ function renderMeta(g: Game, save: SaveData): void {
     <div class="metainner wide">
       ${head}
       ${renderTree(save)}
-      <button class="launch" data-launch>LAUNCH RUN</button>
+      <button class="launch${save.hardcore ? ' hc' : ''}" data-launch>LAUNCH${
+        save.hardcore ? ' · HARDCORE' : ' RUN'}</button>
       <div class="metanav">
         <button class="linkbtn" data-view="menu">MENU</button>
         <button class="linkbtn" data-view="levels">LEVEL · ${

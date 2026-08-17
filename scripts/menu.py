@@ -17,7 +17,11 @@ with sync_playwright() as p:
     pg.on("pageerror", lambda e: errs.append(str(e)))
 
     # ---- a v1 save must survive the bump ----
+    # Current version is read, not pinned — see the same note in tree.py.
     pg.goto(URL, wait_until="networkidle")
+    pg.evaluate("() => localStorage.clear()")
+    pg.reload(wait_until="networkidle"); time.sleep(0.8)
+    CURRENT_V = pg.evaluate("() => window.__swarm.save.version")
     pg.evaluate("""() => localStorage.setItem('swarm-td-save', JSON.stringify(
         {version:1, cores:123, upgrades:{dmg:2}, bestWave:7, wins:1}))""")
     pg.reload(wait_until="networkidle"); time.sleep(1.0)
@@ -29,7 +33,7 @@ with sync_playwright() as p:
     # chips, which land back on top of the 123 already banked. Progress is not
     # preserved in place — it is preserved in value, to be respent in the tree.
     results["v1_save_migrates_keeping_progress"] = (
-        mig["version"] == 5 and mig["cores"] == 153 and mig["bestWave"] == 7
+        mig["version"] == CURRENT_V and mig["cores"] == 153 and mig["bestWave"] == 7
         and mig.get("upgrades") is None and mig["tree"] == {}
         and mig["settings"]["detail"] == "high")
 
