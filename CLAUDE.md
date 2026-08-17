@@ -260,12 +260,27 @@ build phase). `SWARM_SPREAD=N` forces one spacing across brackets — spacing is
 a real confound now and must be controlled before blaming a result on cost.
 
 Current numbers — 2 runs per bracket at 150px spacing, re-measured 2026-08-17
-after the flame fix (flame sits in the median plan, so the earlier table was
-measured against a broken weapon):
+after ROUTE CHOICE landed:
 
-    poor    (default aim)   held 2:39   surge 7
-    median  (road aim)      held 2:30   surge 7
-    strong  (downflow aim)  held 3:38   surge 10
+    poor    (default aim)   held 2:50   surge 8
+    median  (road aim)      held 7:21   surge 19
+    strong  (downflow aim)  held 6:07   surge 16
+
+**Route choice made the game markedly easier for competent play, and that is
+an owner decision, not a bug to tune away.** Same brackets immediately before
+it: poor 2:39 · median 2:30 · strong 3:38. Poor barely moved (+11s); median
+went up ~3x. The mechanism is straightforward — alternates are LONGER than the
+shortest path, so a horde that splits spends more time under fire and arrives
+at the fort spread out instead of in one mass. Poor gains nothing from that
+because its lanes point the wrong way, so extra exposure buys it little.
+
+Median outlasting strong here is almost certainly noise: strong is the bracket
+with the known +/-50% swing and this is 2 runs. Do not read a bracket
+inversion into it.
+
+**The shootout table below predates route choice.** Spread traffic clusters
+less, so the AoE weapons' 4x figures are the ones most likely to have moved.
+Re-run `shootout.py` before quoting those numbers as current.
 
 1. **Aiming pays, but this harness cannot yet say by how much.** Across three
    measurements this session strong came in at 7:00, 4:57 and 3:38 — a ±50%
