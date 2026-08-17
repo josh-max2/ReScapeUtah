@@ -42,6 +42,8 @@ export interface SaveData {
   tree: Record<string, number>;
   /** Selected track (map id). */
   track: string;
+  /** First-run coaching has been completed or skipped. */
+  taught: boolean;
   bestWave: number;
   wins: number;
   settings: Settings;
@@ -57,6 +59,7 @@ const DEFAULTS: SaveData = {
   bestTime: 0,
   tree: {},
   track: 'map2',
+  taught: false,
   bestWave: 0,
   wins: 0,
   settings: { ...DEFAULT_SETTINGS },
@@ -126,6 +129,11 @@ export function loadSave(): SaveData {
       bestTime: typeof data.bestTime === 'number' ? data.bestTime : 0,
       tree: data.tree && typeof data.tree === 'object' ? data.tree : {},
       track: typeof data.track === 'string' ? data.track : 'map2',
+      // Added inside v4 rather than bumping again: v4 was created this session
+      // and never shipped, and the loader defaults every unknown field anyway,
+      // so a v4 save written an hour ago reads `taught: false` and simply gets
+      // the coaching once. No player state can be lost by this.
+      taught: data.taught === true,
       bestWave: typeof data.bestWave === 'number' ? data.bestWave : 0,
       wins: typeof data.wins === 'number' ? data.wins : 0,
       settings: readSettings(data.settings),

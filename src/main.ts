@@ -12,18 +12,21 @@ await Promise.all([initTerrain(), initArt()]);
 import { createGame, startRun, castStrike, tick } from './sim/run';
 import { waveMix, STAGE_SECS, waveHpMul } from './sim/waves';
 import { shove } from './sim/combat';
-import { placeTower, upgradeTower, sellTower, destroyTower } from './sim/towers';
+import { placeTower, upgradeTower, sellTower, destroyTower, towerCost } from './sim/towers';
 import { loadSave, persist, type Settings } from './meta/save';
 import { computeMods, NODE_BY_ID, TREE, nodeCost, isGated, treeSpent } from './meta/tree';
 import { emptyMods } from './meta/upgrades';
 import { CARDS, playModCard, playStrikeCard, playInstantCard } from './sim/cards';
 import { initHand, updateHand } from './ui/hand';
-import { initHud, updateHud, markMetaDirty, HudCallbacks } from './ui/hud';
+import { initHud, updateHud, markMetaDirty, setCoachStep, HudCallbacks } from './ui/hud';
+import { newCoach, updateCoach, CoachState } from './ui/coach';
 import { render, UiState } from './render/draw';
 import './style.css';
 
 const save = loadSave();
 const game = createGame(computeMods(save.tree));
+
+let coach: CoachState | null = null;
 
 const ui: UiState = {
   placing: null,
@@ -35,13 +38,20 @@ const ui: UiState = {
   aiming: -1,
 };
 
-/** Point the tower being aimed at the cursor. Called on every mouse move. */
-function updateAim(): void {
+/**
+ * Point the tower being aimed at the cursor.
+ *
+ * `byMove` distinguishes the player actually swinging the angle from the seed
+ * call made the instant a tower is placed. Both set the angle; only the former
+ * counts as having aimed, which is what the coach watches for.
+ */
+function updateAim(byMove = false): void {
   const t = game.towers[ui.aiming];
   if (!t) return;
   t.aim = Math.atan2(ui.mouseY - t.y, ui.mouseX - t.x);
   t.aimX = ui.mouseX;
   t.aimY = ui.mouseY;
+  if (byMove) t.aimMoved = true;
 }
 
 /** Commit the current angle and let the tower start firing. */
@@ -57,7 +67,9 @@ function cancelAim(): void {
   ui.aiming = -1;
   const t = game.towers[ti];
   if (!t || t.armed) return;
-  game.gold += TOWER_DEFS[t.kind].cost;
+  // Refund what was actually PAID, not the list price — Workshop Tools
+  // discounts the build, and refunding the sticker price would print money.
+  game.gold += towerCost(game, t.kind);
   destroyTower(game, ti);
 }
 
@@ -108,11 +120,24 @@ const cb: HudCallbacks = {
     persist(save);
     markMetaDirty();
   },
+  skipCoaching() {
+    coach = null;
+    setCoachStep(null);
+    save.taught = true;
+    persist(save);
+  },
   launchRun() {
     // Money persists: come back with the bank you died holding.
     startRun(game, computeMods(save.tree), save.gold);
+    // Coaching runs on the first launch only, inside the live flow — the game
+    // never pauses to teach, because the thing being taught is what to do
+    // while it is running.
+    coach = save.taught ? null : newCoach();
     game.speed = save.settings.defaultSpeed;
-    ui.placing = 'autocannon';
+    // Normally the gun is pre-selected as a convenience. On a coached first
+    // run it is NOT, or step 1 completes before the player has read it and
+    // they never learn that choosing a weapon is a thing they do.
+    ui.placing = coach ? null : 'autocannon';
     ui.strikeArmed = false;
   },
   upgradeSelected(branch: 1 | 2) {
@@ -194,7 +219,7 @@ canvas.addEventListener('mousemove', (ev) => {
   ui.mouseX = p.x;
   ui.mouseY = p.y;
   ui.mouseIn = true;
-  if (ui.aiming >= 0) updateAim();
+  if (ui.aiming >= 0) updateAim(true);
 });
 canvas.addEventListener('mouseleave', () => {
   ui.mouseIn = false;
@@ -353,6 +378,15 @@ function frame(now: number): void {
   while (acc >= DT) {
     tick(game, save, DT);
     acc -= DT;
+  }
+  if (coach) {
+    const step = updateCoach(coach, game, ui, rdt);
+    setCoachStep(step);
+    if (!step) {
+      coach = null;
+      save.taught = true;
+      persist(save);
+    }
   }
   render(ctx, game, ui);
   updateHud(game, save, ui);

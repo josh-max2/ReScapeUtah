@@ -38,6 +38,8 @@ export interface Tower {
    * default aim below, so no caller has to know about aiming.
    */
   armed: boolean;
+  /** True once the player has actually swung the angle — the coach reads it. */
+  aimMoved: boolean;
 }
 
 /**
@@ -165,6 +167,7 @@ export function placeTower(g: Game, kind: TowerKind, cx: number, cy: number): nu
     aimX: 0,
     aimY: 0,
     armed: true,
+    aimMoved: false,
   };
   t.aim = defaultAim(g, t.x, t.y);
   // Point weapons default to a spot down-flow inside their band.

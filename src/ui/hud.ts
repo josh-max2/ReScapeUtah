@@ -9,6 +9,9 @@ import { towerStats } from '../sim/towers';
 import type { Game } from '../state';
 import type { SaveData, Settings } from '../meta/save';
 import { renderTree, setSelectedNode } from './tree';
+import { STEPS, type CoachStep } from './coach';
+
+const STEP_IDS = STEPS.map((s) => s.id);
 import { waveMix, STAGE_SECS } from '../sim/waves';
 import { CARDS } from '../sim/cards';
 import { makeTowerIcon } from '../render/towerArt';
@@ -20,6 +23,7 @@ export interface HudCallbacks {
   armStrike(): void;
   buyUpgrade(id: string): void;
   respec(): void;
+  skipCoaching(): void;
   selectTrack(id: string): void;
   launchRun(): void;
   pickCard(id: string | null): void;
@@ -36,6 +40,7 @@ interface HudRefs {
   goldEl: HTMLElement;
   killsEl: HTMLElement;
   coresEl: HTMLElement;
+  coach: HTMLElement;
   towerBtns: Map<TowerKind, HTMLButtonElement>;
   strikeBtn: HTMLButtonElement;
   strikeCd: HTMLElement;
@@ -115,6 +120,13 @@ export function initHud(root: HTMLElement, cb: HudCallbacks): HTMLElement {
   const goldEl = el('span', '', chips);
   const killsEl = el('span', '', chips);
   const coresEl = el('span', '', chips);
+
+  // First-run coaching. One line, above the command bar, never blocking.
+  const coach = el('div', 'panel coach', hud);
+  coach.style.display = 'none';
+  coach.addEventListener('click', (ev) => {
+    if ((ev.target as HTMLElement).closest('[data-skip]')) cb.skipCoaching();
+  });
 
   const ctl = el('div', 'panel ctl', hud);
   const speedBtn = el('button', 'slot', ctl, '<div class="k">SPEED</div>');
@@ -202,7 +214,7 @@ export function initHud(root: HTMLElement, cb: HudCallbacks): HTMLElement {
   });
 
   refs = {
-    waveEl, hpFill, hpText, goldEl, killsEl, coresEl,
+    waveEl, hpFill, hpText, goldEl, killsEl, coresEl, coach,
     towerBtns, strikeBtn, strikeCd, speedBtn, speedVal, metaScreen,
     perkScreen, inspect, bossBar,
   };
@@ -379,8 +391,29 @@ function renderMeta(g: Game, save: SaveData): void {
     </div>`;
 }
 
+let coachStep: CoachStep | null = null;
+
+/** Set by the frame loop; null hides the panel. */
+export function setCoachStep(step: CoachStep | null): void {
+  if (step?.id !== coachStep?.id) coachDirty = true;
+  coachStep = step;
+}
+let coachDirty = true;
+
 export function updateHud(g: Game, save: SaveData, ui: UiState): void {
   if (!refs) return;
+  if (coachDirty) {
+    coachDirty = false;
+    refs.coach.style.display = coachStep ? '' : 'none';
+    if (coachStep) {
+      const i = STEP_IDS.indexOf(coachStep.id) + 1;
+      refs.coach.innerHTML =
+        `<div class="cstep">STEP ${i} OF ${STEP_IDS.length}</div>` +
+        `<div class="ctext">${coachStep.text}</div>` +
+        `<div class="chint">${coachStep.hint}</div>` +
+        `<button class="linkbtn" data-skip>SKIP</button>`;
+    }
+  }
   const inRun = g.phase === 'running';
 
   // There are no waves to count. What matters is how long you have held and

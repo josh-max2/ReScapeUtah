@@ -1009,3 +1009,47 @@ body,
 @media (max-width: 980px) {
   .treebody { grid-template-columns: 1fr; }
 }
+
+/* ---- first-run coaching ----
+   Sits above the command bar, left of centre so it never covers the slots it
+   is telling you to click. Cyan is interaction, and this IS interaction. */
+.coach {
+  bottom: 116px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(460px, 80vw);
+  padding: 13px 18px 14px;
+  text-align: center;
+  border-color: rgba(121, 214, 208, 0.32);
+  box-shadow: var(--shadow), 0 0 26px rgba(121, 214, 208, 0.12);
+}
+
+.coach .cstep {
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: var(--cyan);
+  margin-bottom: 5px;
+}
+
+.coach .ctext {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+
+.coach .chint {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink-dim);
+}
+
+.coach .linkbtn {
+  /* The HUD layer is click-through so the canvas can be dragged; anything
+     actually clickable has to opt back in. */
+  pointer-events: auto;
+  margin-top: 8px;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  opacity: 0.6;
+}
