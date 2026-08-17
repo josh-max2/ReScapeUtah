@@ -555,7 +555,13 @@ export function updateHud(g: Game, save: SaveData, ui: UiState): void {
   refs.strikeBtn.disabled = g.phase !== 'running';
   refs.strikeBtn.classList.toggle('sel', ui.strikeArmed);
   put(refs.strikeCd, g.strikeCd > 0 ? `${Math.ceil(g.strikeCd)}s` : 'RDY');
-  put(refs.speedVal, `${g.speed}×`);
+  // Show what the sim is actually managing when it falls meaningfully short.
+  // A readout claiming 10x while the population holds it to 2.6x is simply
+  // untrue, and the player has no other way to tell.
+  const lagging = inRun && g.achievedSpeed < g.speed * 0.75;
+  put(refs.speedVal, lagging
+    ? `${g.speed}× <span class="lag">${g.achievedSpeed.toFixed(1)}×</span>`
+    : `${g.speed}×`);
 
   if (inRun) updateBossBar(g);
   else refs.bossBar.style.display = 'none';

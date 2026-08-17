@@ -391,6 +391,7 @@ if (demoParam !== null) {
   // Wave composition, so harnesses can assert what can and cannot spawn.
   waveMix,
   flowRate,
+  waveHpMul,
   // Blast physics probe for the force harness.
   shove: (x: number, y: number, r: number, power: number) => shove(game, x, y, r, power),
   // Perf probe: bunched spawns along the channel, like real waves.
@@ -418,9 +419,17 @@ function frame(now: number): void {
   if (game.phase !== 'running' && ui.strikeArmed) ui.strikeArmed = false;
   acc += rdt * game.speed;
   if (acc > 0.5) acc = 0.5; // don't spiral after a long stall
+  let stepped = 0;
   while (acc >= DT) {
     tick(game, save, DT);
     acc -= DT;
+    stepped += DT;
+  }
+  // What the sim MANAGED, as opposed to what was asked for. The clamp above
+  // silently discards time it cannot afford, so at a big population a 10x
+  // request runs at a fraction of that — measured 2.6x at ~7000 enemies.
+  if (rdt > 0.001) {
+    game.achievedSpeed += (stepped / rdt - game.achievedSpeed) * 0.06;
   }
   if (coach) {
     const step = updateCoach(coach, game, ui, rdt);

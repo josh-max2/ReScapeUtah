@@ -413,6 +413,19 @@ the opening — already a real fight — is untouched. Same playtest after: fort
 263 -> 233 -> 182 and the run ENDED at surge 23. Clear lands at 21, death in the
 low 20s, which is the intended shape. Numbers provisional pending playtest.
 
+**The speed control is aspirational at scale.** Measured at surge 20-23 after
+the change: 1x and 2x hold a true 60fps with ~6000 alive (ratio 1.00), 4x
+delivers 0.87, and 10x delivers **0.26** — about 2.6x. The accumulator clamp in
+main.ts (`acc > 0.5`) discards sim time it cannot afford, so the request is
+silently dropped rather than the frame rate collapsing. The player experience at
+the speeds people actually play is fine; the READOUT was the problem, and it now
+shows the achieved figure alongside the requested one when it falls short.
+Consequence for harnesses: anything running at 10x takes far longer in wall
+clock than sim-seconds/10 suggests — that is what timed difficulty.py out.
+
+**Never edit src/ while a Playwright harness is running.** The vite dev server
+hot-reloads the page and the run dies with "Execution context was destroyed".
+
 STILL OPEN: the gold sink. That run finished holding 33,000 unspent gold with
 nothing to buy — the economy stops meaning anything around minute five, and
 neither directive covered it.

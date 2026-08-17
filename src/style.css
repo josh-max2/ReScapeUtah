@@ -1236,3 +1236,11 @@ body,
 }
 
 .trackcard .tkclear.perfect { background: #f2e3b4; }
+
+/* Achieved speed, shown only when the sim cannot keep up with the request. */
+.ctl .n .lag {
+  margin-left: 6px;
+  font-size: 11px;
+  color: var(--ink-dim);
+  letter-spacing: 0.04em;
+}

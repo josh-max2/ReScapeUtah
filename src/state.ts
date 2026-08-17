@@ -67,6 +67,12 @@ export interface Game {
    * have somewhere else to go when route 0 is busy.
    */
   routes: FlowField[];
+  /**
+   * Speed the sim is ACTUALLY managing, smoothed. At high populations a 10x
+   * request delivers far less — the accumulator clamp discards the sim time it
+   * cannot afford — and a readout claiming 10x while running 2.6x is a lie.
+   */
+  achievedSpeed: number;
   /** Sim-seconds since the congestion field was last rebuilt. */
   flowAcc: number;
   /** Cleared the track this run (survived past the final surge). */

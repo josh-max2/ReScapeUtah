@@ -51,6 +51,7 @@ export function createGame(mods: MetaMods): Game {
     enemies: new EnemyPool(),
     field: primary,
     routes,
+    achievedSpeed: 1,
     flowAcc: 0,
     cleared: false,
     clearPerfect: false,
