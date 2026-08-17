@@ -23,6 +23,8 @@ with sync_playwright() as p:
     if page.is_visible("button[data-view='hangar']"):
         page.click("button[data-view='hangar']")
     page.click("button[data-launch]")
+    # No build phase any more — freeze the flow so dummies stay controlled.
+    page.evaluate("() => { window.__swarm.game.flowPaused = true; }")
     time.sleep(0.3)
     page.evaluate("() => { window.__swarm.game.gold = 9000; }")
     box = page.evaluate(
@@ -232,10 +234,21 @@ with sync_playwright() as p:
     rim = place("9", (1400, 400))
     assert "lattice" in towers(), "lattice placement failed"
     tgt = open_near_rim(page, rim, 50, 150)
+    aim_last_at(page, tgt[0], tgt[1])  # lane weapons must be pointed at it
     spawn(7, tgt)  # titan, hp 1800
+    # Pin it: a titan drifts out of the 26px lane inside the measuring window
+    # and the beam correctly stops ramping.
+    page.evaluate(
+        f"""() => {{ const e = window.__swarm.game.enemies;
+             window.__lp = setInterval(() => {{ if (e.n) {{
+               e.x[0] = {tgt[0]}; e.y[0] = {tgt[1]}; e.vel[0] = 0;
+               e.vx[0] = 0; e.vy[0] = 0; }} }}, 8); }}"""
+    )
     time.sleep(2.5)
     s = page.evaluate("""() => { const t = window.__swarm.game.towers.find(t => t.kind === 'lattice');
              return { lockT: t ? t.lockT : -1, hp: window.__swarm.game.enemies.n > 0 ? window.__swarm.game.enemies.hp[0] : -1 }; }""")
+    page.evaluate("() => clearInterval(window.__lp)")
+    print(f"    lattice lockT {s['lockT']:.2f}, titan hp {s['hp']:.0f}")
     results["lattice_locks_and_damages_titan"] = s["lockT"] > 1 and (s["hp"] == -1 or s["hp"] < 1800)
 
     # --- H: cryo applies Frozen

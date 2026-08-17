@@ -262,6 +262,38 @@ Curve as of this pass: poor dies ~w8, strong ~w10, with an EMPTY meta tree.
 That is the intended roguelite starting point — the skill tree is meant to
 carry the rest. Re-measure rather than reasoning about balance from the code.
 
+## CONTINUOUS FLOW — there are no waves (owner-directed 2026-08-17)
+
+A run is ONE unbroken stream that thickens with elapsed time. You build inside
+it; nothing pauses. Phases are now `'meta' | 'running' | 'lost'` — no build
+phase, no wave phase, no win state.
+
+- `g.runT` is elapsed run seconds. `g.wave` survives as a DERIVED **stage**
+  (`stageAt(runT)`, `STAGE_SECS` = 24) that advances on the clock rather than
+  on a clear. Everything downstream — `waveMix`, `waveHpMul`, boss roster,
+  `auraCap` — is reused unchanged, so all the tuned content carries over and
+  only its cadence changed.
+- `FlowSpawner` in waves.ts accumulates `flowRate(runT)` budget per tick and
+  releases units as it can afford them. The rate is the old per-stage budget
+  spread across the stage and blended across the boundary, so the pressure
+  curve is the one the difficulty harness was tuned against.
+- **The drain cull is gone.** It existed only to guarantee a wave could end,
+  and it was silently deleting stragglers and bosses.
+- **Money persists.** `save.gold` carries between attempts (save **v3**);
+  `startRun(g, mods, bankedGold)` restores it. A failed run leaves you richer,
+  which is the progression hook now. `save.bestTime` records the longest hold.
+- `startWave()` is a retained no-op so callers do not need special-casing.
+  The START WAVE button is hidden.
+- `?demo=N` means **N surges in**, not wave N.
+- **`g.flowPaused` is the harness affordance**: it freezes spawning AND the
+  clock. Harnesses that stage exact enemies must set it, or the stream refills
+  the pool and rising `hpMul` makes staged units tougher than the test expects.
+  Both mistakes were made and caught while building this.
+
+STILL OPEN after this change: there is no win condition or level-clear rule —
+a run ends only when the fort falls. The difficulty harness still thinks in
+waves and needs reworking against time survived.
+
 ## Tower aiming — FIXED ANGLE (owner-directed 2026-08-16)
 
 Towers do NOT acquire targets. The player commits a facing (or a ground area)

@@ -51,10 +51,10 @@ with sync_playwright() as p:
                            baseHp: Math.round(g.baseHp), gold: Math.floor(g.gold),
                            cores: Math.floor(g.runCores), towers: g.towers.length }; }"""
             )
-            if s["phase"] != "wave":
+            if s["phase"] != "running":
                 break
         print("wave result:", s)
-        if s["phase"] == "build":
+        if s["phase"] == "lost":
             # the post-wave perk draft blocks Start Wave — pick the first card
             if page.query_selector(".perkcard"):
                 page.click(".perkcard")

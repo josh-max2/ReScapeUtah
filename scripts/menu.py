@@ -25,7 +25,7 @@ with sync_playwright() as p:
     print("v1 save migrated ->", {k: mig[k] for k in ('version','cores','bestWave','wins')},
           "settings:", mig["settings"])
     results["v1_save_migrates_keeping_progress"] = (
-        mig["version"] == 2 and mig["cores"] == 123 and mig["bestWave"] == 7
+        mig["version"] == 3 and mig["cores"] == 123 and mig["bestWave"] == 7
         and mig["upgrades"].get("dmg") == 2 and mig["settings"]["detail"] == "high")
 
     # ---- menu is the first thing you see ----

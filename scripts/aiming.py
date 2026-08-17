@@ -23,6 +23,8 @@ with sync_playwright() as p:
     if page.is_visible("button[data-view='hangar']"):
         page.click("button[data-view='hangar']")
     page.click("button[data-launch]")
+    # No build phase any more — freeze the flow so dummies stay controlled.
+    page.evaluate("() => { window.__swarm.game.flowPaused = true; }")
     time.sleep(0.3)
     page.evaluate("() => { window.__swarm.game.gold = 9000; }")
     box = page.evaluate(

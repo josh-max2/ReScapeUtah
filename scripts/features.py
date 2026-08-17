@@ -147,7 +147,7 @@ with sync_playwright() as p:
     # Force the draft state directly (organically it fires after wave 3)
     page.evaluate(
         """() => { const g = window.__swarm.game;
-                   g.phase = 'build'; g.cardChoices = ['barrels', 'nova', 'scrap']; }"""
+                   g.flowPaused = true; g.cardChoices = ['barrels', 'nova', 'scrap']; }"""
     )
     time.sleep(0.5)
     before_deck = page.evaluate("() => window.__swarm.game.deck.length")

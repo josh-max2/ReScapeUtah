@@ -9,7 +9,7 @@ import { towerStats } from '../sim/towers';
 import type { Game } from '../state';
 import type { SaveData, Settings } from '../meta/save';
 import { UPGRADES } from '../meta/upgrades';
-import { waveMix } from '../sim/waves';
+import { waveMix, STAGE_SECS } from '../sim/waves';
 import { CARDS } from '../sim/cards';
 import { makeTowerIcon } from '../render/towerArt';
 import type { UiState } from '../render/draw';
@@ -145,7 +145,10 @@ export function initHud(root: HTMLElement, cb: HudCallbacks): HTMLElement {
     towerBtns.set(kind, b);
   }
 
+  // Nothing to start any more — the flow never stops. Kept in the refs so the
+  // rest of the HUD code and the harnesses do not need special-casing.
   const startBtn = el('button', 'startbtn', hud, 'START WAVE');
+  startBtn.style.display = 'none';
   startBtn.addEventListener('click', () => cb.startWave());
 
   const metaScreen = el('div', 'metascreen', stage);
@@ -349,18 +352,23 @@ function renderMeta(g: Game, save: SaveData): void {
   if (!refs) return;
   // A finished run always lands on the hangar so the result is never hidden
   // behind the title screen.
-  if (g.phase === 'won' || g.phase === 'lost') view = 'hangar';
+  if (g.phase === 'lost') view = 'hangar';
   if (view === 'menu') { refs.metaScreen.innerHTML = renderMenu(save); return; }
   if (view === 'options') { refs.metaScreen.innerHTML = renderOptions(save); return; }
   let head = '';
-  if (g.phase === 'won') {
-    head = `<h2 class="good">SECTOR CLEARED</h2><p>All ${WAVES_PER_RUN} waves survived. +${Math.floor(g.runCores)} cores banked.</p>`;
-  } else if (g.phase === 'lost') {
-    head = `<h2 class="bad">OVERRUN</h2><p>The rampart fell on wave ${g.wave}. +${Math.floor(g.runCores)} cores banked — spend them and go again.</p>`;
+  if (g.phase === 'lost') {
+    const m = Math.floor(g.runT / 60), sec = Math.floor(g.runT % 60);
+    head = `<h2 class="bad">OVERRUN</h2><p>You held for ` +
+      `${m}:${sec < 10 ? '0' : ''}${sec}, to surge ${g.wave}. ` +
+      `Your money stays with you — go again.</p>`;
   } else {
-    head = `<h2>SWARM</h2><p>Hold the lane. Everything you kill pays for the next attempt.</p>`;
+    head = `<h2>SWARM</h2><p>One unbroken flow. It only ever gets heavier.</p>`;
   }
-  const stats = `<p class="meta-stats">CORES <b>${save.cores}</b> · BEST WAVE <b>${save.bestWave}</b> · WINS <b>${save.wins}</b></p>`;
+  const bt = save.bestTime ?? 0;
+  const bm = Math.floor(bt / 60), bs = bt % 60;
+  const stats = `<p class="meta-stats">BANK <b>${Math.floor(save.gold)} ⬡</b>` +
+    ` · CORES <b>${save.cores}</b>` +
+    ` · LONGEST HELD <b>${bm}:${bs < 10 ? '0' : ''}${bs}</b></p>`;
   let cards = '';
   for (const u of UPGRADES) {
     const lvl = save.upgrades[u.id] ?? 0;
@@ -390,13 +398,19 @@ function renderMeta(g: Game, save: SaveData): void {
 
 export function updateHud(g: Game, save: SaveData, ui: UiState): void {
   if (!refs) return;
-  const inRun = g.phase === 'build' || g.phase === 'wave';
+  const inRun = g.phase === 'running';
 
-  const wv = g.phase === 'build' ? g.wave + 1 : g.wave;
+  // There are no waves to count. What matters is how long you have held and
+  // how thick the flow has become.
+  const mins = Math.floor(g.runT / 60);
+  const secs = Math.floor(g.runT % 60);
+  const clock = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  const intoStage = (g.runT % STAGE_SECS) / STAGE_SECS;
   put(refs.waveEl, inRun
-    ? `WAVE ${wv}<small>/${WAVES_PER_RUN}</small>` +
-      `<span class="wtype">${waveMix(Math.min(wv, WAVES_PER_RUN)).label}</span>` +
-      `<span class="wprog"><i style="width:${((wv / WAVES_PER_RUN) * 100).toFixed(0)}%"></i></span>`
+    ? `${clock}<small> HELD</small>` +
+      `<span class="wtype">${waveMix(Math.min(g.wave, WAVES_PER_RUN)).label}` +
+      ` · SURGE ${g.wave}</span>` +
+      `<span class="wprog"><i style="width:${(intoStage * 100).toFixed(0)}%"></i></span>`
     : 'STANDBY');
   const f = g.baseMaxHp > 0 ? Math.max(0, g.baseHp / g.baseMaxHp) : 0;
   const w = `${(f * 100).toFixed(1)}%`;
@@ -409,9 +423,9 @@ export function updateHud(g: Game, save: SaveData, ui: UiState): void {
   put(refs.killsEl, `kills <b>${fmt(g.kills)}</b>`);
   put(refs.coresEl, `cores <b>${save.cores}${inRun && g.runCores >= 1 ? ` +${Math.floor(g.runCores)}` : ''}</b>`);
 
-  const draftPending = g.cardChoices !== null && g.phase === 'build';
-  refs.banner.style.display = g.phase === 'build' && !draftPending ? '' : 'none';
-  refs.startBtn.style.display = g.phase === 'build' ? '' : 'none';
+  const draftPending = g.cardChoices !== null && g.phase === 'running';
+  refs.banner.style.display = g.phase === 'running' && !draftPending ? '' : 'none';
+  refs.startBtn.style.display = g.phase === 'running' ? '' : 'none';
   (refs.startBtn as HTMLButtonElement).disabled = draftPending;
   refs.perkScreen.style.display = draftPending ? '' : 'none';
   if (draftPending) {
@@ -430,7 +444,7 @@ export function updateHud(g: Game, save: SaveData, ui: UiState): void {
     btn.classList.toggle('sel', ui.placing === kind);
   }
 
-  refs.strikeBtn.disabled = g.phase !== 'wave'; // strike is wave-only in the sim
+  refs.strikeBtn.disabled = g.phase !== 'running';
   refs.strikeBtn.classList.toggle('sel', ui.strikeArmed);
   put(refs.strikeCd, g.strikeCd > 0 ? `${Math.ceil(g.strikeCd)}s` : 'RDY');
   put(refs.speedVal, `${g.speed}×`);

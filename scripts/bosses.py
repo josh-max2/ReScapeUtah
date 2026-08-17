@@ -27,7 +27,13 @@ with sync_playwright() as p:
     spot = snap_open(page, 700, 500)
 
     def clear():
-        page.evaluate("() => { window.__swarm.game.enemies.n = 0; }")
+        # Freeze the flow as well as emptying the pool: with continuous spawning
+        # the stream refills it between setup and assertion, and these checks
+        # need to start from exactly one boss.
+        page.evaluate(
+            "() => { const g = window.__swarm.game;"
+            "  g.flowPaused = true; g.enemies.n = 0; }"
+        )
 
     def spawn(t, pt):
         page.evaluate(f"() => window.__swarm.game.enemies.spawn({t}, {pt[0]}, {pt[1]})")
@@ -84,7 +90,7 @@ with sync_playwright() as p:
         const S = window.__swarm; return { sel: S.game.selected }; }""")
     R["boss_waves_scheduled"] = True  # verified via wave probe below
     b10 = page.evaluate("""() => { const g = window.__swarm.game;
-        g.enemies.n = 0; g.phase = 'build'; g.wave = 9; return true; }""")
+        g.enemies.n = 0; g.flowPaused = true; g.wave = 9; return true; }""")
     page.evaluate("() => { const S = window.__swarm; S.game.gold = 5000; }")
     print("  (boss scheduling verified separately via ?demo=10)")
 

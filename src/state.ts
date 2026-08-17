@@ -5,12 +5,19 @@ import { EnemyPool } from './sim/enemies';
 import { FlowField } from './sim/flowfield';
 import { SpatialHash } from './sim/spatial';
 import type { Tower } from './sim/towers';
-import type { Spawner } from './sim/waves';
+import type { FlowSpawner } from './sim/waves';
 import type { MetaMods } from './meta/upgrades';
 import type { TowerKind } from './defs';
 import type { TypeMods, RunFx } from './sim/cards';
 
-export type Phase = 'meta' | 'build' | 'wave' | 'won' | 'lost';
+/**
+ * Continuous flow (owner-directed 2026-08-17): there are no waves. A run is
+ * one unbroken stream of enemies that thickens with elapsed time, and you
+ * build while it is happening. 'stage' still exists as a DERIVED number —
+ * it advances on a timer, not on a clear — so all the tested composition,
+ * HP-scaling and boss content keeps working unchanged.
+ */
+export type Phase = 'meta' | 'running' | 'lost';
 
 export interface Effect {
   kind: 'tracer' | 'boom' | 'flash' | 'smoke' | 'arc' | 'rail' | 'shock';
@@ -43,7 +50,8 @@ export interface Impact {
 
 export interface Game {
   phase: Phase;
-  wave: number;       // 0 before the first wave starts
+  wave: number;       // DERIVED stage, advances on a timer (see runT)
+  runT: number;       // seconds of continuous flow so far
   gold: number;
   baseHp: number;
   baseMaxHp: number;
@@ -53,7 +61,7 @@ export interface Game {
   enemies: EnemyPool;
   field: FlowField;
   hash: SpatialHash;
-  spawner: Spawner | null;
+  spawner: FlowSpawner | null;
   effects: Effect[];
   beams: Beam[];
   impacts: Impact[];
@@ -68,7 +76,9 @@ export interface Game {
   time: number;       // sim clock (s)
   selected: number;   // index of the inspected tower, -1 = none
   kills: number;      // kills this run (HUD stat)
-  drainT: number;     // seconds since the wave's spawner finished (soft-lock insurance)
+  spawnAcc: number;   // fractional spawn budget carried between ticks
+  /** Test affordance: freeze the flow so a harness can stage exact enemies. */
+  flowPaused: boolean;
   rescues: number;    // stuck-car rescues this run (telemetry)
   deaths: number[];   // flat [x, y, r, ...] death positions; renderer drains into the ground layer (oil)
   marks: number[];    // flat [x, y, heading, ...] skid events; renderer drains into the ground layer (rubber)

@@ -82,14 +82,14 @@ with sync_playwright() as p:
     if not titled:
         fails.append("1_menu: no title screen")
 
-    # ---- 2. build phase: committed aim lanes are the core mechanic now ----
+    # ---- 2. committed aim lanes: the core mechanic ----
     page.goto(f"{BASE}/?demo={FIGHT_WAVE}", wait_until="networkidle")
     time.sleep(1.4)
-    page.evaluate("() => { const g = window.__swarm.game; g.phase = 'build'; }")
+    page.evaluate("() => { const g = window.__swarm.game; g.flowPaused = true; g.enemies.n = 0; }")
     time.sleep(0.5)
     towers = page.evaluate("() => window.__swarm.game.towers.length")
     shoot(page, "2_build", {"towers": towers}, towers >= 8,
-          "build phase, aim lanes shown")
+          "committed aim lanes")
 
     # ---- 3. mid-fight at real density ----
     page.goto(f"{BASE}/?demo={FIGHT_WAVE}", wait_until="networkidle")

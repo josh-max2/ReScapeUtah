@@ -104,7 +104,7 @@ const KIND_TAG: Record<string, string> = {
 
 export function updateHand(g: Game): void {
   if (!handEl || !deckEl) return;
-  const inRun = g.phase === 'build' || g.phase === 'wave';
+  const inRun = g.phase === 'running';
   (handEl.parentElement as HTMLElement).style.display = inRun ? '' : 'none';
   if (!inRun) return;
   deckEl.textContent = `DECK ${g.deck.length}`;

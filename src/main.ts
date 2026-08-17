@@ -10,7 +10,7 @@ import { initArt } from './render/sprites';
 // The map is an image and the terrain is textured — both must load first.
 await Promise.all([initTerrain(), initArt()]);
 import { createGame, startRun, startWave, castStrike, tick } from './sim/run';
-import { waveMix } from './sim/waves';
+import { waveMix, STAGE_SECS, waveHpMul } from './sim/waves';
 import { shove } from './sim/combat';
 import { placeTower, upgradeTower, sellTower, destroyTower } from './sim/towers';
 import { loadSave, persist, type Settings } from './meta/save';
@@ -72,7 +72,7 @@ const cb: HudCallbacks = {
     game.speed = game.speed === 1 ? 2 : game.speed === 2 ? 4 : game.speed === 4 ? 10 : 1;
   },
   armStrike() {
-    if (game.phase !== 'wave') {
+    if (game.phase !== 'running') {
       ui.strikeArmed = false;
       return;
     }
@@ -91,7 +91,8 @@ const cb: HudCallbacks = {
     markMetaDirty();
   },
   launchRun() {
-    startRun(game, computeMods(save.upgrades));
+    // Money persists: come back with the bank you died holding.
+    startRun(game, computeMods(save.upgrades), save.gold);
     game.speed = save.settings.defaultSpeed;
     ui.placing = 'autocannon';
     ui.strikeArmed = false;
@@ -125,7 +126,7 @@ const cb: HudCallbacks = {
 };
 
 function playCard(idx: number, expectedId: string, x: number | null, y: number | null, isClick: boolean): void {
-  if (game.phase !== 'build' && game.phase !== 'wave') return;
+  if (game.phase !== 'running') return;
   const id = game.hand[idx];
   // The hand can change mid-drag (wave-clear draw); only play what was grabbed.
   if (!id || id !== expectedId) return;
@@ -136,7 +137,7 @@ function playCard(idx: number, expectedId: string, x: number | null, y: number |
     ok = (isClick || x !== null) && playInstantCard(game, id);
   } else if (x !== null && y !== null) {
     if (def.kind === 'strike') {
-      ok = game.phase === 'wave' && playStrikeCard(game, id, x, y);
+      ok = game.phase === 'running' && playStrikeCard(game, id, x, y);
     } else {
       // mod card: find the tower under the drop point
       let best = -1;
@@ -235,7 +236,7 @@ window.addEventListener('keydown', (ev) => {
     // Starting a wave mid-aim commits at the current angle — never strand an
     // unarmed tower that silently does nothing all wave.
     if (ui.aiming >= 0) commitAim();
-    if (game.phase === 'build') startWave(game);
+    if (game.phase === 'running') startWave(game);
   } else if (ev.key === 'Escape') {
     // Escape means "done placing", so it COMMITS a half-aimed tower rather
     // than binning it. Right-click is the destructive cancel.
@@ -274,8 +275,10 @@ if (demoParam !== null) {
       }
     }
   }
-  game.wave = demoWave - 1;
-  startWave(game);
+  // ?demo=N now means "N surges in", since there are no waves to jump to.
+  game.runT = (demoWave - 1) * STAGE_SECS;
+  game.wave = demoWave;
+  game.enemies.hpMul = waveHpMul(demoWave);
   game.speed = 2;
 }
 
@@ -315,7 +318,7 @@ function frame(now: number): void {
   const rdt = Math.min(0.1, (now - last) / 1000);
   last = now;
   // A strike armed when the wave ends would swallow build-phase clicks.
-  if (game.phase !== 'wave' && ui.strikeArmed) ui.strikeArmed = false;
+  if (game.phase !== 'running' && ui.strikeArmed) ui.strikeArmed = false;
   acc += rdt * game.speed;
   if (acc > 0.5) acc = 0.5; // don't spiral after a long stall
   while (acc >= DT) {

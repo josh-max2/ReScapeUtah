@@ -34,6 +34,10 @@ export const LOD_LIMIT: Record<Settings['detail'], number> = {
 export interface SaveData {
   version: number;
   cores: number;
+  /** Money survives a failed run — the progression hook under continuous flow. */
+  gold: number;
+  /** Longest continuous run, seconds. */
+  bestTime: number;
   upgrades: Record<string, number>;
   bestWave: number;
   wins: number;
@@ -41,11 +45,13 @@ export interface SaveData {
 }
 
 const KEY = 'swarm-td-save';
-const VERSION = 2;
+const VERSION = 3;
 
 const DEFAULTS: SaveData = {
   version: VERSION,
   cores: 0,
+  gold: 0,
+  bestTime: 0,
   upgrades: {},
   bestWave: 0,
   wins: 0,
@@ -79,6 +85,10 @@ export function loadSave(): SaveData {
     return {
       version: VERSION,
       cores: typeof data.cores === 'number' ? data.cores : 0,
+      // v2 -> v3: gold and bestTime did not exist; default them. Nothing is
+      // lost, a v2 player simply starts the new economy with an empty bank.
+      gold: typeof data.gold === 'number' ? data.gold : 0,
+      bestTime: typeof data.bestTime === 'number' ? data.bestTime : 0,
       upgrades: data.upgrades && typeof data.upgrades === 'object' ? data.upgrades : {},
       bestWave: typeof data.bestWave === 'number' ? data.bestWave : 0,
       wins: typeof data.wins === 'number' ? data.wins : 0,

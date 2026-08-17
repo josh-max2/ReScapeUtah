@@ -142,7 +142,7 @@ def play_run(page, skill, box):
                 """() => { const g = window.__swarm.game;
                    return { phase: g.phase, hp: Math.round(g.baseHp), wave: g.wave }; }"""
             )
-            if s["phase"] != "wave":
+            if s["phase"] != "running":
                 break
         econ = page.evaluate(
             """() => { const g = window.__swarm.game;

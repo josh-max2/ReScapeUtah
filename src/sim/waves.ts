@@ -188,3 +188,95 @@ export class Spawner {
     }
   }
 }
+
+// ---------------------------------------------------------------------------
+// CONTINUOUS FLOW (owner-directed 2026-08-17)
+// ---------------------------------------------------------------------------
+// There are no waves. The horde is one unbroken stream whose thickness grows
+// with elapsed time. Everything above is reused unchanged — composition,
+// HP scaling, the boss roster — by treating `stage` as a DERIVED number that
+// advances on a clock instead of on a clear. That keeps all the tested content
+// and only changes WHEN it arrives.
+
+/** Seconds per stage. Roughly the old wave duration, so pressure ramps alike. */
+export const STAGE_SECS = 24;
+
+export function stageAt(runT: number): number {
+  return 1 + Math.floor(runT / STAGE_SECS);
+}
+
+/**
+ * Spawn budget per second. The old per-stage budget spread evenly across the
+ * stage, so the pressure curve is the one the difficulty harness was tuned
+ * against — just delivered continuously instead of in bursts.
+ */
+export function flowRate(runT: number): number {
+  const stage = stageAt(runT);
+  // Blend across the stage boundary so the stream thickens smoothly rather
+  // than stepping every 24 seconds.
+  const f = (runT % STAGE_SECS) / STAGE_SECS;
+  const a = waveBudget(stage) / STAGE_SECS;
+  const b = waveBudget(stage + 1) / STAGE_SECS;
+  return a + (b - a) * f;
+}
+
+/** Stages at which a boss joins the flow. */
+export const BOSS_STAGES = [10, 20];
+
+/**
+ * Continuous spawner. Accumulates budget every tick and releases units as it
+ * can afford them, so the stream is dense and steady rather than arriving in
+ * discrete bursts.
+ */
+export class FlowSpawner {
+  private auras = 0;
+  private auraStage = 0;
+  private bossesSent = new Set<number>();
+
+  update(g: Game, dt: number): void {
+    if (g.flowPaused) return;
+    const stage = stageAt(g.runT);
+    if (stage !== this.auraStage) { this.auraStage = stage; this.auras = 0; }
+
+    // Bosses arrive once, when their stage opens.
+    for (const bs of BOSS_STAGES) {
+      if (stage >= bs && !this.bossesSent.has(bs)) {
+        this.bossesSent.add(bs);
+        const boss = bossForWave(g.runId, BOSS_WAVES[BOSS_STAGES.indexOf(bs)]);
+        if (boss >= 0) this.spawnOne(g, boss);
+      }
+    }
+    // A titan anchors every 5th stage, as it used to.
+    if (stage % 5 === 0 && !this.bossesSent.has(-stage)) {
+      this.bossesSent.add(-stage);
+      this.spawnOne(g, TITAN);
+    }
+
+    g.spawnAcc += flowRate(g.runT) * dt;
+    const mix = waveMix(Math.min(stage, WAVES_PER_RUN));
+    const cap = auraCap(stage);
+    let guard = 0;
+    while (g.spawnAcc > 0 && guard++ < 400) {
+      let type = pickType(mix);
+      const ab = ENEMY_TYPES[type].ability;
+      if (ab === 'shield' || ab === 'heal') {
+        if (this.auras >= cap) type = SWARMER;
+        else this.auras++;
+      }
+      const cost = ENEMY_TYPES[type].cost;
+      if (cost > g.spawnAcc) break;
+      g.spawnAcc -= cost;
+      this.spawnOne(g, type);
+    }
+  }
+
+  private spawnOne(g: Game, type: number): void {
+    let sx = SPAWN_X + Math.random() * 96;
+    let sy = SPAWN_Y1 + Math.random() * (SPAWN_Y2 - SPAWN_Y1);
+    for (let a = 0; a < 8 && !isOpen(sx, sy); a++) {
+      sx = SPAWN_X + Math.random() * 96;
+      sy = SPAWN_Y1 + Math.random() * (SPAWN_Y2 - SPAWN_Y1);
+    }
+    g.enemies.spawn(type, sx, sy);
+  }
+}

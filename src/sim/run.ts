@@ -12,7 +12,8 @@ import { FlowField } from './flowfield';
 import { SpatialHash } from './spatial';
 import { updateTowers, shove } from './combat';
 import { dealHit } from './damage';
-import { Spawner } from './waves';
+import { Spawner, FlowSpawner, stageAt,
+} from './waves';
 import { waveHpMul } from './waves';
 import type { MetaMods } from '../meta/upgrades';
 import type { SaveData } from '../meta/save';
@@ -49,7 +50,9 @@ export function createGame(mods: MetaMods): Game {
     time: 0,
     selected: -1,
     kills: 0,
-    drainT: 0,
+    runT: 0,
+    spawnAcc: 0,
+    flowPaused: false,
     rescues: 0,
     deaths: [],
     marks: [],
@@ -59,11 +62,16 @@ export function createGame(mods: MetaMods): Game {
   return g;
 }
 
-export function startRun(g: Game, mods: MetaMods): void {
+export function startRun(g: Game, mods: MetaMods, bankedGold = 0): void {
   g.mods = mods;
-  g.phase = 'build';
-  g.wave = 0;
-  g.gold = mods.startGold;
+  // No build phase: the flow starts immediately and you build inside it.
+  g.phase = 'running';
+  g.wave = 1;
+  g.runT = 0;
+  g.spawnAcc = 0;
+  // Money persists between attempts (owner call 2026-08-17) — a failed run
+  // leaves you richer, not reset.
+  g.gold = bankedGold > 0 ? bankedGold : mods.startGold;
   g.baseMaxHp = mods.baseHp;
   g.baseHp = mods.baseHp;
   g.runCores = 0;
@@ -72,7 +80,8 @@ export function startRun(g: Game, mods: MetaMods): void {
   g.enemies.clear();
   g.field.blocked.fill(0);
   g.field.compute();
-  g.spawner = null;
+  g.spawner = new FlowSpawner();
+  g.enemies.hpMul = waveHpMul(1);
   g.effects.length = 0;
   g.beams.length = 0;
   g.impacts.length = 0;
@@ -80,7 +89,6 @@ export function startRun(g: Game, mods: MetaMods): void {
   g.time = 0;
   g.selected = -1;
   g.kills = 0;
-  g.drainT = 0;
   g.rescues = 0;
   g.deaths.length = 0;
   g.marks.length = 0;
@@ -93,18 +101,17 @@ export function startRun(g: Game, mods: MetaMods): void {
   g.runId++;
 }
 
-export function startWave(g: Game): void {
-  if (g.phase !== 'build' || g.cardChoices !== null) return;
-  g.wave++;
-  g.enemies.hpMul = waveHpMul(g.wave);
-  g.spawner = new Spawner(g.wave, g.runId);
-  g.drainT = 0;
-  g.phase = 'wave';
+/**
+ * Retained as a no-op so existing callers (hotkey, HUD button, harnesses) do
+ * not have to special-case a game that no longer has waves to start.
+ */
+export function startWave(_g: Game): void {
+  /* continuous flow: nothing to start */
 }
 
 export function castStrike(g: Game, x: number, y: number): boolean {
   // Wave-only: a misfire during the build phase would waste the whole cooldown.
-  if (g.strikeCd > 0 || g.phase !== 'wave') return false;
+  if (g.strikeCd > 0 || g.phase !== 'running') return false;
   const e = g.enemies;
   const r2 = STRIKE_RADIUS * STRIKE_RADIUS;
   const dmg = STRIKE_DMG * g.mods.dmgMul;
@@ -201,19 +208,19 @@ function sweepDeaths(g: Game): boolean {
   return spawned;
 }
 
-export function endRun(g: Game, save: SaveData, won: boolean): void {
-  g.phase = won ? 'won' : 'lost';
-  if (won) {
-    g.runCores += 50;
-    save.wins++;
-  }
+export function endRun(g: Game, save: SaveData, _won = false): void {
+  g.phase = 'lost';
   save.cores += Math.floor(g.runCores);
+  // Money survives the run. This is the progression hook now: you come back
+  // with what you had, so the next attempt starts from a better place.
+  save.gold = Math.floor(g.gold);
   if (g.wave > save.bestWave) save.bestWave = g.wave;
+  if (g.runT > (save.bestTime ?? 0)) save.bestTime = Math.floor(g.runT);
   persist(save);
 }
 
 export function tick(g: Game, save: SaveData, dt: number): void {
-  if (g.phase !== 'wave' && g.phase !== 'build') return;
+  if (g.phase !== 'running') return;
   g.time += dt;
   if (g.strikeCd > 0) g.strikeCd = Math.max(0, g.strikeCd - dt);
 
@@ -224,7 +231,7 @@ export function tick(g: Game, save: SaveData, dt: number): void {
     g.hash.insert(i, e.x[i], e.y[i]);
   }
 
-  if (g.phase === 'wave' && g.spawner) {
+  if (g.phase === 'running' && g.spawner) {
     g.spawner.update(g, dt);
   }
 
@@ -266,38 +273,26 @@ export function tick(g: Game, save: SaveData, dt: number): void {
     return;
   }
 
-  // Soft-lock insurance: long after the spawner finishes, any car that STILL
-  // hasn't reached the fort is beyond saving — cull it silently (no gold, no
-  // base damage) so the wave can always end. Generous window: crossing the
-  // whole map at the slowest pace takes well under 90s.
-  if (g.phase === 'wave' && g.spawner && g.spawner.done) {
-    g.drainT += dt;
-    if (g.drainT > 120) {
-      for (let i = 0; i < e.n; i++) {
-        e.hp[i] = 0;
-        e.leaked[i] = 1;
-      }
-    }
-  }
+  // No drain cull any more: the flow never stops, so there is no wave to end
+  // and nothing to time out. The old 120s cull existed purely to guarantee a
+  // wave could finish, and it was silently deleting stragglers (and bosses).
 
-  if (g.phase === 'wave' && g.spawner && g.spawner.done && e.n === 0) {
-    // Wave cleared.
+  // Stage advances on a CLOCK. Everything downstream — composition, HP
+  // scaling, boss timing — keeps using it exactly as it used to use the wave
+  // number, so all the tuned content carries over unchanged.
+  // flowPaused freezes PROGRESSION, not just spawning: a harness that stops
+  // the stream still had the clock advancing under it, so stage, HP scaling
+  // and the stage bounty all kept moving and staged enemies spawned tougher
+  // than the test expected.
+  if (g.flowPaused) return;
+  const prevStage = g.wave;
+  g.runT += dt;
+  g.wave = stageAt(g.runT);
+  if (g.wave !== prevStage) {
+    g.enemies.hpMul = waveHpMul(g.wave);
+    // Surviving a stage still pays, on the same geometric curve as the old
+    // wave-clear bounty — the economy is unchanged, only its cadence is.
     g.runCores += 5 + g.wave;
-    // Wave-clear bounty scales GEOMETRICALLY. Threat grows ~28%/wave, so a
-    // flat bounty means linear defence against exponential pressure — the
-    // difficulty harness showed that spiral kills every skill bracket by
-    // wave 6, and makes expensive towers permanently unaffordable.
-    g.gold += 40 * Math.pow(1.2, g.wave - 1);
-    if (g.wave >= WAVES_PER_RUN) {
-      endRun(g, save, true);
-    } else {
-      g.phase = 'build';
-      if (CARDS_ENABLED) {
-        draw(g, 1); // round-by-round draw
-        if (g.wave % 3 === 0) {
-          g.cardChoices = rollCardChoices(); // grow the deck every 3rd wave
-        }
-      }
-    }
+    g.gold += 40 * Math.pow(1.2, g.wave - 2);
   }
 }

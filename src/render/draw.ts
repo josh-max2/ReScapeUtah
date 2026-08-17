@@ -354,7 +354,7 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, ui: UiState): voi
     ctx.globalAlpha = 1;
   }
 
-  if (g.phase === 'build') {
+  if (g.phase === 'running') {
     if (ui.settings.routePreview) {
       ensureRoutes(g);
       drawRoutes(ctx);
@@ -373,7 +373,7 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, ui: UiState): voi
   // ---- Committed firing lanes ----
   // Every armed tower shows the line it holds during build phase: the whole
   // strategy is where these point, so they must be readable without clicking.
-  if (g.phase === 'build' && ui.settings.coverageRings) {
+  if (g.phase === 'running' && ui.settings.coverageRings) {
     for (let i = 0; i < g.towers.length; i++) {
       const t = g.towers[i];
       if (!t.armed || i === ui.aiming) continue;
