@@ -16,7 +16,6 @@ import type { UiState } from '../render/draw';
 
 export interface HudCallbacks {
   selectTower(kind: TowerKind | null): void;
-  startWave(): void;
   cycleSpeed(): void;
   armStrike(): void;
   buyUpgrade(id: string): void;
@@ -35,13 +34,11 @@ interface HudRefs {
   goldEl: HTMLElement;
   killsEl: HTMLElement;
   coresEl: HTMLElement;
-  banner: HTMLElement;
   towerBtns: Map<TowerKind, HTMLButtonElement>;
   strikeBtn: HTMLButtonElement;
   strikeCd: HTMLElement;
   speedBtn: HTMLButtonElement;
   speedVal: HTMLElement;
-  startBtn: HTMLButtonElement;
   metaScreen: HTMLElement;
   perkScreen: HTMLElement;
   inspect: HTMLElement;
@@ -117,9 +114,6 @@ export function initHud(root: HTMLElement, cb: HudCallbacks): HTMLElement {
   const killsEl = el('span', '', chips);
   const coresEl = el('span', '', chips);
 
-  const banner = el('div', 'panel banner', hud,
-    '<div class="t">BUILD PHASE</div><div class="s">SPACE STARTS THE WAVE</div>');
-
   const ctl = el('div', 'panel ctl', hud);
   const speedBtn = el('button', 'slot', ctl, '<div class="k">SPEED</div>');
   const speedVal = el('div', 'n', speedBtn, '1×');
@@ -147,9 +141,6 @@ export function initHud(root: HTMLElement, cb: HudCallbacks): HTMLElement {
 
   // Nothing to start any more — the flow never stops. Kept in the refs so the
   // rest of the HUD code and the harnesses do not need special-casing.
-  const startBtn = el('button', 'startbtn', hud, 'START WAVE');
-  startBtn.style.display = 'none';
-  startBtn.addEventListener('click', () => cb.startWave());
 
   const metaScreen = el('div', 'metascreen', stage);
   metaScreen.addEventListener('click', (ev) => {
@@ -199,8 +190,8 @@ export function initHud(root: HTMLElement, cb: HudCallbacks): HTMLElement {
   });
 
   refs = {
-    waveEl, hpFill, hpText, goldEl, killsEl, coresEl, banner,
-    towerBtns, strikeBtn, strikeCd, speedBtn, speedVal, startBtn, metaScreen,
+    waveEl, hpFill, hpText, goldEl, killsEl, coresEl,
+    towerBtns, strikeBtn, strikeCd, speedBtn, speedVal, metaScreen,
     perkScreen, inspect, bossBar,
   };
   return stage;
@@ -318,7 +309,7 @@ function renderOptions(save: SaveData): string {
       <h2>OPTIONS</h2>
       <p>Changes save immediately and persist between runs.</p>
       <div class="optlist">
-        ${optionRow('Route preview', 'Show where the horde will drive during build phase',
+        ${optionRow('Route preview', 'Show where the horde will drive while you are placing',
           'routePreview', ON_OFF, s.routePreview)}
         ${optionRow('Coverage rings', 'Show tower range while building',
           'coverageRings', ON_OFF, s.coverageRings)}
@@ -423,10 +414,11 @@ export function updateHud(g: Game, save: SaveData, ui: UiState): void {
   put(refs.killsEl, `kills <b>${fmt(g.kills)}</b>`);
   put(refs.coresEl, `cores <b>${save.cores}${inRun && g.runCores >= 1 ? ` +${Math.floor(g.runCores)}` : ''}</b>`);
 
+  // No build-phase banner and no START WAVE: the flow is continuous, so
+  // `phase` is 'running' for the whole run. Keying that UI on it meant the game
+  // permanently told the player to press SPACE to begin a wave that no longer
+  // exists, beside a button wired to a no-op.
   const draftPending = g.cardChoices !== null && g.phase === 'running';
-  refs.banner.style.display = g.phase === 'running' && !draftPending ? '' : 'none';
-  refs.startBtn.style.display = g.phase === 'running' ? '' : 'none';
-  (refs.startBtn as HTMLButtonElement).disabled = draftPending;
   refs.perkScreen.style.display = draftPending ? '' : 'none';
   if (draftPending) {
     const key = (g.cardChoices ?? []).join(',');

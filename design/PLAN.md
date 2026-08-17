@@ -182,16 +182,17 @@ goal). There is exactly one. Each needs the area-coverage classifier to keep
 narrow strands connected, and harnesses must stay map-agnostic via
 `scripts/maplib.py` — they already are.
 
-### 13. Tower cost curve, then re-measure difficulty
-**Know:** the median bot currently dies at wave 6, **earlier than the poor bot
-at wave 8** — 35 cheap autocannons beat 11 expensive mixed towers. The cost
-curve is inverted against your own design intent.
-**Know:** `difficulty.py` has not been run since fixed-angle aiming, which will
-have moved the whole curve a long way. Run it before touching a number.
-**Know:** bots use the default down-flow aim, so their result is a floor, not a
-ceiling — do not tune to it directly.
-**Know:** your rule — balance is hand-tuned by humans in playtests. Measure,
-report, let the numbers be your call.
+### 13. ~~Tower cost curve~~ — DONE 2026-08-17, premise was wrong
+**Outcome:** there is no inversion. Measured with the new `scripts/shootout.py`
+(equal gold, equal aim, equal spacing), autocannon spam ranks **6th of 9** —
+cryo 4.1x, mortar 3.9x, tesla 3.0x better per gold. The old claim came from
+comparing difficulty.py brackets that differ in aim style AND weapon mix at
+once, on a gap smaller than run variance. **No TOWER_DEFS costs were changed.**
+**What it did find:** flame was broken two ways (cone weapon gated on a narrow
+lane; range 60 unusable under the rim-only placement law) — fixed, 0.22x ->
+1.61x. And the wave UI had outlived the wave system.
+**Still open, owner's call:** gatling at 0.73x is beaten by 40g spam. Railgun
+at 0.29x is by design (anti-boss) — do not touch it.
 
 ### 14. A horde-redirect mechanic
 **Know:** the impulse system now exists (`impX/impY`, consumed by the movement

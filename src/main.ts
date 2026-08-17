@@ -9,7 +9,7 @@ import { initArt } from './render/sprites';
 
 // The map is an image and the terrain is textured — both must load first.
 await Promise.all([initTerrain(), initArt()]);
-import { createGame, startRun, startWave, castStrike, tick } from './sim/run';
+import { createGame, startRun, castStrike, tick } from './sim/run';
 import { waveMix, STAGE_SECS, waveHpMul } from './sim/waves';
 import { shove } from './sim/combat';
 import { placeTower, upgradeTower, sellTower, destroyTower } from './sim/towers';
@@ -64,9 +64,6 @@ const cb: HudCallbacks = {
   selectTower(kind: TowerKind | null) {
     ui.placing = ui.placing === kind ? null : kind;
     ui.strikeArmed = false;
-  },
-  startWave() {
-    startWave(game);
   },
   cycleSpeed() {
     game.speed = game.speed === 1 ? 2 : game.speed === 2 ? 4 : game.speed === 4 ? 10 : 1;
@@ -235,8 +232,9 @@ window.addEventListener('keydown', (ev) => {
     ev.preventDefault();
     // Starting a wave mid-aim commits at the current angle — never strand an
     // unarmed tower that silently does nothing all wave.
+    // SPACE no longer starts anything — it survives as a commit for a
+    // half-aimed tower, so a tower is never left unarmed and silent.
     if (ui.aiming >= 0) commitAim();
-    if (game.phase === 'running') startWave(game);
   } else if (ev.key === 'Escape') {
     // Escape means "done placing", so it COMMITS a half-aimed tower rather
     // than binning it. Right-click is the destructive cancel.

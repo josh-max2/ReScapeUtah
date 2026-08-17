@@ -354,7 +354,13 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, ui: UiState): voi
     ctx.globalAlpha = 1;
   }
 
-  if (g.phase === 'running') {
+  // Planning aids. The design contract calls these "build phase only", but the
+  // flow is continuous now and `phase` stays 'running' for the whole run — so
+  // that gate had quietly become "always", painting route ribbons and range
+  // rings over live combat for the entire game. The honest translation of
+  // "while planning" is: while the player is actually placing or aiming.
+  const planning = ui.placing !== null || ui.aiming >= 0;
+  if (planning) {
     if (ui.settings.routePreview) {
       ensureRoutes(g);
       drawRoutes(ctx);
@@ -373,7 +379,7 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, ui: UiState): voi
   // ---- Committed firing lanes ----
   // Every armed tower shows the line it holds during build phase: the whole
   // strategy is where these point, so they must be readable without clicking.
-  if (g.phase === 'running' && ui.settings.coverageRings) {
+  if (ui.settings.coverageRings) {
     for (let i = 0; i < g.towers.length; i++) {
       const t = g.towers[i];
       if (!t.armed || i === ui.aiming) continue;

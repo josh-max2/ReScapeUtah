@@ -209,7 +209,7 @@ export interface TowerDef {
 
 export const TOWER_DEFS: Record<TowerKind, TowerDef> = {
   autocannon: { name: 'Autocannon',  cost: 40,  hp: 80,  range: 100, rate: 3.33, hit: 8,   color: '#9aa5b8', hotkey: '1', desc: 'Workhorse volume fire — bounces off armor' },
-  flame:      { name: 'Flamethrower', cost: 60, hp: 90,  range: 60,  rate: 3,    hit: 5,   coneDeg: 90, burnS: 4, color: '#d9642e', hotkey: '2', desc: 'Short cone; sets the horde Burning (DoT ignores armor)' },
+  flame:      { name: 'Flamethrower', cost: 60, hp: 90,  range: 90,  rate: 3,    hit: 5,   coneDeg: 90, burnS: 4, color: '#d9642e', hotkey: '2', desc: 'Short cone; sets the horde Burning (DoT ignores armor)' },
   mortar:     { name: 'Mortar Pit',  cost: 85,  hp: 100, range: 280, rate: 0.5,  hit: 60,  splash: 50, minRange: 80, color: '#c8825a', hotkey: '3', desc: 'Indirect AoE; blind up close, shells lead & can miss' },
   cryo:       { name: 'Cryo Sprayer', cost: 70, hp: 90,  range: 100, rate: 2,    hit: 4,   splash: 100, slowS: 3, color: '#79d6d0', hotkey: '4', desc: 'Freezes everything near: -40% speed, +30% damage taken' },
   tesla:      { name: 'Tesla Coil',  cost: 100, hp: 100, range: 120, rate: 0.8,  hit: 45,  chains: 4, chainFalloff: 0.7, stunS: 0.5, color: '#7fd0e8', hotkey: '5', desc: 'Chain lightning, cannot miss; stutters the primary target' },

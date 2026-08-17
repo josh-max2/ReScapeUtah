@@ -101,14 +101,6 @@ export function startRun(g: Game, mods: MetaMods, bankedGold = 0): void {
   g.runId++;
 }
 
-/**
- * Retained as a no-op so existing callers (hotkey, HUD button, harnesses) do
- * not have to special-case a game that no longer has waves to start.
- */
-export function startWave(_g: Game): void {
-  /* continuous flow: nothing to start */
-}
-
 export function castStrike(g: Game, x: number, y: number): boolean {
   // Wave-only: a misfire during the build phase would waste the whole cooldown.
   if (g.strikeCd > 0 || g.phase !== 'running') return false;

@@ -267,11 +267,67 @@ Three things this establishes:
 2. **Spacing matters enormously.** Strong went 4:40 -> 7:00 purely by widening
    from 70px to 150px. With fixed lanes, clustered towers overlap coverage and
    waste it. This is a NEW strategic truth the aiming change created.
-3. **The cost-curve inversion is REAL and still unfixed.** At identical
-   spacing the median bot still dies before the poor one (2:24 vs 2:40): ~19
-   cheap autocannons beat ~9 expensive mixed towers for the same money. This
-   was first found in the 2026-08-16 audit and survives the redesign. Cheap
-   spam strictly dominates per gold. Untouched — balance is the owner's call.
+3. ~~The cost-curve inversion is REAL~~ — **WITHDRAWN 2026-08-17, it was a
+   measurement artifact.** See below.
+
+## Two bugs the cost investigation actually found (2026-08-17)
+
+Both were invisible to every existing test and visible in one screenshot.
+
+- **Flame was gated on the wrong shape.** A 90-degree cone weapon triggered on
+  `findInLane`, a LANE_HALF strip 52px wide, so a flamethrower with twenty cars
+  inside its cone held fire unless one sat in the centre strip. Cone weapons now
+  gate on `firstInCone`. Separately its `range: 60` predated the rim-only
+  placement law: mounts sit 20px off-road, leaving a 40px-deep wedge and ~3 road
+  cells of coverage against the autocannon's ~13. Range is now 90. Flame went
+  0.22x -> 0.42x (gate) -> 1.61x (range) vs autocannon spam. If a weapon's
+  trigger shape and effect shape ever disagree again, that is the first suspect.
+- **Wave UI outlived the wave system.** The build-phase banner and START WAVE
+  button were keyed on `g.phase === 'running'`, which under continuous flow is
+  true for the WHOLE RUN — so the game permanently told the player to press
+  SPACE to begin a wave that no longer exists, beside a button wired to a no-op.
+  Removed, with its CSS and plumbing. Route preview and coverage rings had the
+  same gate and now show while `ui.placing`/`ui.aiming` is active, which is the
+  honest translation of the design contract's "build phase only". SPACE survives
+  as commit-aim.
+
+Standing lesson, third time now: `phase` has ONE value during play. Any UI that
+used it to mean "not fighting yet" is currently always-on — audit before adding.
+
+## The cost curve is NOT inverted (measured 2026-08-17)
+
+The "cheap spam dominates" claim stood since the 2026-08-16 audit and drove a
+whole plan item. It came from comparing difficulty.py brackets — but those
+brackets differ in AIM STYLE and WEAPON MIX at the same time, and the poor/
+median gap is ~13s on runs whose variance is larger than that. It never
+isolated cost. Do not revive it from bracket comparisons.
+
+`scripts/shootout.py` is the instrument that DOES isolate it: every weapon gets
+an identical budget, spends it upfront on identical route-ordered emplacements
+with identical downflow aim, and is scored on fort damage prevented per gold
+actually spent, against a no-tower baseline. Its guards exist because each one
+was got wrong first: the clock is PAUSED while buying (placing twelve towers
+takes longer than three), the fort is unkillable (a weak stack must not score
+on a shorter window), there is NO reinvestment (kill income compounds for
+whoever is already winning), and placements are VERIFIED (the route-ordered
+spot list starts inside the rift band where placement is refused, which silently
+cost every weapon its first 2-3 towers and made the first table meaningless).
+
+Measured, 480g budget, 120s window, 2 reps — fort damage stopped per 100g,
+relative to autocannon spam:
+
+    cryo 4.11x · mortar 3.86x · tesla 2.98x · rocket 1.76x · flame 1.61x
+    lattice 1.38x · AUTOCANNON 1.00x · gatling 0.73x · railgun 0.29x
+
+Autocannon spam ranks 6th of 9. Expensive towers already earn their price, so
+**do not "fix" TOWER_DEFS costs.** Two live notes:
+- **railgun 0.29x is BY DESIGN** — it is the anti-boss weapon and the enemy
+  design law explicitly forbids fixing it for being anti-horde. Judge it in an
+  armored/boss window, never here.
+- **gatling 0.73x is the one open balance question.** At 110g it is beaten by
+  40g spam. Not a bug — it is single-target with hitMax 22 against 4hp mites,
+  so ~80% of every shot is overkill. Owner's call; the obvious lever is giving
+  its ramped stream a pierce so overkill spills down the lane.
 
 ## Balance & difficulty (2026-08-16, wave model — superseded)
 

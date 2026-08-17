@@ -39,6 +39,27 @@ function findInLane(g: Game, t: Tower, range: number, minR = 0): number {
   return best;
 }
 
+/**
+ * First living enemy inside a cone weapon's committed wedge. Cone weapons must
+ * gate on their own footprint, not on the narrow lane the projectile weapons
+ * use — see the flame case for what mismatching those two costs.
+ */
+function firstInCone(g: Game, t: Tower, range: number, half: number): number {
+  const e = g.enemies;
+  const r2 = range * range;
+  let best = -1;
+  g.hash.query(t.x, t.y, range + 8, (k) => {
+    if (best >= 0 || e.hp[k] <= 0) return;
+    const dx = e.x[k] - t.x, dy = e.y[k] - t.y;
+    if (dx * dx + dy * dy > r2) return;
+    let da = Math.atan2(dy, dx) - t.aim;
+    if (da > Math.PI) da -= Math.PI * 2;
+    else if (da < -Math.PI) da += Math.PI * 2;
+    if (da >= -half && da <= half) best = k;
+  });
+  return best;
+}
+
 /** A point tower's committed ground target, clamped into its usable band. */
 function aimPoint(t: Tower, range: number, minR: number): { x: number; y: number } {
   const dx = t.aimX - t.x, dy = t.aimY - t.y;
@@ -219,12 +240,17 @@ export function updateTowers(g: Game, dt: number): void {
     if (t.kind === 'flame') {
       // The cone is welded to the committed facing.
       t.angle = t.aim;
-      if (findInLane(g, t, S.range) < 0) {
+      const half = ((def.coneDeg ?? 90) * Math.PI) / 360;
+      // Fire when anything is IN THE CONE. This used to gate on findInLane,
+      // which is a LANE_HALF-wide strip (52px) — far narrower than the 90°
+      // spray it triggers. A flamethrower with twenty cars inside its cone sat
+      // idle unless one happened to be in the centre strip, which is why an
+      // equal-gold flame stack stopped 4% of what a mortar stack did.
+      if (firstInCone(g, t, S.range, half) < 0) {
         if (t.cd < 0) t.cd = 0;
         continue;
       }
       if (t.cd <= 0) {
-        const half = ((def.coneDeg ?? 90) * Math.PI) / 360;
         const r2 = S.range * S.range;
         g.hash.query(t.x, t.y, S.range + 8, (k) => {
           if (e.hp[k] <= 0) return;

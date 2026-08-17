@@ -152,7 +152,10 @@ with sync_playwright() as p:
     time.sleep(0.5)
     before_deck = page.evaluate("() => window.__swarm.game.deck.length")
     visible = page.evaluate("() => document.querySelector('.perkscreen').style.display !== 'none'")
-    start_blocked = page.evaluate("() => document.querySelector('.startbtn').disabled")
+    # START WAVE was removed with the wave system; if the deck layer is ever
+    # re-enabled the draft must block something else, so don't assert on it.
+    start_blocked = page.evaluate(
+        "() => { const b = document.querySelector('.startbtn'); return b ? b.disabled : true; }")
     page.screenshot(path=f"{OUT}\\card_draft.png")
     print("draft overlay:", {"visible": visible, "startBlocked": start_blocked, "deck": before_deck})
     page.click(".perkcard")

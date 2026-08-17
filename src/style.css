@@ -178,28 +178,6 @@ body,
   font-weight: 700;
 }
 
-/* ---- build banner ---- */
-.banner {
-  top: 92px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 13px 30px;
-  text-align: center;
-}
-
-.banner .t {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0.32em;
-}
-
-.banner .s {
-  font-size: 10.5px;
-  color: var(--ink-dim);
-  letter-spacing: 0.16em;
-  margin-top: 4px;
-}
-
 /* ---- command bar: tower palette ---- */
 .ctl,
 .slots {
@@ -315,42 +293,6 @@ body,
 .slot:disabled {
   opacity: 0.45;
   cursor: default;
-}
-
-/* ---- start wave ---- */
-.startbtn {
-  position: absolute;
-  bottom: 14px;
-  right: 14px;
-  padding: 14px 30px;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  font-family: inherit;
-  color: var(--bg);
-  background: linear-gradient(180deg, #fff8ec, #e9e0d0);
-  border: none;
-  border-radius: 9px;
-  cursor: pointer;
-  pointer-events: auto;
-  box-shadow: var(--shadow);
-  animation: startpulse 2.2s ease-in-out infinite;
-  transition: transform 0.1s ease;
-}
-
-.startbtn:hover {
-  transform: translateY(-2px);
-}
-
-.startbtn:disabled {
-  opacity: 0.45;
-  animation: none;
-  cursor: default;
-}
-
-@keyframes startpulse {
-  0%, 100% { box-shadow: var(--shadow); }
-  50% { box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 18px rgba(232, 194, 106, 0.35); }
 }
 
 /* ---- boss bar ---- */
