@@ -1181,3 +1181,55 @@ body,
 }
 
 .tilecard .tkd { font-size: 10px; line-height: 1.35; color: var(--ink-dim); }
+
+/* ---- track cleared ---- */
+.clearbanner {
+  top: 92px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 30px 14px;
+  text-align: center;
+  border-color: rgba(232, 194, 106, 0.45);
+  box-shadow: var(--shadow), 0 0 30px rgba(232, 194, 106, 0.18);
+}
+
+.clearbanner .cbt {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  color: var(--gold);
+}
+
+.clearbanner .cbs {
+  margin-top: 4px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--ink-dim);
+}
+
+.metainner p.cleared {
+  color: var(--gold);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  font-size: 13px;
+}
+
+/* Token-priced capstones read differently from chip nodes. */
+.board .node.token circle { stroke: var(--gold); stroke-width: 2.5; }
+.nodedetail button.tokenbuy {
+  background: linear-gradient(180deg, #f0d48a, #d8ae56);
+}
+
+.trackcard .tkclear {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 3px 8px;
+  font-size: 8.5px;
+  letter-spacing: 0.16em;
+  color: var(--bg);
+  background: var(--gold);
+  border-radius: 4px;
+}
+
+.trackcard .tkclear.perfect { background: #f2e3b4; }

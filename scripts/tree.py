@@ -127,7 +127,7 @@ with sync_playwright() as p:
     page.evaluate("() => { const s = window.__swarm.save;"
                   "  s.cores = 99999; s.bestTime = 0; window.__swarm.refreshMeta(); }")
     time.sleep(0.3)
-    page.evaluate("() => { document.querySelector('[data-node=\"piercing\"]').dispatchEvent(new MouseEvent('click', {bubbles: true})); }")
+    page.evaluate("() => { document.querySelector('[data-node=\"quota\"]').dispatchEvent(new MouseEvent('click', {bubbles: true})); }")
     time.sleep(0.3)
     locked = page.evaluate(
         "() => { const b = document.querySelector('.nodedetail button');"
@@ -140,7 +140,7 @@ with sync_playwright() as p:
     page.evaluate("() => { window.__swarm.save.bestTime = 900;"
                   "  window.__swarm.refreshMeta(); }")
     time.sleep(0.3)
-    page.evaluate("() => { document.querySelector('[data-node=\"piercing\"]').dispatchEvent(new MouseEvent('click', {bubbles: true})); }")
+    page.evaluate("() => { document.querySelector('[data-node=\"quota\"]').dispatchEvent(new MouseEvent('click', {bubbles: true})); }")
     time.sleep(0.3)
     opened = page.evaluate(
         "() => { const b = document.querySelector('.nodedetail button');"
@@ -198,8 +198,8 @@ with sync_playwright() as p:
         "           bestTime: s.bestTime, tree: Object.keys(s.tree).length }; }"
     )
     # dmg 3 = 12+18+27=57, hp 2 = 10+15=25, gold 1 = 10  ->  92 refunded on top of 10
-    check("v3 -> v4 refunds the old flat upgrades",
-          after_mig["v"] == 4 and after_mig["cores"] == 102
+    check("v3 -> v5 refunds the old flat upgrades",
+          after_mig["v"] == 5 and after_mig["cores"] == 102
           and after_mig["gold"] == 500 and after_mig["tree"] == 0, after_mig)
 
     browser.close()

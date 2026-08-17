@@ -52,6 +52,11 @@ export function createGame(mods: MetaMods): Game {
     field: primary,
     routes,
     flowAcc: 0,
+    cleared: false,
+    clearPerfect: false,
+    clearTokens: 0,
+    clearBannerT: 0,
+    tokenEligible: true,
     tiles: [],
     tileOffer: null,
     hash: new SpatialHash(W, H, 16, MAX_ENEMIES),
@@ -99,6 +104,11 @@ export function startRun(g: Game, mods: MetaMods, bankedGold = 0): void {
   // built once at boot. Without this, run two starts on run one's map.
   g.tiles = [];
   g.tileOffer = null;
+  g.cleared = false;
+  g.clearPerfect = false;
+  g.clearTokens = 0;
+  g.clearBannerT = 0;
+  g.tokenEligible = true;
   resetTerrain();
   invalidateTerrain();
   // resetTerrain restores the fine mask and the distance field, but the COARSE
@@ -133,6 +143,24 @@ export function startRun(g: Game, mods: MetaMods, bankedGold = 0): void {
   g.cardChoices = null;
   if (CARDS_ENABLED) draw(g, 3); // opening hand
   g.runId++;
+}
+
+/**
+ * Pay out a clear. One token for a FIRST clear of this track, one more for a
+ * first PERFECT clear. The ledger is per track and per kind, so replaying the
+ * easiest track cannot mint tokens forever.
+ */
+function awardClear(g: Game, save: SaveData): number {
+  if (!g.tokenEligible) return 0;
+  const rec = save.clears[save.track] ?? { clear: false, perfect: false };
+  let gained = 0;
+  if (!rec.clear) { rec.clear = true; gained++; }
+  if (g.clearPerfect && !rec.perfect) { rec.perfect = true; gained++; }
+  save.clears[save.track] = rec;
+  save.tokens += gained;
+  save.wins++;
+  persist(save);
+  return gained;
 }
 
 export function castStrike(g: Game, x: number, y: number): boolean {
@@ -318,6 +346,7 @@ export function tick(g: Game, save: SaveData, dt: number): void {
   // the stream still had the clock advancing under it, so stage, HP scaling
   // and the stage bounty all kept moving and staged enemies spawned tougher
   // than the test expected.
+  if (g.clearBannerT > 0) g.clearBannerT -= dt;
   tickRouting(g, dt);
 
   if (g.flowPaused) return;
@@ -326,6 +355,17 @@ export function tick(g: Game, save: SaveData, dt: number): void {
   g.wave = stageAt(g.runT);
   if (g.wave !== prevStage) {
     g.enemies.hpMul = waveHpMul(g.wave);
+    // ---- LEVEL CLEAR ----
+    // Reaching the far side of the final surge with the fort standing clears
+    // the track. It is a MILESTONE, not a terminal state: the flow carries on
+    // and the run still only ends when the fort falls, so best-time survives
+    // as the endless chase on top of a goal that can actually be finished.
+    if (!g.cleared && g.wave > WAVES_PER_RUN && g.baseHp > 0) {
+      g.cleared = true;
+      g.clearPerfect = g.baseHp >= g.baseMaxHp;
+      g.clearBannerT = 6;
+      g.clearTokens = awardClear(g, save);
+    }
     // A fresh draft every surge. It REPLACES the last one rather than queueing
     // — an offer you ignored is an offer you did not want, and stacking them
     // would turn a light decision into a backlog.

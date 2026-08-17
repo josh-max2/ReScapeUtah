@@ -27,6 +27,13 @@ export interface TreeNode {
   branch: BranchId;
   line: string;          // sub-cluster within the branch
   gate?: number;         // seconds of `bestTime` required before it can be bought
+  /**
+   * Priced in TOKENS instead of chips. Tokens only come from CLEARING tracks,
+   * so these are earned by finishing something rather than by grinding time —
+   * which is why they carry no `gate` as well: two gates on one node is
+   * friction, not depth.
+   */
+  costTokens?: number;
   apply: (m: MetaMods, lvl: number) => void;
 }
 
@@ -51,6 +58,14 @@ const n = (
   id: string, name: string, desc: string, ranks: number, base: number,
   branch: BranchId, line: string, apply: TreeNode['apply'], gate?: number,
 ): TreeNode => ({ id, name, desc, ranks, base, branch, line, apply, gate });
+
+/** A capstone: single rank, priced in tokens, no time gate. */
+const cap = (
+  id: string, name: string, desc: string, tokens: number,
+  branch: BranchId, line: string, apply: TreeNode['apply'],
+): TreeNode => ({
+  id, name, desc, ranks: 1, base: 0, branch, line, apply, costTokens: tokens,
+});
 
 export const TREE: TreeNode[] = [
   // ---------------- COMMAND — universal, no prerequisite ----------------
@@ -77,8 +92,8 @@ export const TREE: TreeNode[] = [
     (m, l) => { m.kind.rocket.dmgMul *= 1 + 0.10 * l; }),
   n('coils', 'Railgun Coils', 'Railgun +10% rate of fire', 3, 20, 'garage', 'Ballistics',
     (m, l) => { m.kind.railgun.rateMul *= 1 + 0.10 * l; }),
-  n('piercing', 'ARMOUR PIERCING', 'Kinetic towers ignore armor entirely', 1, 220, 'garage', 'Ballistics',
-    (m) => { m.pierceAll = true; }, G.deep),
+  cap('piercing', 'ARMOUR PIERCING', 'Kinetic towers ignore armor entirely', 2,
+    'garage', 'Ballistics', (m) => { m.pierceAll = true; }),
 
   n('fuelmix', 'Fuel Mix', 'Flamethrower burn lasts +10% longer', 5, 12, 'garage', 'Energy',
     (m, l) => { m.kind.flame.burnMul *= 1 + 0.10 * l; }),
@@ -91,8 +106,8 @@ export const TREE: TreeNode[] = [
     (m, l) => { m.kind.mine.chargesAdd += l; }),
   n('shells', 'Shell Capacity', 'Mortar Pit +10% damage', 5, 16, 'garage', 'Ordnance',
     (m, l) => { m.kind.mortar.dmgMul *= 1 + 0.10 * l; }),
-  n('carpet', 'CARPET', 'Every Mortar volley fires a second shell', 1, 240, 'garage', 'Ordnance',
-    (m) => { m.kind.mortar.salvoAdd += 1; }, G.deep),
+  cap('carpet', 'CARPET', 'Every Mortar volley fires a second shell', 2,
+    'garage', 'Ordnance', (m) => { m.kind.mortar.salvoAdd += 1; }),
 
   // ---------------- RULEBOOK — the horde and the rules ----------------
   n('scrutineering', 'Scrutineering', '-3 enemy armor, globally', 3, 24, 'rulebook', 'Root',
@@ -119,8 +134,8 @@ export const TREE: TreeNode[] = [
   n('toll', 'Attrition Toll', '4 damage/s while still inside the rift', 3, 24, 'rulebook', 'The rift',
     (m, l) => { m.riftDps += 4 * l; }),
 
-  n('giantslayer', 'GIANT-SLAYER', '+40% damage to Titans and bosses', 1, 220, 'rulebook', 'Mass',
-    (m) => { m.bossDmgMul *= 1.4; }, G.deep),
+  cap('giantslayer', 'GIANT-SLAYER', '+40% damage to Titans and bosses', 2,
+    'rulebook', 'Mass', (m) => { m.bossDmgMul *= 1.4; }),
 
   // ---------------- PIT WALL — track and tempo ----------------
   n('fastforward', 'Fast Forward', 'Unlock a faster speed step', 3, 10, 'pitwall', 'Root',
@@ -165,19 +180,21 @@ export const TREE: TreeNode[] = [
     (m) => { m.chipsPerMin += 2; }, G.mid),
   n('holdingsco', 'Holdings Co.', 'Bank 10% of unspent gold as chips at run end', 1, 150, 'holdings', 'Compound',
     (m) => { m.bankChips += 0.10; }, G.late),
-  n('principal', 'TEAM PRINCIPAL', 'Open every run with one weapon already built', 1, 240, 'holdings', 'Compound',
-    (m) => { m.prebuilt = true; }, G.deep),
+  cap('principal', 'TEAM PRINCIPAL', 'Open every run with one weapon already built', 2,
+    'holdings', 'Compound', (m) => { m.prebuilt = true; }),
 ];
 
 export const NODE_BY_ID = new Map(TREE.map((t) => [t.id, t]));
 
 /** Price of the NEXT rank given current level. Flat for single-rank nodes. */
 export function nodeCost(node: TreeNode, lvl: number): number {
+  if (node.costTokens) return node.costTokens;
   return Math.round(node.base * Math.pow(1.5, lvl));
 }
 
 /** Chips already sunk into a node — the refund basis for a respec. */
 export function nodeSpent(node: TreeNode, lvl: number): number {
+  if (node.costTokens) return 0; // token nodes refund tokens, not chips
   let sum = 0;
   for (let i = 0; i < lvl; i++) sum += nodeCost(node, i);
   return sum;
@@ -191,6 +208,15 @@ export function isGated(node: TreeNode, bestTime: number): boolean {
 export function treeSpent(owned: Record<string, number>): number {
   let sum = 0;
   for (const node of TREE) sum += nodeSpent(node, owned[node.id] ?? 0);
+  return sum;
+}
+
+/** Tokens sunk into the tree — refunded separately by a respec. */
+export function tokensSpent(owned: Record<string, number>): number {
+  let sum = 0;
+  for (const node of TREE) {
+    if (node.costTokens && (owned[node.id] ?? 0) > 0) sum += node.costTokens;
+  }
   return sum;
 }
 

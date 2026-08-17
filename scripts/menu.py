@@ -29,7 +29,7 @@ with sync_playwright() as p:
     # chips, which land back on top of the 123 already banked. Progress is not
     # preserved in place — it is preserved in value, to be respent in the tree.
     results["v1_save_migrates_keeping_progress"] = (
-        mig["version"] == 4 and mig["cores"] == 153 and mig["bestWave"] == 7
+        mig["version"] == 5 and mig["cores"] == 153 and mig["bestWave"] == 7
         and mig.get("upgrades") is None and mig["tree"] == {}
         and mig["settings"]["detail"] == "high")
 

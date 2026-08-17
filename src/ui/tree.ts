@@ -93,13 +93,18 @@ function detail(save: SaveData): string {
       <p>Pick a node.</p>
       <p class="dim">Chips come from kills and from time held. You keep them
       when you fail — that is the whole point.</p>
+      <p class="dim">★ Tokens are different: only CLEARING a track pays them.
+      One for the clear, one more for clearing it without losing a single point
+      of fort health. They buy the capstones, which chips cannot.</p>
     </div>`;
   }
   const lvl = save.tree[node.id] ?? 0;
   const maxed = lvl >= node.ranks;
   const gated = isGated(node, save.bestTime ?? 0);
   const cost = nodeCost(node, lvl);
-  const afford = !maxed && !gated && save.cores >= cost;
+  const tokenNode = !!node.costTokens;
+  const purse = tokenNode ? save.tokens : save.cores;
+  const afford = !maxed && !gated && purse >= cost;
   const gateM = node.gate ? Math.floor(node.gate / 60) : 0;
   const gateS = node.gate ? node.gate % 60 : 0;
   let action: string;
@@ -107,7 +112,8 @@ function detail(save: SaveData): string {
   else if (gated) {
     action = `<button disabled>HOLD ${gateM}:${gateS < 10 ? '0' : ''}${gateS}</button>`;
   } else {
-    action = `<button data-upgrade="${node.id}" ${afford ? '' : 'disabled'}>${cost} ◆</button>`;
+    action = `<button class="${tokenNode ? 'tokenbuy' : ''}" data-upgrade="${node.id}" `
+      + `${afford ? '' : 'disabled'}>${cost} ${tokenNode ? '★' : '◆'}</button>`;
   }
   return `<div class="nodedetail ${branchOf(node.id)}">
     <div class="ndline">${node.line.toUpperCase()}</div>
@@ -148,9 +154,9 @@ export function renderTree(save: SaveData): string {
       'node', p.node.branch,
       lvl > 0 ? 'owned' : '', maxed ? 'maxed' : '',
       gated ? 'gated' : '', selected === p.node.id ? 'sel' : '',
-      p.node.ranks === 1 && p.node.base >= 200 ? 'capstone' : '',
+      p.node.costTokens ? 'capstone token' : '',
     ].filter(Boolean).join(' ');
-    const r = p.node.line === 'Root' ? 17 : p.node.base >= 200 ? 16 : 13;
+    const r = p.node.line === 'Root' ? 17 : p.node.costTokens ? 16 : 13;
     dots += `<g class="${cls}" data-node="${p.node.id}">
       <circle cx="${p.x}" cy="${p.y}" r="${r}"/>
       ${lvl > 0 ? `<text x="${p.x}" y="${p.y + 4}">${lvl}</text>` : ''}
@@ -174,7 +180,8 @@ export function renderTree(save: SaveData): string {
           <h2>UPGRADES</h2>
           <p class="dim">Chips are kept when you fail. Deep nodes open as you hold longer.</p>
         </div>
-        <p class="meta-stats">CHIPS <b>${save.cores} ◆</b> · BANK <b>${Math.floor(save.gold)} ⬡</b>
+        <p class="meta-stats">CHIPS <b>${save.cores} ◆</b> · TOKENS <b>${save.tokens} ★</b>
+          · BANK <b>${Math.floor(save.gold)} ⬡</b>
           · LONGEST HELD <b>${bm}:${bs < 10 ? '0' : ''}${bs}</b></p>
       </div>
       <div class="treebody">

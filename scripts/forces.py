@@ -78,16 +78,24 @@ with sync_playwright() as p:
     R["heavier_cars_resist"] = imp_heavy < imp_light * 0.7
 
     # ---- the shove must not tunnel anyone off the track ----
-    off = page.evaluate(
+    # Measure with the FINE mask, which is what the car physics actually reads.
+    # The coarse walk mask needs >=25% road coverage per cell, so a car sitting
+    # legitimately at the edge of the road can land in a cell that mask calls
+    # wall — counting those reports a false off-track and fails a working shove.
+    probe = page.evaluate(
         """() => { const g = window.__swarm.game, e = g.enemies, C = 90, CELL = 20;
-             let bad = 0;
+             let coarse = 0, fine = 0;
              for (let i = 0; i < e.n; i++) {
                const cx = (e.x[i] / CELL) | 0, cy = (e.y[i] / CELL) | 0;
-               if (g.field.walk[cy * C + cx] !== 1) bad++;
+               if (g.field.walk[cy * C + cx] !== 1) coarse++;
+               // sampleDist rises past PATH_RADIUS only INSIDE a wall.
+               if (window.__swarm.sampleDist(e.x[i], e.y[i]) > 40) fine++;
              }
-             return bad; }"""
+             return { coarse, fine }; }"""
     )
-    print("cars left off-track by the blast:", off)
+    off = probe["fine"]
+    print(f"cars left off-track by the blast: {off}"
+          f"  (coarse-mask count {probe['coarse']}, incl. road-edge false positives)")
     R["shove_never_tunnels_off_track"] = off == 0
 
     # ---- and the wave must still resolve, not lean on the drain cull ----

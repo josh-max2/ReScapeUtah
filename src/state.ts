@@ -69,6 +69,20 @@ export interface Game {
   routes: FlowField[];
   /** Sim-seconds since the congestion field was last rebuilt. */
   flowAcc: number;
+  /** Cleared the track this run (survived past the final surge). */
+  cleared: boolean;
+  /** Cleared it without the fort taking a single point of damage. */
+  clearPerfect: boolean;
+  /** Tokens this clear paid out, for the banner. */
+  clearTokens: number;
+  /** Seconds left on the CLEARED banner. */
+  clearBannerT: number;
+  /**
+   * Whether this run may mint tokens. `?demo=N` drops straight into a late
+   * surge with a prebuilt gun line — reaching the finish from there is not an
+   * achievement and must not pay.
+   */
+  tokenEligible: boolean;
   /** Tiles the player has drafted into the map this run. */
   tiles: { kind: TileKind; x: number; y: number }[];
   /** The three tiles currently on offer, or null between surges. */

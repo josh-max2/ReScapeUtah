@@ -379,6 +379,44 @@ Curve as of this pass: poor dies ~w8, strong ~w10, with an EMPTY meta tree.
 That is the intended roguelite starting point — the skill tree is meant to
 carry the rest. Re-measure rather than reasoning about balance from the code.
 
+## TOKENS + THE CLEAR (owner-directed 2026-08-17)
+
+Two currencies, deliberately different in what they reward:
+- **CHIPS** (`save.cores`) come from kills and time held, are kept when you
+  fail, and buy the ordinary tree. Grinding pays them.
+- **TOKENS** (`save.tokens`) come ONLY from clearing a track: one for a first
+  clear, one more for a first clear at full fort health. They price the four
+  capstones, which chips cannot buy at any price.
+
+`save.clears[trackId] = { clear, perfect }` is the ledger, and the awards are
+once per track per kind — without it, replaying the easiest track mints tokens
+forever and the capstones are free. Supply is therefore 4 tracks x 2 = 8, and
+the capstones cost 2 each. Their old `bestTime` gates are GONE: earning the
+token is the gate, and two gates on one node is friction, not depth.
+
+`g.tokenEligible` is cleared by `?demo=N`, which drops into a late surge with a
+prebuilt gun line — reaching the finish from there is not an achievement.
+Save **v5**. `scripts/tokens.py` covers all of it.
+
+## SCALING — why the late game had no arc (measured 2026-08-17)
+
+A 7-minute playtest sat at 333/400 fort HP from surge 8 to surge 18, never once
+threatened. The obvious suspect was the rift being a throughput cap, so it was
+measured first: bodies/sec is 6.6 at surge 5, 12.8 at 10, 41.5 at 14, 78.7 at
+17, 113.6 at 20, 349 at 24. **Count scales fine — the rift is not a cap.**
+
+The real cause: player DPS compounds (kills -> gold -> more permanent towers)
+while per-body toughness rose only LINEARLY (`1 + 0.11(w-1)`). A wall of 4hp
+mites is trivial to a mature gun line however many there are. `waveHpMul` now
+adds a quadratic tail past surge 10 (`+0.022*(w-10)^2`), identical below it so
+the opening — already a real fight — is untouched. Same playtest after: fort HP
+263 -> 233 -> 182 and the run ENDED at surge 23. Clear lands at 21, death in the
+low 20s, which is the intended shape. Numbers provisional pending playtest.
+
+STILL OPEN: the gold sink. That run finished holding 33,000 unspent gold with
+nothing to buy — the economy stops meaning anything around minute five, and
+neither directive covered it.
+
 ## DRAFTED TILES — the map is no longer fixed (2026-08-17)
 
 Every surge offers three pieces (`sim/tiles.ts`); taking one lets the player
@@ -482,9 +520,11 @@ phase, no wave phase, no win state.
   the pool and rising `hpMul` makes staged units tougher than the test expects.
   Both mistakes were made and caught while building this.
 
-STILL OPEN after this change: there is no win condition or level-clear rule —
-a run ends only when the fort falls. The difficulty harness still thinks in
-waves and needs reworking against time survived.
+RESOLVED 2026-08-17 — there IS a clear now, and it did not cost the endless
+model. See TOKENS below: reaching the far side of the final surge with the fort
+standing CLEARS the track. It is a milestone inside a run that keeps going, so
+"a run ends only when the fort falls" is still literally true and best-time
+survives as the endless chase on top of a goal you can actually finish.
 
 ## Tower aiming — FIXED ANGLE (owner-directed 2026-08-16)
 

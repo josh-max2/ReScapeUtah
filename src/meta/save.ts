@@ -44,13 +44,26 @@ export interface SaveData {
   track: string;
   /** First-run coaching has been completed or skipped. */
   taught: boolean;
+  /**
+   * Tokens. A second currency that only CLEARING tracks pays out — one for a
+   * first clear, one more for a first clear at full health. They price the
+   * capstones, which chips cannot buy at any price, so the deepest upgrades
+   * are earned by playing well rather than by grinding time.
+   */
+  tokens: number;
+  /**
+   * Per-track award ledger. Awards fire on the FIRST clear and the FIRST
+   * perfect clear only — without this, replaying the easiest track mints
+   * tokens forever.
+   */
+  clears: Record<string, { clear: boolean; perfect: boolean }>;
   bestWave: number;
   wins: number;
   settings: Settings;
 }
 
 const KEY = 'swarm-td-save';
-const VERSION = 4;
+const VERSION = 5;
 
 const DEFAULTS: SaveData = {
   version: VERSION,
@@ -60,6 +73,8 @@ const DEFAULTS: SaveData = {
   tree: {},
   track: 'map2',
   taught: false,
+  tokens: 0,
+  clears: {},
   bestWave: 0,
   wins: 0,
   settings: { ...DEFAULT_SETTINGS },
@@ -134,6 +149,11 @@ export function loadSave(): SaveData {
       // so a v4 save written an hour ago reads `taught: false` and simply gets
       // the coaching once. No player state can be lost by this.
       taught: data.taught === true,
+      // v4 -> v5: tokens did not exist. A v4 player starts the token economy
+      // empty and their existing clears are not retroactively paid, because v4
+      // had no notion of clearing anything to record.
+      tokens: typeof data.tokens === 'number' ? data.tokens : 0,
+      clears: data.clears && typeof data.clears === 'object' ? data.clears : {},
       bestWave: typeof data.bestWave === 'number' ? data.bestWave : 0,
       wins: typeof data.wins === 'number' ? data.wins : 0,
       settings: readSettings(data.settings),

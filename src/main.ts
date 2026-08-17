@@ -10,11 +10,11 @@ import { initArt } from './render/sprites';
 // The map is an image and the terrain is textured — both must load first.
 await Promise.all([initTerrain(), initArt()]);
 import { createGame, startRun, castStrike, tick } from './sim/run';
-import { waveMix, STAGE_SECS, waveHpMul } from './sim/waves';
+import { waveMix, STAGE_SECS, waveHpMul, flowRate } from './sim/waves';
 import { shove } from './sim/combat';
 import { placeTower, upgradeTower, sellTower, destroyTower, towerCost } from './sim/towers';
 import { loadSave, persist, type Settings } from './meta/save';
-import { computeMods, NODE_BY_ID, TREE, nodeCost, isGated, treeSpent } from './meta/tree';
+import { computeMods, NODE_BY_ID, TREE, nodeCost, isGated, treeSpent, tokensSpent } from './meta/tree';
 import { emptyMods } from './meta/upgrades';
 import { CARDS, playModCard, playStrikeCard, playInstantCard } from './sim/cards';
 import { initHand, updateHand } from './ui/hand';
@@ -100,11 +100,17 @@ const cb: HudCallbacks = {
     if (!node) return;
     const lvl = save.tree[id] ?? 0;
     const cost = nodeCost(node, lvl);
+    if (lvl >= node.ranks) return;
     // Gates read bestTime, so a node can be visible-but-locked and its price
     // still shown — the player can see what holding longer would open.
-    if (lvl >= node.ranks || save.cores < cost) return;
     if (isGated(node, save.bestTime ?? 0)) return;
-    save.cores -= cost;
+    if (node.costTokens) {
+      if (save.tokens < cost) return;
+      save.tokens -= cost;
+    } else {
+      if (save.cores < cost) return;
+      save.cores -= cost;
+    }
     save.tree[id] = lvl + 1;
     persist(save);
     markMetaDirty();
@@ -114,6 +120,7 @@ const cb: HudCallbacks = {
     // makes players hoard rather than experiment, which is the opposite of
     // what a tree this size wants.
     save.cores += treeSpent(save.tree);
+    save.tokens += tokensSpent(save.tree);
     save.tree = {};
     persist(save);
     markMetaDirty();
@@ -322,6 +329,9 @@ if (demoParam !== null) {
   // Clamp: waveBudget grows exponentially, an absurd N would hang the spawner.
   const demoWave = clamp(parseInt(demoParam, 10) || 5, 1, WAVES_PER_RUN);
   startRun(game, computeMods(save.tree));
+  // A demo jumps straight into a late surge with a prebuilt gun line. Reaching
+  // the finish from there is not an achievement, so it must not mint tokens.
+  game.tokenEligible = false;
   game.gold = 3000;
   // Towers on the canyon rims: unwalkable cells that touch the road.
   const kinds: TowerKind[] = [
@@ -380,6 +390,7 @@ if (demoParam !== null) {
   place: (kind: TowerKind, cx: number, cy: number) => placeTower(game, kind, cx, cy),
   // Wave composition, so harnesses can assert what can and cannot spawn.
   waveMix,
+  flowRate,
   // Blast physics probe for the force harness.
   shove: (x: number, y: number, r: number, power: number) => shove(game, x, y, r, power),
   // Perf probe: bunched spawns along the channel, like real waves.

@@ -104,8 +104,22 @@ function pickType(mix: WaveMix): number {
 
 // Linear HP scaling per the owner's spec — speed and armor NEVER scale, so
 // counterplay stays stable across the run.
+/**
+ * Per-body toughness. Linear early, quadratic tail past surge 10.
+ *
+ * Measured 2026-08-17: body COUNT already scales hard (6.6/s at surge 5 to
+ * 349/s at surge 24 — the rift is not a throughput cap), but a wall of 4hp
+ * mites is trivial to a mature gun line however many of them there are. A
+ * 7-minute playtest sat at 333/400 fort HP from surge 8 to surge 18, never
+ * threatened, because player DPS compounds with gold while toughness only rose
+ * linearly. Toughness now has to climb faster than DPS can be bought.
+ *
+ * Deliberately identical up to surge 10, so the opening — the part that was
+ * already a real fight — is untouched.
+ */
 export function waveHpMul(wave: number): number {
-  return 1 + 0.11 * (wave - 1);
+  const late = Math.max(0, wave - 10);
+  return 1 + 0.11 * (wave - 1) + 0.022 * late * late;
 }
 
 /**

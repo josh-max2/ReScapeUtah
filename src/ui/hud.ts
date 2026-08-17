@@ -45,6 +45,7 @@ interface HudRefs {
   coresEl: HTMLElement;
   coach: HTMLElement;
   draft: HTMLElement;
+  clearBanner: HTMLElement;
   towerBtns: Map<TowerKind, HTMLButtonElement>;
   strikeBtn: HTMLButtonElement;
   strikeCd: HTMLElement;
@@ -141,6 +142,11 @@ export function initHud(root: HTMLElement, cb: HudCallbacks): HTMLElement {
     if (b) cb.takeTile(b.getAttribute('data-tile')!);
   });
 
+  // Transient CLEARED banner. The clear is a milestone inside a run that keeps
+  // going, so it announces itself and gets out of the way.
+  const clearBanner = el('div', 'panel clearbanner', hud);
+  clearBanner.style.display = 'none';
+
   const ctl = el('div', 'panel ctl', hud);
   const speedBtn = el('button', 'slot', ctl, '<div class="k">SPEED</div>');
   const speedVal = el('div', 'n', speedBtn, '1×');
@@ -227,7 +233,7 @@ export function initHud(root: HTMLElement, cb: HudCallbacks): HTMLElement {
   });
 
   refs = {
-    waveEl, hpFill, hpText, goldEl, killsEl, coresEl, coach, draft,
+    waveEl, hpFill, hpText, goldEl, killsEl, coresEl, coach, draft, clearBanner,
     towerBtns, strikeBtn, strikeCd, speedBtn, speedVal, metaScreen,
     perkScreen, inspect, bossBar,
   };
@@ -380,9 +386,13 @@ function renderTracks(save: SaveData): string {
   let cards = '';
   for (const t of TRACKS) {
     const on = save.track === t.id;
+    const rec = save.clears?.[t.id];
+    const badge = rec?.perfect ? '<div class="tkclear perfect">PERFECT ★★</div>'
+      : rec?.clear ? '<div class="tkclear">CLEARED ★</div>' : '';
     cards += `
       <button class="trackcard${on ? ' on' : ''}" data-track="${t.id}">
         <img src="/maps/${t.id}.png" alt="" />
+        ${badge}
         <div class="tkname">${t.name}</div>
         <div class="tkblurb">${t.blurb}</div>
         ${on ? '<div class="tkon">SELECTED</div>' : ''}
@@ -391,7 +401,9 @@ function renderTracks(save: SaveData): string {
   return `
     <div class="metainner wide">
       <h2>TRACKS</h2>
-      <p>Every track is one unbroken flow. They differ in how the horde arrives.</p>
+      <p>Every track is one unbroken flow. Survive past the final surge to clear
+        it — once for a token, and once more without losing a single point of
+        fort health for a second.</p>
       <div class="trackgrid">${cards}</div>
       <div class="metanav">
         <button class="linkbtn" data-view="hangar">BACK</button>
@@ -410,7 +422,11 @@ function renderMeta(g: Game, save: SaveData): void {
   let head = '';
   if (g.phase === 'lost') {
     const m = Math.floor(g.runT / 60), sec = Math.floor(g.runT % 60);
-    head = `<h2 class="bad">OVERRUN</h2><p>You held for ` +
+    const clr = g.cleared
+      ? `<p class="cleared">TRACK CLEARED${g.clearPerfect ? ' — PERFECT' : ''}` +
+        `${g.clearTokens > 0 ? ` · +${g.clearTokens} ★` : ' · already banked'}</p>`
+      : '';
+    head = `<h2 class="bad">OVERRUN</h2>${clr}<p>You held for ` +
       `${m}:${sec < 10 ? '0' : ''}${sec}, to surge ${g.wave}. ` +
       `Your money stays with you — go again.</p>`;
   } else {
@@ -443,6 +459,18 @@ let draftKey = '';
 
 export function updateHud(g: Game, save: SaveData, ui: UiState): void {
   if (!refs) return;
+  const showClear = g.clearBannerT > 0;
+  refs.clearBanner.style.display = showClear ? '' : 'none';
+  if (showClear && !refs.clearBanner.innerHTML) {
+    refs.clearBanner.innerHTML =
+      `<div class="cbt">TRACK CLEARED${g.clearPerfect ? ' — PERFECT' : ''}</div>` +
+      `<div class="cbs">${g.clearTokens > 0
+        ? `+${g.clearTokens} TOKEN${g.clearTokens > 1 ? 'S' : ''} · the flow does not stop`
+        : 'already banked · the flow does not stop'}</div>`;
+  } else if (!showClear && refs.clearBanner.innerHTML) {
+    refs.clearBanner.innerHTML = '';
+  }
+
   // Tile draft panel, rebuilt only when the offer or the pick changes.
   const key = `${(g.tileOffer ?? []).join(',')}|${ui.placingTile ?? ''}`;
   if (key !== draftKey) {
