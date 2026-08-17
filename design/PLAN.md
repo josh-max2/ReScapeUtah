@@ -63,19 +63,10 @@ re-run `profile.py` at 10k before accepting more passes.
 **Done when:** deepest penetration under ~1 px away from spawn points, and
 `profile.py` unchanged.
 
-### 4. The drain-cull tail
-**Why:** waves end on the 120-second safety cull instead of resolving. At 1×
-that is up to two real minutes of the player watching an empty map. Found in
-the audit, documented twice, never fixed.
-**Know:** the survivor is usually the slow anchor — titan or boss — crossing a
-big map, plus a few stragglers. Unresolved question: **does the cull ever
-delete a live boss**, silently voiding its bounty and its threat? Check that
-before choosing a fix.
-**Options, in order of preference:** end the wave when every remaining unit is
-cull-eligible; speed the tail; shorten the timer. Shortening alone hides it.
-**Done when:** waves 5, 10, 15 and 20 end with `drainT` well under 120.
-
----
+### 4. ~~The drain-cull tail~~ — MOOT (continuous flow, 2026-08-17)
+The 120s safety cull existed only to guarantee a wave could end. Continuous
+flow removed waves and deleted the cull with them, along with the silent
+deletion of stragglers and bosses it was doing.
 
 ## Phase 2 — make it feel like a game
 

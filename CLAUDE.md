@@ -436,7 +436,8 @@ off-track.
 displacement and reset on any tick moving >0.2px, so a car grinding in place at
 ~9px/s never registered (audit found one holding position 46s). It now measures
 NET displacement over a 1s window (`STUCK_WINDOW`, `STUCK_MIN_MOVE`).
-STILL OPEN: waves frequently end on the 120s drain cull rather than resolving.
+(The drain-cull note that sat here is RESOLVED: continuous flow deleted the
+cull entirely — there are no waves left to fail to resolve.)
 
 ## Front end + settings (2026-08-16)
 
