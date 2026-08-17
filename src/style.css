@@ -1182,9 +1182,12 @@ body,
 
 .tilecard .tkd { font-size: 10px; line-height: 1.35; color: var(--ink-dim); }
 
-/* ---- track cleared ---- */
+/* ---- track cleared ----
+   Sits BELOW the boss bar. The final boss arrives on surge 20 and the clear
+   fires on 21, so the two are on screen together almost every time — at the
+   same offset the clear was half-hidden behind THE MARSHAL. */
 .clearbanner {
-  top: 92px;
+  top: 200px;
   left: 50%;
   transform: translateX(-50%);
   padding: 12px 30px 14px;
