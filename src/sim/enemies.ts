@@ -313,46 +313,7 @@ export function updateEnemies(g: Game, dt: number): void {
     // Base steering = flow… or, if we were shoved off-track (flow dir is 0
     // out there), steer straight back in — never wander without a path.
     let ffx = fdx, ffy = fdy;
-    // A wrecker parked against its target barely moves; that must count as a
-    // legitimate hold or the stuck-rescue teleports it away mid-ram.
-    let ramming = false;
-    // WRECKER: ignores the fort and drives at the nearest structure instead.
-    // Damage is PROXIMITY-based, not cell-occupancy: weapon towers sit on
-    // unwalkable rims, and wall collision projects cars away before they can
-    // ever enter the tower's cell — so the normal chew never fires for them.
-    // Frustration fallback: a wrecker whose target sits behind geometry it
-    // can't cross would grind the wall forever (thousands of stuck-rescues in
-    // soak). If it stops making progress, drop the hunt and rejoin the flow;
-    // stuckT decays once it's moving, so it resumes hunting on its own.
-    if (t.ability === 'wreck' && g.towers.length > 0 && e.stuckT[i] < 1.2) {
-      let best = -1, bd = 260 * 260;
-      for (let k = 0; k < g.towers.length; k++) {
-        const dxT = g.towers[k].x - px, dyT = g.towers[k].y - py;
-        const d2 = dxT * dxT + dyT * dyT;
-        if (d2 < bd) { bd = d2; best = k; }
-      }
-      if (best >= 0) {
-        const dxT = g.towers[best].x - px, dyT = g.towers[best].y - py;
-        const dl = Math.sqrt(dxT * dxT + dyT * dyT) || 1;
-        ffx = dxT / dl;
-        ffy = dyT / dl;
-        // Rim-mounted towers sit inside the wall, and wall collision holds the
-        // car ~28px off the tower centre — reach must clear that or the
-        // wrecker grinds forever without ever landing a hit.
-        const reach = 26 + t.r;
-        if (dl <= reach) {
-          ramming = true;
-          g.towers[best].hp -= t.dps * dt;
-          if (g.effects.length < 460 && Math.random() < 0.10) {
-            g.effects.push({
-              kind: 'flash', x: g.towers[best].x, y: g.towers[best].y,
-              r: 14, t: 0, ttl: 0.16, color: '#e0864a',
-            });
-          }
-        }
-      }
-    }
-    const offTrack = fdx === 0 && fdy === 0 && !(t.ability === 'wreck' && ffx !== 0);
+    const offTrack = fdx === 0 && fdy === 0;
     if (offTrack) {
       ffx = -wnx;
       ffy = -wny;
@@ -453,7 +414,7 @@ export function updateEnemies(g: Game, dt: number): void {
     }
     const mc = clamp((my / CELL) | 0, 0, ROWS - 1) * COLS + clamp((mx / CELL) | 0, 0, COLS - 1);
 
-    let holding = ramming;
+    let holding = false;
     if (f.blocked[mc] === 1 && mc !== c) {
       // Something is in the way: chew if allowed, and SLIDE along it so the
       // pack flows around corners instead of pinning against the face.

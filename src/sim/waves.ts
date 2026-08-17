@@ -2,7 +2,7 @@
 // types phase in as waves progress; a titan anchors every 5th wave.
 
 import {
-  ENEMY_TYPES, SWARMER, RUNNER, HAULER, SPLITTER, SHIELDER, MENDER, WRECKER, TITAN,
+  ENEMY_TYPES, SWARMER, RUNNER, HAULER, SPLITTER, SHIELDER, MENDER, TITAN,
   BOSS_TYPES, WAVES_PER_RUN,
 } from '../defs';
 import { SPAWN_X, SPAWN_Y1, SPAWN_Y2, isOpen } from './terrain';
@@ -30,22 +30,22 @@ export function waveMix(wave: number): WaveMix {
   if (wave === 6) return { label: 'SPLITTERS', weights: { [SWARMER]: 0.5, [SPLITTER]: 0.5 } };
   if (wave === 7) return { label: 'SPEED', weights: { [SWARMER]: 0.4, [RUNNER]: 0.6 } };
   if (wave === 8) return { label: 'SHIELDED', weights: { [SWARMER]: 0.72, [SHIELDER]: 0.08, [HAULER]: 0.2 } };
-  if (wave === 9) return { label: 'WRECKERS', weights: { [SWARMER]: 0.6, [WRECKER]: 0.4 } };
+  if (wave === 9) return { label: 'PRESSURE', weights: { [SWARMER]: 0.5, [HAULER]: 0.3, [RUNNER]: 0.2 } };
   if (wave === 10) return { label: 'ANCHOR', weights: { [SWARMER]: 0.45, [SPLITTER]: 0.25, [HAULER]: 0.3 } };
   if (wave === 11) return { label: 'MENDED', weights: { [SWARMER]: 0.67, [MENDER]: 0.08, [HAULER]: 0.25 } };
   if (wave === 12) return { label: 'BLITZ', weights: { [RUNNER]: 0.7, [SWARMER]: 0.3 } };
-  if (wave === 13) return { label: 'DEMOLITION', weights: { [WRECKER]: 0.45, [SWARMER]: 0.4, [HAULER]: 0.15 } };
+  if (wave === 13) return { label: 'CRUSH', weights: { [HAULER]: 0.5, [SWARMER]: 0.4, [SPLITTER]: 0.1 } };
   if (wave === 14) return { label: 'MITOSIS', weights: { [SPLITTER]: 0.55, [SWARMER]: 0.39, [MENDER]: 0.06 } };
   if (wave === 15) return { label: 'ANCHOR', weights: { [SWARMER]: 0.44, [HAULER]: 0.25, [SHIELDER]: 0.06, [RUNNER]: 0.25 } };
   if (wave === 16) return { label: 'BULWARK', weights: { [SHIELDER]: 0.09, [HAULER]: 0.41, [SWARMER]: 0.5 } };
   if (wave === 17) return { label: 'ATTRITION', weights: { [MENDER]: 0.09, [SPLITTER]: 0.41, [SWARMER]: 0.5 } };
-  if (wave === 18) return { label: 'ONSLAUGHT', weights: { [WRECKER]: 0.18, [RUNNER]: 0.4, [SHIELDER]: 0.06, [SWARMER]: 0.36 } };
-  if (wave === 19) return { label: 'SIEGE', weights: { [HAULER]: 0.32, [SPLITTER]: 0.3, [MENDER]: 0.08, [WRECKER]: 0.3 } };
+  if (wave === 18) return { label: 'ONSLAUGHT', weights: { [RUNNER]: 0.5, [SHIELDER]: 0.06, [SWARMER]: 0.44 } };
+  if (wave === 19) return { label: 'SIEGE', weights: { [HAULER]: 0.42, [SPLITTER]: 0.4, [MENDER]: 0.08, [SWARMER]: 0.1 } };
   return {
     label: 'FINAL',
     weights: {
-      [SWARMER]: 0.34, [RUNNER]: 0.18, [HAULER]: 0.16, [SPLITTER]: 0.16,
-      [SHIELDER]: 0.05, [MENDER]: 0.04, [WRECKER]: 0.07,
+      [SWARMER]: 0.41, [RUNNER]: 0.18, [HAULER]: 0.16, [SPLITTER]: 0.16,
+      [SHIELDER]: 0.05, [MENDER]: 0.04,
     },
   };
 }

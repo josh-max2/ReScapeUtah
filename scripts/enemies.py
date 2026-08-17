@@ -95,29 +95,23 @@ with sync_playwright() as p:
     R["runner_outruns_swarmer"] = run_d > swarm_d * 1.25
     print(f"  travel: swarmer {swarm_d:.0f}px vs runner {run_d:.0f}px")
 
-    # --- WRECKER: drives at a tower instead of the fort ---
-    clear()
-    rim = snap_rim(page, 900, 300)
-    page.keyboard.press("Escape")
-    page.keyboard.press("1")
-    page.mouse.click(box["x"] + box["w"] * rim[0] / W, box["y"] + box["h"] * rim[1] / H)
-    page.keyboard.press("Escape")
-    time.sleep(0.2)
-    twr = page.evaluate("() => window.__swarm.game.towers.length")
-    near = open_near_rim(page, rim, 60, 150)
-    spawn(6, near)
-    d0 = page.evaluate(f"""() => {{ const e = window.__swarm.game.enemies;
-        return Math.hypot(e.x[0] - {rim[0]}, e.y[0] - {rim[1]}); }}""")
-    time.sleep(3.5)
-    d1 = page.evaluate(f"""() => {{ const g = window.__swarm.game, e = g.enemies;
-        return e.n > 0 ? Math.hypot(e.x[0] - {rim[0]}, e.y[0] - {rim[1]}) : -1; }}""")
-    hp_left = page.evaluate("() => window.__swarm.game.towers.length ? window.__swarm.game.towers[0].hp : 0")
-    # Must actually DAMAGE the tower — approaching is not the mechanic.
-    R["wrecker_attacks_structures"] = twr == 1 and hp_left < 80
-    print(f"  wrecker dist {d0:.0f} -> {d1:.0f}, tower hp {hp_left:.0f}")
+    # --- WRECKER is RETIRED (2026-08-17) ---
+    # It steered at the nearest tower, but weapon towers mount on unwalkable
+    # rim cells, so it drove into the wall beside its target and pressed there.
+    # Guard the retirement rather than the behaviour: if anything puts it back
+    # into a wave, this fails.
+    wrecker_waves = page.evaluate(
+        """() => { const out = [];
+             for (let w = 1; w <= 20; w++) {
+               const mix = window.__swarm.waveMix ? window.__swarm.waveMix(w) : null;
+               if (mix && mix.weights && mix.weights[6]) out.push(w);
+             }
+             return out; }"""
+    )
+    print(f"  waves still containing wreckers: {wrecker_waves}")
+    R["wrecker_stays_retired"] = wrecker_waves == []
 
     # --- SOFT ARMOR: a light weapon still hurts a heavy unit ---
-    # Needs its own emplacement: the wrecker above just destroyed the last one.
     clear()
     rim2 = snap_rim(page, 500, 700)
     page.keyboard.press("Escape")

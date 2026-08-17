@@ -10,6 +10,7 @@ import { initArt } from './render/sprites';
 // The map is an image and the terrain is textured — both must load first.
 await Promise.all([initTerrain(), initArt()]);
 import { createGame, startRun, startWave, castStrike, tick } from './sim/run';
+import { waveMix } from './sim/waves';
 import { shove } from './sim/combat';
 import { placeTower, upgradeTower, sellTower, destroyTower } from './sim/towers';
 import { loadSave, persist, type Settings } from './meta/save';
@@ -288,6 +289,8 @@ if (demoParam !== null) {
   // Placement through the real code path, so harnesses can build a barrier
   // without pixel-clicking every cell (needed to test the sealed-route rule).
   place: (kind: TowerKind, cx: number, cy: number) => placeTower(game, kind, cx, cy),
+  // Wave composition, so harnesses can assert what can and cannot spawn.
+  waveMix,
   // Blast physics probe for the force harness.
   shove: (x: number, y: number, r: number, power: number) => shove(game, x, y, r, power),
   // Perf probe: bunched spawns along the channel, like real waves.

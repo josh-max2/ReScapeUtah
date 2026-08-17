@@ -51,7 +51,7 @@ export type EnemyAbility =
   | 'split'   // bursts into swarmers on death — the mass multiplies
   | 'shield'  // aura: units inside take reduced damage
   | 'heal'    // aura: units inside regenerate
-  | 'wreck'   // ignores the fort, drives at towers/walls and rams them
+  | 'wreck'   // RETIRED — see WRECKER below; no live enemy uses this
   | 'surge'   // periodic speed bursts — outruns the kill zone
   // --- boss abilities: one big legible threat, one idea each ---
   | 'drop'    // periodically unloads fresh units from its ramp
@@ -130,8 +130,14 @@ export const ENEMY_TYPES: EnemyDef[] = [
     dps: 8, leak: 4, gold: 6, cores: 1.3, cost: 7,
     color: '#7a2a5e', nose: '#e89fd0', ability: 'heal',
     auraR: 84, auraAmt: 7 },
-  // 6 WRECKER — ignores the fort entirely, drives at your towers and rams
-  // them. Rewrites your layout mid-wave.
+  // 6 WRECKER — RETIRED 2026-08-17 (owner call: "they just get stuck").
+  // It steered straight at the nearest tower, but weapon towers mount on
+  // UNWALKABLE rim cells, so the wrecker drove into the wall beside its target
+  // and pressed there. No amount of frustration-fallback tuning fixed the root
+  // cause: the thing it wants to reach is somewhere it cannot stand.
+  // The slot is kept so TITAN and the bosses do not renumber (literal type
+  // indices are used throughout the harnesses). Nothing spawns it: it is in no
+  // wave mix and the 'wreck' steering branch is gone.
   { name: 'wrecker', hp: 150, speed: 46, accel: 60, turn: 1.6, r: 6.8, thresh: 6,
     dps: 46, leak: 2, gold: 7, cores: 1.6, cost: 9,
     color: '#8a3a1c', nose: '#e0864a', ability: 'wreck' },

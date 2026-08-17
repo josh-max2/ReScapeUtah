@@ -87,7 +87,12 @@ The textured terrain is the established look; do not regress it to flat fills.
   visibly when towers/walls change the track.
 - Ground history: kill sites stamp OIL (not blood); hard cornering/wall
   scrapes stamp tire marks. Persistent per run (GroundLayer).
-- Hordes are 8x scale (waveBudget 480 base). Fodder principle: mites die to
+- Wave size: `waveBudget` is `55 * 1.28^(wave-1)`, NOT the old flat 480 — the
+  8x-scale figure was rebalanced away after the difficulty harness showed wave
+  1 at 480 was unwinnable for every skill bracket. Budget buys COST, not
+  bodies, so unit counts depend on the mix. Measured queue sizes: w1 55 ·
+  w5 63 · w9 88 · w12 589 · w14 469 · w20 1153. Early waves are genuinely
+  small by design; the flood arrives from ~w12. Fodder principle: mites die to
   one gun shot; threat = volume + speed + tanks. Balance posture 2026-08-16
   (provisional, owner playtest pending): startGold 120, mite hp 4 / leak 3.
 - TOWER ROSTER (owner spec, 2026-08-16): 10 weapons (autocannon, flame,
@@ -169,11 +174,21 @@ units each chunk of HP it loses). Bosses justify single-target towers such as
 the Lattice and Railgun — do NOT "fix" those for being anti-horde.
 `scripts/bosses.py` asserts each boss's idea plus the health bar.
 
-The seven archetypes: SWARMER (baseline flood) · RUNNER (speed surges, tests
-depth) · HAULER (armoured soak) · SPLITTER (bursts into 4 swarmers — mass
-multiplies) · SHIELDER (bubble reduces damage inside) · MENDER (heal aura,
-demands burst) · WRECKER (ignores the fort, rams towers) + TITAN every 5th
-wave. Wave composition in `waveMix()` gives each wave ONE pressure and a HUD
+The archetypes: SWARMER (baseline flood) · RUNNER (speed surges, tests depth) ·
+HAULER (armoured soak) · SPLITTER (bursts into 4 swarmers — mass multiplies) ·
+SHIELDER (bubble reduces damage inside) · MENDER (heal aura, demands burst)
++ TITAN every 5th wave.
+
+WRECKER is **RETIRED** (owner call 2026-08-17: "they just get stuck"). It
+steered straight at the nearest tower, but weapon towers mount on UNWALKABLE
+rim cells — so it drove into the wall beside its target and pressed there
+forever. The frustration fallback never fixed the root cause: the thing it
+wants to reach is somewhere it cannot stand. Its def slot survives at index 6
+so TITAN and the bosses do not renumber (harnesses use literal type indices),
+but nothing spawns it and the 'wreck' steering branch is deleted.
+`scripts/enemies.py` asserts no wave mix contains it. **Any future
+tower-attacking enemy must be able to physically reach a rim-mounted tower**,
+or it will reproduce this exactly. Wave composition in `waveMix()` gives each wave ONE pressure and a HUD
 label; new archetypes phase in gradually, never debuting as the bulk of a wave.
 `scripts/enemies.py` asserts every ability — keep it green.
 
