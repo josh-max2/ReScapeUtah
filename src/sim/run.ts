@@ -130,7 +130,9 @@ export function castStrike(g: Game, x: number, y: number): boolean {
   return true;
 }
 
-function sweepDeaths(g: Game): void {
+/** Returns true if anything was spawned (splitter bursts) while sweeping. */
+function sweepDeaths(g: Game): boolean {
+  let spawned = false;
   const e = g.enemies;
   // Cryo's Shatter branch: anything killed while Frozen detonates.
   const shatter = g.towers.some((t) => t.kind === 'cryo' && t.upg === 2);
@@ -164,7 +166,9 @@ function sweepDeaths(g: Game): void {
         let sx = px, sy = py, found = false;
         for (let attempt = 0; attempt < 6 && !found; attempt++) {
           const a = base + attempt * 0.7;
-          const d = 11 - attempt;
+          // Never below the widest child pair's combined radius (~8.7px) or
+          // the children are born overlapping each other.
+          const d = Math.max(9, 13 - attempt);
           const tx = px + Math.cos(a) * d;
           const ty = py + Math.sin(a) * d;
           if (isOpen(tx, ty)) { sx = tx; sy = ty; found = true; }
@@ -175,6 +179,7 @@ function sweepDeaths(g: Game): void {
           sy = py + (Math.random() - 0.5) * 6;
         }
         e.spawn(child, sx, sy);
+        spawned = true;
       }
       g.effects.push({
         kind: 'boom', x: px, y: py, r: 26, t: 0, ttl: 0.35, color: '#d4e86a',
@@ -193,6 +198,7 @@ function sweepDeaths(g: Game): void {
     }
     e.kill(i);
   }
+  return spawned;
 }
 
 export function endRun(g: Game, save: SaveData, won: boolean): void {
@@ -231,7 +237,18 @@ export function tick(g: Game, save: SaveData, dt: number): void {
   for (let i = 0; i < e.n; i++) g.hash.insert(i, e.x[i], e.y[i]);
   separate(g);
   updateTowers(g, dt);
-  sweepDeaths(g);
+  const born = sweepDeaths(g);
+  // Splitter bursts are created INSIDE sweepDeaths — after the main separation
+  // pass — so without this their children sit interpenetrated for a whole
+  // rendered frame. Measured: every deepest overlap was age 0, born that tick.
+  // Only pay for it on ticks that actually spawned something, which buys
+  // enough budget to run the two passes it takes to clear a burst landing in
+  // an existing crowd.
+  if (born && e.n > 1) {
+    g.hash.clear();
+    for (let i = 0; i < e.n; i++) g.hash.insert(i, e.x[i], e.y[i]);
+    separate(g, 2);
+  }
 
   // Effects age out here so they respect sim speed.
   for (let i = g.effects.length - 1; i >= 0; i--) {

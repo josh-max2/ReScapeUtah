@@ -20,6 +20,7 @@ const STUCK_WINDOW = 1.0;
 const STUCK_MIN_MOVE = 6;
 
 /** Largest body radius in the game — the separation query reach. */
+const SEP_R = new Float32Array(MAX_ENEMIES);
 const MAX_BODY = Math.max(...ENEMY_TYPES.map((d) => d.r)) * Math.max(...SIZE_MULS); // scratch for wallNormal
 
 const PI = Math.PI;
@@ -442,6 +443,13 @@ export function updateEnemies(g: Game, dt: number): void {
       wallNormal(mx, my, NORM);
       const intoWall = vx * NORM[0] + vy * NORM[1];
       if (intoWall > 0) { vx -= NORM[0] * intoWall; vy -= NORM[1] * intoWall; }
+      // Scraping the wall at speed still lays rubber. The circle rewrite
+      // dropped both mark sites and silently killed ground history, which
+      // CLAUDE.md lists as a shipped feature.
+      const scrapeV = Math.hypot(vx, vy);
+      if (scrapeV > t.speed * 0.35 && g.marks.length < 600 && Math.random() < 0.08) {
+        g.marks.push(mx, my, Math.atan2(vy, vx));
+      }
     }
     const mc = clamp((my / CELL) | 0, 0, ROWS - 1) * COLS + clamp((mx / CELL) | 0, 0, COLS - 1);
 
@@ -474,6 +482,16 @@ export function updateEnemies(g: Game, dt: number): void {
       e.x[i] = mx;
       e.y[i] = my;
     }
+    // Hard change of direction at speed = a slide, same as cornering did.
+    const prevSp = e.vel[i];
+    if (prevSp > t.speed * 0.45 && g.marks.length < 600) {
+      const turn = Math.abs(Math.atan2(vy, vx) - e.heading[i]);
+      const wrapped = turn > Math.PI ? Math.PI * 2 - turn : turn;
+      if (wrapped > 0.5 && Math.random() < 0.1) {
+        g.marks.push(e.x[i], e.y[i], e.heading[i]);
+      }
+    }
+
     // Store the vector; keep heading/vel as derived values because rendering,
     // effects and the harnesses still read them.
     e.vx[i] = vx;
@@ -561,44 +579,78 @@ export function updateEnemies(g: Game, dt: number): void {
  * Heavier bodies give less ground (mass = radius). Two relaxation passes are
  * enough to clear a dense crush without the jitter a single pass leaves.
  */
-export function separate(g: Game, passes = 3): void {
-  // Push slightly past touching. Movement re-introduces a little overlap every
-  // tick, so resolving exactly to contact leaves a permanent shallow bite.
-  const RELAX = 1.0;
+export function separate(g: Game, passes = 2): void {
   const e = g.enemies;
   if (e.n < 2) return;
+
+  // Body radius per agent, computed once instead of per pair per pass.
+  const rad = SEP_R;
+  let maxR = 0;
+  for (let i = 0; i < e.n; i++) {
+    const r = ENEMY_TYPES[e.type[i]].r * SIZE_MULS[e.size[i]];
+    rad[i] = r;
+    if (r > maxR) maxR = r;
+  }
+
+  // Inline, closure-free bucket walk — the documented pattern for this
+  // codebase's hot loops. Going through hash.query()'s callback cost ~12x the
+  // sim budget at 10k agents. The reach is the LARGEST BODY ACTUALLY PRESENT,
+  // not the largest in the game: querying every swarmer at boss radius scanned
+  // roughly nine times the buckets it needed.
+  const hash = g.hash;
+  const cs = hash.cs, hcols = hash.cols, hrows = hash.rows;
+  const heads = hash.heads, next = hash.next;
+
   for (let pass = 0; pass < passes; pass++) {
     for (let i = 0; i < e.n; i++) {
       if (e.hp[i] <= 0) continue;
-      const ri = ENEMY_TYPES[e.type[i]].r * SIZE_MULS[e.size[i]];
-      g.hash.query(e.x[i], e.y[i], ri + MAX_BODY, (j) => {
-        if (j <= i || e.hp[j] <= 0) return;
-        const rj = ENEMY_TYPES[e.type[j]].r * SIZE_MULS[e.size[j]];
-        const rr = ri + rj;
-        let dx = e.x[j] - e.x[i];
-        let dy = e.y[j] - e.y[i];
-        let d2 = dx * dx + dy * dy;
-        if (d2 >= rr * rr) return;
-        let d = Math.sqrt(d2);
-        if (d < 1e-4) {
-          // Exactly coincident: shove apart on a stable pseudo-random axis so
-          // the pair cannot sit inside one another forever.
-          const a = (e.seed[i] + e.seed[j]) * 1.7;
-          dx = Math.cos(a); dy = Math.sin(a); d = 1;
-        } else {
-          dx /= d; dy /= d;
+      const ri = rad[i];
+      const reach = ri + maxR;
+      const xi = e.x[i], yi = e.y[i];
+      let x0 = ((xi - reach) / cs) | 0;
+      let y0 = ((yi - reach) / cs) | 0;
+      let x1 = ((xi + reach) / cs) | 0;
+      let y1 = ((yi + reach) / cs) | 0;
+      if (x0 < 0) x0 = 0;
+      if (y0 < 0) y0 = 0;
+      if (x1 >= hcols) x1 = hcols - 1;
+      if (y1 >= hrows) y1 = hrows - 1;
+      for (let cy = y0; cy <= y1; cy++) {
+        const row = cy * hcols;
+        for (let cx = x0; cx <= x1; cx++) {
+          let j = heads[row + cx];
+          while (j !== -1) {
+            if (j <= i || e.hp[j] <= 0) { j = next[j]; continue; }
+            const rj = rad[j];
+            const rr = ri + rj;
+            let dx = e.x[j] - e.x[i];
+            let dy = e.y[j] - e.y[i];
+            const d2 = dx * dx + dy * dy;
+            if (d2 >= rr * rr) { j = next[j]; continue; }
+            let d = Math.sqrt(d2);
+            if (d < 1e-4) {
+              // Exactly coincident: shove apart on a stable pseudo-random axis
+              // so the pair cannot sit inside one another forever.
+              const ang = (e.seed[i] + e.seed[j]) * 1.7;
+              dx = Math.cos(ang); dy = Math.sin(ang); d = 1;
+            } else {
+              dx /= d; dy /= d;
+            }
+            const overlap = rr - d;
+            const total = rr;
+            const wi = rj / total;   // light bodies move most
+            const wj = ri / total;
+            e.x[i] -= dx * overlap * wi;
+            e.y[i] -= dy * overlap * wi;
+            e.x[j] += dx * overlap * wj;
+            e.y[j] += dy * overlap * wj;
+            j = next[j];
+          }
         }
-        const overlap = rr - d;
-        const total = ri + rj;
-        const wi = rj / total;   // light bodies move most
-        const wj = ri / total;
-        e.x[i] -= dx * overlap * wi * RELAX;
-        e.y[i] -= dy * overlap * wi * RELAX;
-        e.x[j] += dx * overlap * wj * RELAX;
-        e.y[j] += dy * overlap * wj * RELAX;
-      });
+      }
     }
   }
+
   // Separation can shoulder someone into terrain; put them back on the road.
   for (let i = 0; i < e.n; i++) {
     const rr = ENEMY_TYPES[e.type[i]].r * SIZE_MULS[e.size[i]];

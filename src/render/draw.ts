@@ -457,18 +457,25 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, ui: UiState): voi
   for (let tt = 0; tt < ENEMY_TYPES.length; tt++) {
     const def = ENEMY_TYPES[tt];
     let any = false;
-    // dark rim first, so overlapping bodies still read as separate discs
-    ctx.beginPath();
-    for (let i = 0; i < e.n; i++) {
-      if (e.type[i] !== tt) continue;
-      const r = def.r * SIZE_MULS[e.size[i]];
-      ctx.moveTo(e.x[i] + r + 1.2, e.y[i]);
-      ctx.arc(e.x[i], e.y[i], r + 1.2, 0, TAU);
-      any = true;
+    // Dark rim so overlapping bodies still read as separate discs. Dropped
+    // under LOD: at that many agents the rim is a sub-pixel detail nobody can
+    // resolve, and it is half the path cost of the whole enemy pass.
+    if (!lod) {
+      ctx.beginPath();
+      for (let i = 0; i < e.n; i++) {
+        if (e.type[i] !== tt) continue;
+        const r = def.r * SIZE_MULS[e.size[i]];
+        ctx.moveTo(e.x[i] + r + 1.2, e.y[i]);
+        ctx.arc(e.x[i], e.y[i], r + 1.2, 0, TAU);
+        any = true;
+      }
+      if (!any) continue;
+      ctx.fillStyle = '#14180d';
+      ctx.fill();
+    } else {
+      for (let i = 0; i < e.n; i++) { if (e.type[i] === tt) { any = true; break; } }
+      if (!any) continue;
     }
-    if (!any) continue;
-    ctx.fillStyle = '#14180d';
-    ctx.fill();
     ctx.beginPath();
     for (let i = 0; i < e.n; i++) {
       if (e.type[i] !== tt) continue;
