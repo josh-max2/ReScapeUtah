@@ -246,7 +246,34 @@ implementation rules. The renderer (`src/render/`) and HUD (`src/style.css`,
   (e.g. an OFL DIN-style face) before the itch/web launch.
 - Coverage rings show in build phase only.
 
-## Balance & difficulty (2026-08-16)
+## Balance & difficulty — MEASURED UNDER CONTINUOUS FLOW (2026-08-17)
+
+`scripts/difficulty.py` was rewritten for the flow model: no waves, so the
+measure is TIME HELD, and each bracket now differs in how it AIMS, because
+fixed lanes made aiming the dominant skill. Bots buy mid-fight (there is no
+build phase). `SWARM_SPREAD=N` forces one spacing across brackets — spacing is
+a real confound now and must be controlled before blaming a result on cost.
+
+Measured, 2 runs per bracket, all at 150px spacing:
+
+    poor    (default aim)   held 2:40   surge 7
+    median  (road aim)      held 2:24   surge 6
+    strong  (downflow aim)  held 7:00   surge 18
+
+Three things this establishes:
+1. **Aiming is worth ~2.6x survival.** Same plan quality, same spacing — only
+   the committed angle differs. The mechanic pays off, which is what it was
+   for.
+2. **Spacing matters enormously.** Strong went 4:40 -> 7:00 purely by widening
+   from 70px to 150px. With fixed lanes, clustered towers overlap coverage and
+   waste it. This is a NEW strategic truth the aiming change created.
+3. **The cost-curve inversion is REAL and still unfixed.** At identical
+   spacing the median bot still dies before the poor one (2:24 vs 2:40): ~19
+   cheap autocannons beat ~9 expensive mixed towers for the same money. This
+   was first found in the 2026-08-16 audit and survives the redesign. Cheap
+   spam strictly dominates per gold. Untouched — balance is the owner's call.
+
+## Balance & difficulty (2026-08-16, wave model — superseded)
 
 `scripts/difficulty.py` is the difficulty-curve harness: bots play full runs at
 three skill brackets (poor/median/strong) and report where each dies plus
