@@ -1,3 +1,19 @@
+/* Bundled UI face. Bahnschrift was the design reference but ships with
+   WINDOWS ONLY — everywhere else the HUD silently fell back to Arial Narrow
+   and the letter-spaced caps stopped looking deliberate. Archivo Narrow (OFL,
+   see public/fonts/OFL.txt) is the DIN-flavoured grotesque that replaces it.
+   One variable file, latin subset, 18KB. Bahnschrift stays in the stack after
+   it purely as a same-metrics fallback if the font request ever fails. */
+@font-face {
+  font-family: 'Archivo Narrow';
+  src: url('/fonts/archivo-narrow.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  /* swap, not block: a tower-defence game must never hold the first frame
+     hostage to a font. */
+  font-display: swap;
+}
+
 :root {
   --panel: linear-gradient(180deg, rgba(30, 26, 21, 0.92), rgba(16, 13, 11, 0.94));
   --panel-flat: rgba(20, 17, 14, 0.9);
@@ -24,7 +40,7 @@ body,
   height: 100%;
   background: var(--bg);
   color: var(--ink);
-  font-family: 'Bahnschrift', 'Arial Narrow', system-ui, sans-serif;
+  font-family: 'Archivo Narrow', 'Bahnschrift', 'Arial Narrow', system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
   overflow: hidden;
   user-select: none;
