@@ -1,0 +1,20 @@
+node_modules/
+dist/
+*.local
+.DS_Store
+
+# Python bytecode from the art + verification scripts
+__pycache__/
+*.pyc
+
+# Generator OUTPUT, not source. The scripts in art/ ARE versioned — they are the
+# reproducible recipe — but their images are not:
+#   art/raw, art/family  the rejected AI object-art experiments (~13MB). Kept on
+#                        disk as reference per the ART LAW note in CLAUDE.md,
+#                        but there is no reason to carry them in history.
+#   art/textures         intermediate output; the copies the game actually loads
+#                        are committed under public/textures/.
+art/raw/
+art/family/
+art/sprites/
+art/textures/

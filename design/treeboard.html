@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>SWARM — skill tree & difficulty</title>
+<style>
+  :root{
+    --bg:#141110; --panel:#1b1613; --line:rgba(255,255,255,.09);
+    --ink:#efe9df; --mute:#6f675c;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);
+       font-family:'Bahnschrift','Arial Narrow',system-ui,sans-serif;
+       font-variant-numeric:tabular-nums;padding:22px 0 50px}
+  .board{width:1380px;margin:0 auto 30px;background:var(--panel);
+         border:1px solid var(--line);border-radius:12px;padding:20px 26px 24px;
+         position:relative;overflow:hidden}
+  .hdr{display:flex;align-items:baseline;gap:16px;margin-bottom:12px}
+  h1{font-size:15px;letter-spacing:.3em;font-weight:700}
+  .sub{font-size:10.5px;letter-spacing:.15em;color:var(--mute)}
+  .chips{margin-left:auto;font-size:13px;letter-spacing:.16em;color:#e8c26a;font-weight:700}
+  svg{display:block;width:100%;height:auto;overflow:visible}
+  .nm{font:700 11px Bahnschrift;letter-spacing:.04em}
+  .bh{font:700 17px Bahnschrift;letter-spacing:.26em}
+  .hb{font:700 13px Bahnschrift;letter-spacing:.22em}
+  .tag{font:9.5px Bahnschrift;letter-spacing:.18em;fill:#6f675c}
+  .axl{font:10.5px Bahnschrift;fill:#6f675c}
+  .lgl{font:11.5px Bahnschrift;fill:#efe9df}
+  .gate{font:700 8.5px Bahnschrift;letter-spacing:.08em;fill:#e0864a}
+</style></head><body>
+
+<div class="board">
+  <div class="hdr"><h1>SKILL TREE</h1>
+    <span class="sub">SPEND CHIPS BETWEEN RUNS · KEPT WHEN YOU LOSE</span>
+    <span class="chips">◆ 1,240 CHIPS</span></div>
+  <svg id="tree" viewBox="0 0 1330 920"></svg>
+</div>
+
+<div class="board">
+  <div class="hdr"><h1>DIFFICULTY CURVE</h1>
+    <span class="sub">MEASURED — ONE FULL BOT RUN PER BRACKET, EMPTY TREE</span></div>
+  <svg id="chart" viewBox="0 0 1330 470"></svg>
+</div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+const mk=(p,t,a={})=>{const e=document.createElementNS(NS,t);
+  for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e;};
+const txt=(p,x,y,s,cls,anchor='start',fill)=>{const e=mk(p,'text',{x,y,class:cls,'text-anchor':anchor});
+  if(fill)e.setAttribute('fill',fill); e.textContent=s; return e;};
+const hexPath=(cx,cy,r)=>{let d='';for(let i=0;i<6;i++){const a=Math.PI/180*(60*i-90);
+  d+=(i?'L':'M')+(cx+r*Math.cos(a)).toFixed(1)+' '+(cy+r*Math.sin(a)).toFixed(1)+' ';}
+  return d+'Z';};
+
+/* ---- glyphs: geometric, readable at 20px ---- */
+function glyph(p,name,cx,cy,s,col){
+  const g=mk(p,'g',{stroke:col,fill:'none','stroke-width':1.8,
+    'stroke-linecap':'round','stroke-linejoin':'round'});
+  const S=v=>v*s;
+  switch(name){
+    case 'dmg':
+      mk(g,'circle',{cx,cy,r:S(.42)});
+      mk(g,'path',{d:`M ${cx-S(.9)} ${cy} h ${S(.4)} M ${cx+S(.5)} ${cy} h ${S(.4)}
+                     M ${cx} ${cy-S(.9)} v ${S(.4)} M ${cx} ${cy+S(.5)} v ${S(.4)}`}); break;
+    case 'rate':
+      for(let i=-1;i<2;i++) mk(g,'path',{d:`M ${cx-S(.55)+i*S(.42)} ${cy-S(.6)} L ${cx-S(.13)+i*S(.42)} ${cy} L ${cx-S(.55)+i*S(.42)} ${cy+S(.6)}`});
+      break;
+    case 'tools':
+      mk(g,'path',{d:`M ${cx-S(.7)} ${cy+S(.7)} L ${cx+S(.55)} ${cy-S(.55)}`});
+      mk(g,'path',{d:`M ${cx+S(.7)} ${cy+S(.7)} L ${cx-S(.55)} ${cy-S(.55)}`});
+      mk(g,'circle',{cx:cx+S(.72),cy:cy-S(.72),r:S(.24)});
+      mk(g,'rect',{x:cx-S(.94),y:cy-S(.94),width:S(.44),height:S(.44),rx:S(.06)}); break;
+    case 'pierce':
+      mk(g,'path',{d:`M ${cx-S(.9)} ${cy} h ${S(1.75)} M ${cx+S(.35)} ${cy-S(.38)} l ${S(.5)} ${S(.38)} l ${-S(.5)} ${S(.38)}`});
+      mk(g,'path',{d:`M ${cx-S(.15)} ${cy-S(.75)} v ${S(1.5)}`,opacity:.75}); break;
+    case 'gear':
+      mk(g,'circle',{cx,cy,r:S(.4)});
+      for(let i=0;i<6;i++){const a=Math.PI/3*i;
+        mk(g,'path',{d:`M ${cx+Math.cos(a)*S(.62)} ${cy+Math.sin(a)*S(.62)} L ${cx+Math.cos(a)*S(.95)} ${cy+Math.sin(a)*S(.95)}`});}
+      break;
+    case 'frost':
+      for(let i=0;i<3;i++){const a=Math.PI/3*i;
+        mk(g,'path',{d:`M ${cx-Math.cos(a)*S(.9)} ${cy-Math.sin(a)*S(.9)} L ${cx+Math.cos(a)*S(.9)} ${cy+Math.sin(a)*S(.9)}`});}
+      break;
+    case 'crack':
+      mk(g,'path',{d:`M ${cx-S(.5)} ${cy-S(.85)} L ${cx-S(.1)} ${cy-S(.1)} L ${cx-S(.48)} ${cy+S(.18)} L ${cx+S(.15)} ${cy+S(.9)}`});
+      mk(g,'path',{d:`M ${cx-S(.1)} ${cy-S(.1)} L ${cx+S(.6)} ${cy-S(.48)}`}); break;
+    case 'flame':
+      mk(g,'path',{d:`M ${cx} ${cy+S(.85)} C ${cx-S(.9)} ${cy+S(.2)} ${cx-S(.22)} ${cy-S(.3)} ${cx-S(.1)} ${cy-S(.9)}
+                      C ${cx+S(.52)} ${cy-S(.26)} ${cx+S(.9)} ${cy+S(.2)} ${cx} ${cy+S(.85)} Z`}); break;
+    case 'bolt':
+      mk(g,'path',{d:`M ${cx+S(.28)} ${cy-S(.9)} L ${cx-S(.5)} ${cy+S(.1)} L ${cx+S(.05)} ${cy+S(.1)} L ${cx-S(.22)} ${cy+S(.9)} L ${cx+S(.55)} ${cy-S(.15)} L ${cx} ${cy-S(.15)} Z`}); break;
+    case 'split':
+      mk(g,'path',{d:`M ${cx-S(.85)} ${cy} h ${S(.6)} M ${cx-S(.25)} ${cy} L ${cx+S(.72)} ${cy-S(.62)} M ${cx-S(.25)} ${cy} L ${cx+S(.72)} ${cy+S(.62)}`});
+      mk(g,'circle',{cx:cx-S(.25),cy,r:S(.14),fill:col}); break;
+    case 'clock':
+      mk(g,'circle',{cx,cy,r:S(.8)});
+      mk(g,'path',{d:`M ${cx} ${cy-S(.44)} V ${cy} H ${cx+S(.38)}`}); break;
+    case 'eye':
+      mk(g,'path',{d:`M ${cx-S(.9)} ${cy} C ${cx-S(.42)} ${cy-S(.64)} ${cx+S(.42)} ${cy-S(.64)} ${cx+S(.9)} ${cy}
+                      C ${cx+S(.42)} ${cy+S(.64)} ${cx-S(.42)} ${cy+S(.64)} ${cx-S(.9)} ${cy} Z`});
+      mk(g,'circle',{cx,cy,r:S(.26),fill:col}); break;
+    case 'ring':
+      mk(g,'circle',{cx,cy,r:S(.85),'stroke-dasharray':'3.5 3.5'});
+      mk(g,'circle',{cx,cy,r:S(.42)});
+      mk(g,'circle',{cx,cy,r:S(.1),fill:col}); break;
+    case 'recycle':
+      mk(g,'path',{d:`M ${cx-S(.75)} ${cy+S(.3)} A ${S(.8)} ${S(.8)} 0 1 1 ${cx+S(.5)} ${cy+S(.65)}`});
+      mk(g,'path',{d:`M ${cx-S(1)} ${cy+S(.02)} l ${S(.3)} ${S(.32)} l ${S(.36)} ${-S(.22)}`}); break;
+    case 'blueprint':
+      mk(g,'rect',{x:cx-S(.85),y:cy-S(.7),width:S(1.7),height:S(1.4),rx:S(.12)});
+      mk(g,'path',{d:`M ${cx-S(.32)} ${cy-S(.7)} v ${S(1.4)} M ${cx-S(.85)} ${cy+S(.12)} h ${S(1.7)}`}); break;
+    case 'coin':
+      mk(g,'ellipse',{cx,cy:cy+S(.52),rx:S(.8),ry:S(.28)});
+      mk(g,'ellipse',{cx,cy:cy,rx:S(.8),ry:S(.28)});
+      mk(g,'ellipse',{cx,cy:cy-S(.52),rx:S(.8),ry:S(.28)}); break;
+    case 'interest':
+      mk(g,'path',{d:`M ${cx-S(.85)} ${cy+S(.72)} L ${cx-S(.2)} ${cy-S(.08)} L ${cx+S(.22)} ${cy+S(.34)} L ${cx+S(.88)} ${cy-S(.72)}`});
+      mk(g,'path',{d:`M ${cx+S(.42)} ${cy-S(.72)} h ${S(.46)} v ${S(.46)}`}); break;
+    case 'target':
+      mk(g,'circle',{cx,cy,r:S(.85)}); mk(g,'circle',{cx,cy,r:S(.42)});
+      mk(g,'circle',{cx,cy,r:S(.1),fill:col}); break;
+    case 'shield':
+      mk(g,'path',{d:`M ${cx} ${cy-S(.85)} L ${cx+S(.75)} ${cy-S(.48)} V ${cy+S(.15)}
+                      C ${cx+S(.75)} ${cy+S(.58)} ${cx+S(.32)} ${cy+S(.8)} ${cx} ${cy+S(.9)}
+                      C ${cx-S(.32)} ${cy+S(.8)} ${cx-S(.75)} ${cy+S(.58)} ${cx-S(.75)} ${cy+S(.15)}
+                      V ${cy-S(.48)} Z`}); break;
+    case 'bank':
+      mk(g,'path',{d:`M ${cx-S(.9)} ${cy-S(.3)} L ${cx} ${cy-S(.8)} L ${cx+S(.9)} ${cy-S(.3)}`});
+      mk(g,'path',{d:`M ${cx-S(.6)} ${cy-S(.12)} v ${S(.72)} M ${cx} ${cy-S(.12)} v ${S(.72)} M ${cx+S(.6)} ${cy-S(.12)} v ${S(.72)}`});
+      mk(g,'path',{d:`M ${cx-S(.9)} ${cy+S(.75)} h ${S(1.8)}`}); break;
+    case 'star':
+      {let d='';for(let i=0;i<10;i++){const a=Math.PI/180*(36*i-90),rr=i%2?S(.38):S(.9);
+        d+=(i?'L':'M')+(cx+Math.cos(a)*rr).toFixed(1)+' '+(cy+Math.sin(a)*rr).toFixed(1)+' ';}
+       mk(g,'path',{d:d+'Z'});} break;
+  }
+  return g;
+}
+
+/* ---------------- SKILL TREE ---------------- */
+(()=>{
+  const svg=document.getElementById('tree');
+  const defs=mk(svg,'defs');
+  ['#e8c26a','#79d6d0','#e0864a','#cfd8e0'].forEach((c,i)=>{
+    const f=mk(defs,'filter',{id:'gl'+i,x:'-90%',y:'-90%',width:'280%',height:'280%'});
+    mk(f,'feGaussianBlur',{stdDeviation:5.5,result:'b'});
+    const m=mk(f,'feMerge'); mk(m,'feMergeNode',{in:'b'}); mk(m,'feMergeNode',{in:'SourceGraphic'});
+  });
+  const rg=mk(defs,'radialGradient',{id:'vig'});
+  mk(rg,'stop',{offset:'0%','stop-color':'#e8c26a','stop-opacity':.11});
+  mk(rg,'stop',{offset:'100%','stop-color':'#e8c26a','stop-opacity':0});
+
+  const HUB={x:490,y:455};
+  mk(svg,'circle',{cx:HUB.x,cy:HUB.y,r:440,fill:'url(#vig)'});
+  const bgm=mk(svg,'g',{opacity:.045});
+  for(let r=0;r<14;r++)for(let c=0;c<13;c++){
+    const x=20+c*84+(r%2?42:0), y=10+r*73;
+    if(x>1000) continue;
+    mk(bgm,'path',{d:hexPath(x,y,35),fill:'none',stroke:'#efe9df','stroke-width':1});
+  }
+
+  // node = [icon, label, state, maxRank, curRank, angleOffset, radius, parentIdx, gate?]
+  const BR=[
+    {name:'GARAGE',tag:'DAMAGE',ink:'#e0864a',gl:'gl2',base:212,cnr:[36,98],anc:'start',
+     n:[['dmg','Calibration','avail',5,3,0,130,-1],
+        ['rate','Rate of Fire','owned',5,5,4,228,0],
+        ['tools','Workshop Tools','avail',4,0,8,322,1],
+        ['pierce','Armour Piercing','locked',3,0,-14,415,2,'CLEAR W10'],
+        ['gear','Overhaul','locked',1,0,22,412,2,'CLEAR W15']]},
+    {name:'RULEBOOK',tag:'CONTROL',ink:'#79d6d0',gl:'gl1',base:328,cnr:[954,98],anc:'end',
+     n:[['frost','Deep Cold','owned',4,4,0,130,-1],
+        ['crack','Brittle','avail',3,1,-4,228,0],
+        ['flame','Sustained Burn','avail',4,0,-8,322,1],
+        ['bolt','Rapid Strike','locked',4,0,14,415,2],
+        ['split','Chain Reaction','locked',2,0,-22,412,2,'CLEAR W10']]},
+    {name:'PIT WALL',tag:'TEMPO',ink:'#cfd8e0',gl:'gl3',base:148,cnr:[36,872],anc:'start',
+     n:[['clock','Fast Forward','owned',3,2,0,130,-1],
+        ['eye','Wave Preview','avail',1,0,-4,228,0],
+        ['ring','Range Rings','locked',1,0,-8,322,1],
+        ['recycle','Salvage Crew','locked',2,0,14,415,2],
+        ['blueprint','Blueprint','locked',1,0,-22,398,2,'CLEAR W15']]},
+    {name:'HOLDINGS',tag:'TYCOON',ink:'#e8c26a',gl:'gl0',base:32,cnr:[954,872],anc:'end',
+     n:[['coin','Scrap Margin','owned',5,3,0,130,-1],
+        ['interest','Interest','avail',4,0,4,228,0],
+        ['target','Bounty Board','locked',3,0,8,322,1],
+        ['shield','Insurance','locked',3,0,-16,412,2],
+        ['bank','Holdings Co.','locked',1,0,-3,498,3,'CLEAR W15'],
+        ['star','Futures','locked',1,0,22,398,2,'CLEAR W10']]},
+  ];
+
+  const D2R=Math.PI/180;
+  BR.forEach(b=>{
+    const pt=b.n.map(n=>{const a=(b.base+n[5])*D2R;
+      return {x:HUB.x+Math.cos(a)*n[6], y:HUB.y+Math.sin(a)*n[6]};});
+    // links first so hexes sit on top
+    b.n.forEach((n,i)=>{
+      const a0=b.base*D2R;
+      const from=n[7]<0?{x:HUB.x+Math.cos(a0)*58,y:HUB.y+Math.sin(a0)*58}:pt[n[7]];
+      const lk=n[2]==='locked';
+      mk(svg,'path',{d:`M ${from.x} ${from.y} L ${pt[i].x} ${pt[i].y}`,fill:'none',
+        stroke:lk?'#584f45':b.ink,'stroke-width':lk?2:4,opacity:lk?.85:.45,
+        'stroke-linecap':'round','stroke-dasharray':lk?'7 7':''});
+    });
+    // region header, parked in the empty corner the arm points at
+    txt(svg,b.cnr[0],b.cnr[1],b.name,'bh',b.anc,b.ink);
+    txt(svg,b.cnr[0],b.cnr[1]+18,b.tag,'tag',b.anc);
+    // nodes — size is the power tier: entry 27 / notable 31 / keystone 38
+    b.n.forEach((n,i)=>{
+      const [ic,label,state,max,cur,,,,gate]=n;
+      const p=pt[i], rr=(i<2?27:i<3?31:38);
+      const owned=state==='owned', avail=state==='avail', locked=state==='locked';
+      const col=locked?'#6b6257':b.ink;
+      if(avail) mk(svg,'path',{d:hexPath(p.x,p.y,rr+8),fill:'none',stroke:b.ink,
+        'stroke-width':2,opacity:.4,filter:`url(#${b.gl})`});
+      mk(svg,'path',{d:hexPath(p.x,p.y,rr+3),fill:'#0e0b09',stroke:col,
+        'stroke-width':locked?1.6:2.6,opacity:locked?.6:1});
+      if(owned) mk(svg,'path',{d:hexPath(p.x,p.y,rr-1),fill:b.ink,opacity:.17,stroke:'none'});
+      glyph(svg,ic,p.x,p.y,rr*0.48,locked?'#847a6e':b.ink);
+      if(gate){
+        const gy=p.y-rr-4, gx=p.x+rr+2;
+        mk(svg,'rect',{x:gx-33,y:gy-10,width:66,height:19,rx:9.5,fill:'#25190f',
+          stroke:'#e0864a','stroke-width':1.3});
+        txt(svg,gx,gy+4,gate,'gate','middle');
+      }
+      if(max>1){
+        const w=(max-1)*10, y=p.y+rr+14;
+        for(let k=0;k<max;k++)
+          mk(svg,'circle',{cx:p.x-w/2+k*10,cy:y,r:3.1,fill:k<cur?b.ink:'#181310',
+            stroke:k<cur?b.ink:'#5a5148','stroke-width':1.4,opacity:locked?.55:1});
+      }
+      txt(svg,p.x,p.y-rr-(gate?22:12),label,'nm','middle',locked?'#948a7e':'#efe9df');
+    });
+  });
+
+  // hub
+  mk(svg,'path',{d:hexPath(HUB.x,HUB.y,66),fill:'none',stroke:'#e8c26a',
+    'stroke-width':2,opacity:.35,filter:'url(#gl0)'});
+  mk(svg,'path',{d:hexPath(HUB.x,HUB.y,54),fill:'#0e0b09',stroke:'#e8c26a','stroke-width':3.4});
+  mk(svg,'path',{d:hexPath(HUB.x,HUB.y,44),fill:'#e8c26a',opacity:.12,stroke:'none'});
+  txt(svg,HUB.x,HUB.y-4,'COMMAND','hb','middle','#e8c26a');
+  txt(svg,HUB.x,HUB.y+14,'ALWAYS OWNED','tag','middle');
+
+  /* ---- sidebar ---- */
+  const SX=1015, SW=305;
+  const card=(y,h)=>mk(svg,'rect',{x:SX,y,width:SW,height:h,rx:10,fill:'#100d0b',
+    stroke:'rgba(255,255,255,.10)','stroke-width':1});
+
+  card(24,238);
+  txt(svg,SX+18,50,'READING THE BOARD','tag');
+  [['owned','Owned','rate','Ranks filled in — already bought'],
+   ['avail','Buyable','interest','Glowing — you can afford it now'],
+   ['locked','Locked','bank','Buy the node before it, or reach']
+  ].forEach(([st,t,ic,d],i)=>{
+    const cy=90+i*48, cx=SX+42;
+    if(st==='avail') mk(svg,'path',{d:hexPath(cx,cy,22),fill:'none',stroke:'#e8c26a',
+      'stroke-width':2,opacity:.4,filter:'url(#gl0)'});
+    mk(svg,'path',{d:hexPath(cx,cy,18),fill:'#0e0b09',
+      stroke:st==='locked'?'#6b6257':'#e8c26a','stroke-width':st==='locked'?1.6:2.4,
+      opacity:st==='locked'?.6:1});
+    if(st==='owned') mk(svg,'path',{d:hexPath(cx,cy,15),fill:'#e8c26a',opacity:.17,stroke:'none'});
+    glyph(svg,ic,cx,cy,8.5,st==='locked'?'#847a6e':'#e8c26a');
+    txt(svg,SX+78,cy-3,t,'nm','start',st==='locked'?'#948a7e':'#efe9df');
+    txt(svg,SX+78,cy+13,d,'axl');
+    if(st==='locked') txt(svg,SX+78,cy+27,'the wave on its badge','axl');
+  });
+  txt(svg,SX+18,244,'BIGGER HEX = BIGGER SWING IN A RUN','tag');
+
+  // focused node — how the copy is surfaced in-game (hover / select), not inline
+  const py=272;
+  mk(svg,'rect',{x:SX,y:py,width:SW,height:212,rx:10,fill:'#100d0b',
+    stroke:'rgba(232,194,106,.5)','stroke-width':1.5});
+  mk(svg,'path',{d:hexPath(SX+50,py+54,30),fill:'#e8c26a',opacity:.12,stroke:'none'});
+  mk(svg,'path',{d:hexPath(SX+50,py+54,30),fill:'none',stroke:'#e8c26a','stroke-width':2.4});
+  glyph(svg,'interest',SX+50,py+54,15,'#e8c26a');
+  txt(svg,SX+94,py+46,'INTEREST','hb','start','#e8c26a');
+  txt(svg,SX+94,py+64,'HOLDINGS · TYCOON','tag');
+  txt(svg,SX+20,py+104,'Keep 4% of your unspent gold as','lgl');
+  txt(svg,SX+20,py+122,'interest every wave you clear.','lgl');
+  txt(svg,SX+20,py+148,'Saving now pays for the wave after.','lgl','start','#a89f92');
+  txt(svg,SX+20,py+180,'RANK 0 / 4','tag');
+  for(let k=0;k<4;k++) mk(svg,'circle',{cx:SX+24+k*13,cy:py+192,r:3.4,fill:'#181310',
+    stroke:'#7a6f61','stroke-width':1.4});
+  mk(svg,'rect',{x:SX+176,y:py+166,width:112,height:32,rx:6,fill:'#e8c26a',opacity:.14});
+  mk(svg,'rect',{x:SX+176,y:py+166,width:112,height:32,rx:6,fill:'none',
+    stroke:'#e8c26a','stroke-width':1.4});
+  txt(svg,SX+232,py+187,'◆ 90 CHIPS','hb','middle','#e8c26a');
+
+  card(510,150);
+  txt(svg,SX+18,536,'WHY IT COMPOUNDS','tag');
+  [['1','Chips bank from every run, win or lose.'],
+   ['2','Nodes raise the power you start with.'],
+   ['3','Depth unlocks stronger nodes to buy.']].forEach(([n,t],i)=>{
+    const y=568+i*31;
+    mk(svg,'circle',{cx:SX+30,cy:y-4,r:11,fill:'none',stroke:'#e8c26a','stroke-width':1.3,opacity:.55});
+    txt(svg,SX+30,y,n,'nm','middle','#e8c26a');
+    txt(svg,SX+54,y,t,'lgl');
+  });
+
+  card(692,126);
+  txt(svg,SX+18,718,'LAST RUN','tag');
+  [['Best wave','12'],['Chips earned','+318'],['Runs invested','4']].forEach(([k,v],i)=>{
+    const y=748+i*27;
+    txt(svg,SX+20,y,k,'lgl','start','#a89f92');
+    txt(svg,SX+SW-20,y,v,'hb','end','#e8c26a');
+  });
+})();
+
+/* ---------------- DIFFICULTY CHART ---------------- */
+(()=>{
+  const svg=document.getElementById('chart');
+  const S={poor:[373,353,338,284,176,111,111,0],
+           median:[375,339,297,199,68,0],
+           strong:[384,368,346,295,226,195,163,77,65,0]};
+  const COL={poor:'#c4553a',median:'#1fa79b',strong:'#b8862b'};
+  const INK={poor:'#e0864a',median:'#79d6d0',strong:'#e8c26a'};
+  const L=72,R=1150,T=48,B=372,maxW=20,maxHP=400;
+  const X=w=>L+((w-1)/(maxW-1))*(R-L), Y=h=>B-(h/maxHP)*(B-T);
+  for(let h=0;h<=400;h+=100){
+    mk(svg,'line',{x1:L,y1:Y(h),x2:R,y2:Y(h),stroke:'rgba(255,255,255,.07)','stroke-width':1});
+    txt(svg,L-12,Y(h)+4,h,'axl','end');
+  }
+  for(let w=1;w<=20;w++){
+    const major=(w%5===0||w===1);
+    mk(svg,'line',{x1:X(w),y1:B,x2:X(w),y2:B+(major?7:4),
+      stroke:`rgba(255,255,255,${major?.3:.14})`,'stroke-width':1});
+    if(major) txt(svg,X(w),B+23,w,'axl','middle');
+  }
+  // the half nobody reaches — the emptiness IS the finding
+  mk(svg,'rect',{x:X(10),y:T-2,width:R-X(10),height:B-T+2,fill:'#ffffff',opacity:.022});
+  txt(svg,(X(10)+R)/2,T+70,'NO BOT HAS REACHED THIS HALF','tag','middle');
+  txt(svg,(X(10)+R)/2,T+90,'ten waves of content the tree has to open up','axl','middle');
+
+  mk(svg,'line',{x1:L,y1:B,x2:R,y2:B,stroke:'rgba(255,255,255,.25)','stroke-width':1.5});
+  txt(svg,L-12,T-18,'FORT HP','axl','start');
+  txt(svg,R+56,B+23,'WAVE','axl','start');
+  [10,20].forEach(w=>{
+    mk(svg,'line',{x1:X(w),y1:T-8,x2:X(w),y2:B,stroke:'rgba(224,134,74,.32)',
+      'stroke-width':1.5,'stroke-dasharray':'4 6'});
+    txt(svg,X(w),T-15,'BOSS','gate','middle');
+  });
+  const LIFT={poor:-38,median:-16,strong:-16};
+  Object.entries(S).forEach(([k,arr])=>{
+    let d=''; arr.forEach((h,i)=>{ d+=(i?' L ':'M ')+X(i+1)+' '+Y(h); });
+    mk(svg,'path',{d,fill:'none',stroke:COL[k],'stroke-width':2.5,
+      'stroke-linejoin':'round','stroke-linecap':'round'});
+    const li=arr.length-1;
+    arr.forEach((h,i)=>{ if(i===li) return;
+      mk(svg,'circle',{cx:X(i+1),cy:Y(h),r:4.5,fill:COL[k],stroke:'#1b1613','stroke-width':2});});
+    // death marker: hollow ring + cross, labelled above
+    const dx=X(li+1), dy=Y(arr[li]);
+    mk(svg,'circle',{cx:dx,cy:dy,r:7,fill:'#1b1613',stroke:COL[k],'stroke-width':2.5});
+    mk(svg,'path',{d:`M ${dx-3.4} ${dy-3.4} L ${dx+3.4} ${dy+3.4} M ${dx+3.4} ${dy-3.4} L ${dx-3.4} ${dy+3.4}`,
+      stroke:COL[k],'stroke-width':2,'stroke-linecap':'round'});
+    const ly=dy+LIFT[k];
+    mk(svg,'line',{x1:dx,y1:dy-9,x2:dx,y2:ly+5,stroke:COL[k],'stroke-width':1,opacity:.5});
+    txt(svg,dx,ly,'FORT FELL · W'+(li+1),'lgl','middle',INK[k]);
+  });
+  [['poor',8,'autocannons only, never upgrades'],['median',6,'mixed towers, some upgrades'],
+   ['strong',10,'heavy mix, upgrades whenever affordable']].forEach(([k,w,desc],i)=>{
+    const y=416+i*18;
+    mk(svg,'rect',{x:L,y:y-9,width:24,height:4,rx:2,fill:COL[k]});
+    txt(svg,L+36,y-2,k.toUpperCase(),'lgl','start',INK[k]);
+    txt(svg,L+120,y-2,'died wave '+w,'lgl','start','#a89f92');
+    txt(svg,L+218,y-2,desc,'axl');
+  });
+  txt(svg,1258,414,'Median dies before poor — 11 costly towers','axl','end','#e0864a');
+  txt(svg,1258,432,'lose to 35 cheap ones. Cost curve needs a pass.','axl','end','#e0864a');
+  txt(svg,1258,456,'Run 1 is not meant to be winnable — the tree closes the gap','axl','end','#e8c26a');
+})();
+</script>
+</body></html>

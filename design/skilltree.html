@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>SWARM — skill tree v2</title>
+<style>
+  :root{ --bg:#141110; --panel:#1b1613; --line:rgba(255,255,255,.09);
+         --ink:#efe9df; --mute:#6f675c; --dim:#a89f92; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);
+       font-family:'Bahnschrift','Arial Narrow',system-ui,sans-serif;
+       font-variant-numeric:tabular-nums;padding:22px 0 50px}
+  .board{width:1560px;margin:0 auto 30px;background:var(--panel);
+         border:1px solid var(--line);border-radius:12px;padding:20px 26px 26px;
+         position:relative;overflow:hidden}
+  .hdr{display:flex;align-items:baseline;gap:16px;margin-bottom:12px}
+  h1{font-size:15px;letter-spacing:.3em;font-weight:700}
+  .sub{font-size:10.5px;letter-spacing:.15em;color:var(--mute)}
+  .chips{margin-left:auto;font-size:13px;letter-spacing:.16em;color:#e8c26a;font-weight:700}
+  svg{display:block;width:100%;height:auto;overflow:visible}
+  .nm{font:700 8px Bahnschrift;letter-spacing:.02em}
+  .bh{font:700 18px Bahnschrift;letter-spacing:.26em}
+  .hb{font:700 11px Bahnschrift;letter-spacing:.2em}
+  .tag{font:9px Bahnschrift;letter-spacing:.18em;fill:var(--mute)}
+  .gate{font:700 7.5px Bahnschrift;letter-spacing:.06em;fill:#e0864a}
+
+  .cat{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  .col{display:flex;flex-direction:column;gap:16px}
+  .grp{border:1px solid var(--line);border-radius:9px;padding:12px 13px 14px;background:#100d0b}
+  .grp h2{font-size:12px;letter-spacing:.24em;font-weight:700;margin-bottom:2px}
+  .grp .cnt{font-size:9px;letter-spacing:.14em;color:var(--mute);margin-bottom:8px}
+  .sec{font-size:8.5px;letter-spacing:.18em;color:var(--mute);
+       margin:11px 0 5px;padding-bottom:3px;border-bottom:1px solid rgba(255,255,255,.07)}
+  .sec:first-of-type{margin-top:3px}
+  .n{display:grid;grid-template-columns:1fr auto;gap:3px 8px;
+     padding:4px 0;border-bottom:1px solid rgba(255,255,255,.035)}
+  .n:last-child{border-bottom:0}
+  .n .t{font-size:11px;font-weight:700;letter-spacing:.02em}
+  .n .e{font-size:10px;color:var(--dim);grid-column:1;line-height:1.35}
+  .n .r{font-size:9.5px;color:var(--mute);letter-spacing:.06em;white-space:nowrap;
+        text-align:right;align-self:start}
+  .g{display:inline-block;font-size:7.5px;font-weight:700;letter-spacing:.06em;
+     color:#e0864a;border:1px solid #e0864a;border-radius:8px;padding:1px 4px;margin-left:5px;
+     vertical-align:1px}
+  .note{font-size:10px;color:var(--dim);line-height:1.45;margin-top:9px;
+        border-top:1px solid rgba(255,255,255,.07);padding-top:8px}
+</style></head><body>
+
+<div class="board">
+  <div class="hdr"><h1>SKILL TREE — STRUCTURE</h1>
+    <span class="sub">16 LINES · 86 NODES · EVERY ONE TIED TO A REAL TOWER, ENEMY, BOSS OR SYSTEM</span>
+    <span class="chips">◆ CHIPS</span></div>
+  <svg id="tree" viewBox="0 0 1600 1280"></svg>
+</div>
+
+<div class="board">
+  <div class="hdr"><h1>SKILL TREE — EVERY NODE</h1>
+    <span class="sub">EACH LINE READS OUTWARD IN ASCENDING COST · ORANGE CHIP = LOCKED UNTIL YOU CLEAR THAT WAVE · ◆ = FIRST-RANK COST</span></div>
+  <div class="cat" id="cat"></div>
+</div>
+
+<script>
+/* =================== NODE DATA — single source of truth ===================
+   [ name, effect, ranks, icon, gate|'', firstRankCost, capstone? ]
+   Every line is ordered outward by ascending cost: cheap incremental ranks
+   first, then the expensive one-offs, then gated unlocks, capstone last.   */
+const TREE = {
+  command: { name:'COMMAND', tag:'HUB · ALWAYS OWNED', ink:'#e8c26a', gl:0, ctr:0,
+    lines: [{ label:'UNIVERSAL', a:0, n:[
+      ['Requisition','+40 starting gold',6,'coin','',12],
+      ['Reinforced Fort','+60 fort HP',6,'wall','',12],
+      ['Calibration','+3% damage, all towers',5,'dmg','',14],
+      ['Optics','+6px range, all towers',3,'ring','',16],
+    ]}]},
+
+  garage: { name:'GARAGE', tag:'THE TEN WEAPONS', ink:'#e0864a', gl:2, ctr:225,
+    root:['Workshop Tools','−5% tower build cost',4,'tools','',16],
+    lines: [
+      { label:'BALLISTICS', sub:'Autocannon · Gatling · Railgun · Rocket', a:196, n:[
+        ['Autocannon Feed','Autocannon +6% rate of fire',5,'rate','',10],
+        ['Spin-Up Motors','Gatling hits its ceiling 15% sooner',3,'gear','',16],
+        ['Barrel Cooling','Gatling damage ceiling +8%',4,'gauge','',18],
+        ['Railgun Coils','Railgun cycle −0.25s',3,'beam','',20],
+        ['Warhead Density','Rocket Battery +10% damage',4,'shell','',20],
+        ['Rocket Guidance','Rockets re-acquire instead of overkilling',2,'rocket','',22],
+        ['Penetrator Sabot','Railgun pierce leaves −10 Threshold for 3s',1,'pierce','W10',90],
+        ['ARMOUR PIERCING','Kinetic towers ignore Threshold entirely',1,'pierce','W15',220,1],
+      ]},
+      { label:'ENERGY', sub:'Flamethrower · Tesla · Lattice', a:215, n:[
+        ['Fuel Mix','Flamethrower burn damage +10%',5,'flame','',12],
+        ['Capacitor Density','Tesla Coil +8% damage',5,'bolt','',16],
+        ['Stutter Field','Tesla stun +0.15s',3,'stun','',18],
+        ['Focusing Optics','Laser Lattice ramps 12% faster',4,'laser','',20],
+        ['Lock Assist','Lattice holds its charge 2s after the target dies',3,'lock','',20],
+        ['Thermal Runaway','Burning stacks up to 3×',1,'flame','W8',80],
+        ['MELTDOWN','Burning kills detonate for 25% max HP',1,'burst','W15',220,1],
+      ]},
+      { label:'ORDNANCE', sub:'Mortar Pit · Minefield', a:235, n:[
+        ['Mine Density','+1 Minefield charge',4,'mine','',14],
+        ['Shell Capacity','Mortar +10% damage',5,'shell','',16],
+        ['Short Fuse','Mortar minimum range −15px',2,'arc','',18],
+        ['Predictive Fire','Mortar leads properly — scatter −30%',3,'target','',20],
+        ['Sympathetic Detonation','A mine sets off adjacent mines',1,'burst','W12',90],
+        ['CARPET','Every Mortar shot fires a second shell',1,'shell','W18',240,1],
+      ]},
+      { label:'EMPLACEMENTS', sub:'the tower as a structure', a:254, n:[
+        ['Hardened Emplacements','+15% tower HP',4,'wall','',14],
+        ['Field Repair','Towers recover 20% HP at each wave clear',3,'heal','',18],
+        ['Redundant Feeds','Rebuilding on a destroyed tower’s pad costs 50%',2,'recycle','',22],
+        ['Modular Mounts','Relocate a tower free in build phase, upgrade intact',1,'blueprint','',30],
+        ['Automated Repair','Towers regenerate 3 HP/s during a wave',1,'heal','W12',85],
+        ['BASTION','Towers below 30% HP deal +50% damage',1,'shield','W18',230,1],
+      ]},
+    ]},
+
+  rulebook: { name:'RULEBOOK', tag:'THE HORDE & THE RULES', ink:'#79d6d0', gl:1, ctr:315,
+    root:['Scrutineering','Permanent −3 enemy Threshold, globally',3,'crack','',24],
+    lines: [
+      { label:'DAMAGE RULES', sub:'freeze · burn · armour', a:344, n:[
+        ['Coolant Volume','Cryo slow +5% stronger',4,'frost','',14],
+        ['Brittle','Frozen damage bonus +5%',3,'crack','',18],
+        ['Saturation','+6% blast radius on all AoE towers',3,'ring','',20],
+        ['Immobilise','Enemies under 30% speed take +8% damage',3,'anchor','W8',26],
+      ]},
+      { label:'THE ELITES', sub:'Runner · Wrecker · Shielder · Mender', a:325, n:[
+        ['Pit Limiter','Runner speed surges last 30% less',2,'rate','',20],
+        ['Bollards','Wreckers deal −20% damage to towers',3,'wreck','',20],
+        ['Bubble Breaker','Shielder bubbles absorb 7% less',3,'bubble','',22],
+        ['Interdiction','Mender heal aura −30%',2,'heal','',22],
+        ['Elite Quota','One fewer aura carrier per wave',2,'eye','W10',60],
+      ]},
+      { label:'THE RIFT', sub:'the spawner itself', a:305, n:[
+        ['Staggered Start','The wave spawns over 20% longer — less bunched',3,'wave','',18],
+        ['Cold Start','Enemies leave the rift at 60% speed for 2s',3,'frost','',20],
+        ['Attrition Toll','Enemies take 4 dmg/s while still inside the rift band',3,'burst','',24],
+        ['Roll Call','See the whole run’s wave list and boss lineup up front',1,'eye','',40],
+        ['QUARANTINE','The rift shuts for 4s each 200 kills in a wave',1,'lock','W15',220,1],
+      ]},
+      { label:'MASS & BOSSES', sub:'Splitter · Titan · Rig · Marshal · Scrapheap', a:286, n:[
+        ['Chain Reaction','Splitters burst into one fewer swarmer',2,'split','W10',60],
+        ['Countermeasures','Every boss’s signature output −25%',2,'skull','W10',100],
+        ['GIANT-SLAYER','+40% damage to Titans and bosses',1,'skull','W15',220,1],
+      ]},
+    ]},
+
+  pitwall: { name:'PIT WALL', tag:'THE TRACK & TEMPO', ink:'#cfd8e0', gl:3, ctr:135,
+    root:['Fast Forward','Unlocks 6× → 10× → 15× → 20×',4,'clock','',10],
+    lines: [
+      { label:'THE TRACK', sub:'Wall · oil · tire marks', a:164, n:[
+        ['Roadworks','Wall cost −4',3,'wall','',12],
+        ['Rebar','Wall HP +600 (matters once sealed)',3,'wall','',14],
+        ['Oil Slick','Kill-site oil turns slippery — cars run wide',2,'oil','W8',70],
+        ['Chicane','Cars scraping a wall lose 25% speed for 1s',1,'skid','W10',80],
+        ['Marbles','Oil-slicked ground deals 4 dmg/s',2,'oil','W12',95],
+      ]},
+      { label:'TEMPO & STRIKE', sub:'Q-strike · speed', a:145, n:[
+        ['Full Course','Q-strike radius +15px',3,'burst','',18],
+        ['Red Reserve','Q-strike cooldown −8%',4,'clock','',18],
+        ['Skip Ahead','Call the next wave early for +10% gold',3,'wave','',20],
+        ['Time Dilation','Auto-slow to 1× on a boss or under 25% HP',1,'clock','',45],
+        ['Second Wind','The Q-strike gets a second charge',1,'burst','W12',110],
+      ]},
+      { label:'INFORMATION', sub:'read the board', a:125, n:[
+        ['Wave Preview','See the next wave’s composition',3,'eye','',16],
+        ['Pit Lane','Sell refund +10% (cap 85%)',2,'recycle','',22],
+        ['Range Rings','All tower ranges during the wave, not just build',1,'ring','',30],
+        ['Kill Attribution','Post-wave breakdown of what each tower killed',1,'gauge','',30],
+        ['Heatmap','Post-run map of damage dealt and where cars leaked',1,'blueprint','',35],
+      ]},
+      { label:'LAYOUT', sub:'build-phase tools', a:106, n:[
+        ['Undo Placement','Full refund within 5s of placing',1,'recycle','',20],
+        ['Loadout Slots','Save and recall tower loadout presets',2,'blueprint','',26],
+        ['Build Queue','Queue towers to auto-build as gold arrives',1,'wave','',40],
+        ['Free Respec','Reset the whole tree, every chip returned',1,'recycle','',60],
+        ['Blueprint','One-click rebuild of a saved layout',1,'blueprint','W15',120],
+      ]},
+    ]},
+
+  holdings: { name:'HOLDINGS', tag:'TYCOON — MONEY THAT MAKES MONEY', ink:'#e8c26a', gl:0, ctr:45,
+    root:['Salvage Yield','+8% gold from kills',5,'coin','',12],
+    lines: [
+      { label:'EARN', a:16, n:[
+        ['Scrap Bonus','Wave-clear bounty +12%',4,'coin','',16],
+        ['Bounty','First 5 kills of each wave pay 3×',3,'target','',18],
+        ['Banked Salvage','Keep 4% of unspent gold as interest',4,'interest','',20],
+        ['Titan Bounty','Titans and bosses pay double gold and chips',1,'skull','W10',80],
+      ]},
+      { label:'PROTECT', a:35, n:[
+        ['Insurance','Recover 4 gold each time a car leaks',3,'shield','',18],
+        ['Reclamation','Destroyed towers refund 40%',2,'recycle','',24],
+        ['Contingency','Survive one lethal leak per run at 1 HP',1,'heal','',55],
+        ['Write-Off','First tower lost each wave is rebuilt free at wave end',1,'wall','W10',70],
+      ]},
+      { label:'RISK', sub:'wagers', a:55, n:[
+        ['Handicap','Start with 40% less gold but +25% gold from kills',1,'flag','',45],
+        ['Double or Nothing','Call a wave: 3× bounty if nothing leaks, nothing if it does',1,'star','W12',100],
+        ['Overtime','Keep playing past wave 20 — each extra wave pays double chips',1,'wave','WIN',160],
+      ]},
+      { label:'COMPOUND', a:74, n:[
+        ['Futures','+2 chips per wave you have ever cleared',1,'star','W10',90],
+        ['Holdings Co.','Bank 10% of unspent gold as chips at run end',1,'bank','W15',150],
+        ['TEAM PRINCIPAL','Start every run with one weapon pre-built',1,'flag','W18',240,1],
+      ]},
+    ]},
+};
+
+/* ============================== glyphs ============================== */
+const NS='http://www.w3.org/2000/svg';
+const mk=(p,t,a={})=>{const e=document.createElementNS(NS,t);
+  for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e;};
+const txt=(p,x,y,s,cls,anchor='start',fill)=>{const e=mk(p,'text',{x,y,class:cls,'text-anchor':anchor});
+  if(fill)e.setAttribute('fill',fill); e.textContent=s; return e;};
+const hexPath=(cx,cy,r)=>{let d='';for(let i=0;i<6;i++){const a=Math.PI/180*(60*i-90);
+  d+=(i?'L':'M')+(cx+r*Math.cos(a)).toFixed(1)+' '+(cy+r*Math.sin(a)).toFixed(1)+' ';}
+  return d+'Z';};
+
+function glyph(p,name,cx,cy,s,col){
+  const g=mk(p,'g',{stroke:col,fill:'none','stroke-width':1.7,
+    'stroke-linecap':'round','stroke-linejoin':'round'});
+  const S=v=>v*s, P=d=>mk(g,'path',{d}), C=(x,y,r,f)=>mk(g,'circle',{cx:x,cy:y,r,fill:f||'none'});
+  switch(name){
+    case 'dmg': C(cx,cy,S(.4)); P(`M ${cx-S(.9)} ${cy} h ${S(.35)} M ${cx+S(.55)} ${cy} h ${S(.35)}
+      M ${cx} ${cy-S(.9)} v ${S(.35)} M ${cx} ${cy+S(.55)} v ${S(.35)}`); break;
+    case 'rate': for(let i=-1;i<2;i++) P(`M ${cx-S(.5)+i*S(.4)} ${cy-S(.6)} L ${cx-S(.1)+i*S(.4)} ${cy} L ${cx-S(.5)+i*S(.4)} ${cy+S(.6)}`); break;
+    case 'tools': P(`M ${cx-S(.7)} ${cy+S(.7)} L ${cx+S(.55)} ${cy-S(.55)}`);
+      P(`M ${cx+S(.7)} ${cy+S(.7)} L ${cx-S(.55)} ${cy-S(.55)}`);
+      C(cx+S(.72),cy-S(.72),S(.22)); mk(g,'rect',{x:cx-S(.92),y:cy-S(.92),width:S(.42),height:S(.42)}); break;
+    case 'pierce': P(`M ${cx-S(.9)} ${cy} h ${S(1.75)} M ${cx+S(.35)} ${cy-S(.36)} l ${S(.5)} ${S(.36)} l ${-S(.5)} ${S(.36)}`);
+      P(`M ${cx-S(.15)} ${cy-S(.7)} v ${S(1.4)}`); break;
+    case 'gear': C(cx,cy,S(.38)); for(let i=0;i<6;i++){const a=Math.PI/3*i;
+      P(`M ${cx+Math.cos(a)*S(.6)} ${cy+Math.sin(a)*S(.6)} L ${cx+Math.cos(a)*S(.92)} ${cy+Math.sin(a)*S(.92)}`);} break;
+    case 'gauge': P(`M ${cx-S(.85)} ${cy+S(.4)} A ${S(.85)} ${S(.85)} 0 0 1 ${cx+S(.85)} ${cy+S(.4)}`);
+      P(`M ${cx} ${cy+S(.4)} L ${cx+S(.45)} ${cy-S(.35)}`); break;
+    case 'frost': for(let i=0;i<3;i++){const a=Math.PI/3*i;
+      P(`M ${cx-Math.cos(a)*S(.88)} ${cy-Math.sin(a)*S(.88)} L ${cx+Math.cos(a)*S(.88)} ${cy+Math.sin(a)*S(.88)}`);} break;
+    case 'crack': P(`M ${cx-S(.5)} ${cy-S(.85)} L ${cx-S(.1)} ${cy-S(.1)} L ${cx-S(.48)} ${cy+S(.18)} L ${cx+S(.15)} ${cy+S(.9)}`);
+      P(`M ${cx-S(.1)} ${cy-S(.1)} L ${cx+S(.6)} ${cy-S(.48)}`); break;
+    case 'flame': P(`M ${cx} ${cy+S(.85)} C ${cx-S(.9)} ${cy+S(.2)} ${cx-S(.22)} ${cy-S(.3)} ${cx-S(.1)} ${cy-S(.9)}
+      C ${cx+S(.52)} ${cy-S(.26)} ${cx+S(.9)} ${cy+S(.2)} ${cx} ${cy+S(.85)} Z`); break;
+    case 'bolt': P(`M ${cx+S(.28)} ${cy-S(.9)} L ${cx-S(.5)} ${cy+S(.1)} L ${cx+S(.05)} ${cy+S(.1)} L ${cx-S(.22)} ${cy+S(.9)} L ${cx+S(.55)} ${cy-S(.15)} L ${cx} ${cy-S(.15)} Z`); break;
+    case 'stun': P(`M ${cx-S(.9)} ${cy} h ${S(.35)} M ${cx+S(.55)} ${cy} h ${S(.35)}`);
+      P(`M ${cx-S(.35)} ${cy-S(.6)} L ${cx+S(.1)} ${cy} L ${cx-S(.2)} ${cy} L ${cx+S(.25)} ${cy+S(.6)}`); break;
+    case 'laser': P(`M ${cx-S(.9)} ${cy} h ${S(1.8)}`); C(cx-S(.5),cy,S(.26)); C(cx+S(.5),cy,S(.16)); break;
+    case 'lock': mk(g,'rect',{x:cx-S(.6),y:cy-S(.15),width:S(1.2),height:S(.95),rx:S(.12)});
+      P(`M ${cx-S(.35)} ${cy-S(.15)} v ${-S(.35)} a ${S(.35)} ${S(.35)} 0 0 1 ${S(.7)} 0 v ${S(.35)}`); break;
+    case 'burst': for(let i=0;i<8;i++){const a=Math.PI/4*i;
+      P(`M ${cx+Math.cos(a)*S(.35)} ${cy+Math.sin(a)*S(.35)} L ${cx+Math.cos(a)*S(.92)} ${cy+Math.sin(a)*S(.92)}`);} C(cx,cy,S(.2),col); break;
+    case 'shell': P(`M ${cx} ${cy-S(.9)} C ${cx+S(.5)} ${cy-S(.45)} ${cx+S(.5)} ${cy+S(.2)} ${cx+S(.42)} ${cy+S(.55)}
+      L ${cx-S(.42)} ${cy+S(.55)} C ${cx-S(.5)} ${cy+S(.2)} ${cx-S(.5)} ${cy-S(.45)} ${cx} ${cy-S(.9)} Z`);
+      P(`M ${cx-S(.42)} ${cy+S(.8)} h ${S(.84)}`); break;
+    case 'rocket': P(`M ${cx} ${cy-S(.9)} C ${cx+S(.42)} ${cy-S(.3)} ${cx+S(.42)} ${cy+S(.3)} ${cx} ${cy+S(.7)}
+      C ${cx-S(.42)} ${cy+S(.3)} ${cx-S(.42)} ${cy-S(.3)} ${cx} ${cy-S(.9)} Z`);
+      P(`M ${cx-S(.38)} ${cy+S(.25)} l ${-S(.3)} ${S(.55)} M ${cx+S(.38)} ${cy+S(.25)} l ${S(.3)} ${S(.55)}`); break;
+    case 'beam': P(`M ${cx-S(.9)} ${cy-S(.3)} h ${S(1.5)} M ${cx-S(.9)} ${cy+S(.3)} h ${S(1.5)}`);
+      P(`M ${cx+S(.6)} ${cy-S(.6)} L ${cx+S(.92)} ${cy} L ${cx+S(.6)} ${cy+S(.6)}`); break;
+    case 'mine': C(cx,cy,S(.42)); for(let i=0;i<6;i++){const a=Math.PI/3*i+0.5;
+      P(`M ${cx+Math.cos(a)*S(.42)} ${cy+Math.sin(a)*S(.42)} L ${cx+Math.cos(a)*S(.85)} ${cy+Math.sin(a)*S(.85)}`);} break;
+    case 'arc': P(`M ${cx-S(.85)} ${cy+S(.5)} A ${S(.9)} ${S(.9)} 0 0 1 ${cx+S(.85)} ${cy+S(.5)}`);
+      P(`M ${cx} ${cy+S(.5)} v ${-S(.55)}`); break;
+    case 'target': C(cx,cy,S(.85)); C(cx,cy,S(.4)); C(cx,cy,S(.1),col); break;
+    case 'ring': {const e=C(cx,cy,S(.85)); e.setAttribute('stroke-dasharray','3 3'); C(cx,cy,S(.35));} break;
+    case 'split': P(`M ${cx-S(.85)} ${cy} h ${S(.6)} M ${cx-S(.25)} ${cy} L ${cx+S(.72)} ${cy-S(.62)} M ${cx-S(.25)} ${cy} L ${cx+S(.72)} ${cy+S(.62)}`);
+      C(cx-S(.25),cy,S(.13),col); break;
+    case 'bubble': C(cx,cy,S(.88)); C(cx,cy,S(.4)); break;
+    case 'heal': P(`M ${cx} ${cy-S(.7)} v ${S(1.4)} M ${cx-S(.7)} ${cy} h ${S(1.4)}`); break;
+    case 'wreck': mk(g,'rect',{x:cx-S(.85),y:cy-S(.3),width:S(1.7),height:S(.7),rx:S(.1)});
+      P(`M ${cx-S(.5)} ${cy-S(.3)} l ${S(.2)} ${-S(.4)} h ${S(.6)} l ${S(.2)} ${S(.4)}`);
+      C(cx-S(.45),cy+S(.55),S(.2)); C(cx+S(.45),cy+S(.55),S(.2)); break;
+    case 'skull': P(`M ${cx-S(.65)} ${cy+S(.15)} a ${S(.65)} ${S(.7)} 0 1 1 ${S(1.3)} 0 v ${S(.35)} h ${-S(1.3)} Z`);
+      C(cx-S(.26),cy-S(.05),S(.15),col); C(cx+S(.26),cy-S(.05),S(.15),col);
+      P(`M ${cx-S(.4)} ${cy+S(.5)} v ${S(.3)} M ${cx} ${cy+S(.5)} v ${S(.3)} M ${cx+S(.4)} ${cy+S(.5)} v ${S(.3)}`); break;
+    case 'wall': mk(g,'rect',{x:cx-S(.9),y:cy-S(.6),width:S(1.8),height:S(1.2),rx:S(.08)});
+      P(`M ${cx-S(.9)} ${cy} h ${S(1.8)} M ${cx-S(.3)} ${cy-S(.6)} v ${S(.6)} M ${cx+S(.3)} ${cy} v ${S(.6)}`); break;
+    case 'oil': P(`M ${cx} ${cy-S(.85)} C ${cx+S(.8)} ${cy} ${cx+S(.55)} ${cy+S(.8)} ${cx} ${cy+S(.8)}
+      C ${cx-S(.55)} ${cy+S(.8)} ${cx-S(.8)} ${cy} ${cx} ${cy-S(.85)} Z`); break;
+    case 'skid': P(`M ${cx-S(.9)} ${cy+S(.6)} C ${cx-S(.2)} ${cy+S(.5)} ${cx+S(.2)} ${cy-S(.5)} ${cx+S(.9)} ${cy-S(.6)}`);
+      P(`M ${cx-S(.9)} ${cy+S(.15)} C ${cx-S(.2)} ${cy+S(.05)} ${cx+S(.2)} ${cy-S(.85)} ${cx+S(.9)} ${cy-S(.95)}`); break;
+    case 'wave': P(`M ${cx-S(.9)} ${cy} q ${S(.45)} ${-S(.8)} ${S(.9)} 0 q ${S(.45)} ${S(.8)} ${S(.9)} 0`); break;
+    case 'clock': C(cx,cy,S(.8)); P(`M ${cx} ${cy-S(.42)} V ${cy} H ${cx+S(.36)}`); break;
+    case 'eye': P(`M ${cx-S(.9)} ${cy} C ${cx-S(.42)} ${cy-S(.62)} ${cx+S(.42)} ${cy-S(.62)} ${cx+S(.9)} ${cy}
+      C ${cx+S(.42)} ${cy+S(.62)} ${cx-S(.42)} ${cy+S(.62)} ${cx-S(.9)} ${cy} Z`); C(cx,cy,S(.25),col); break;
+    case 'recycle': P(`M ${cx-S(.72)} ${cy+S(.3)} A ${S(.78)} ${S(.78)} 0 1 1 ${cx+S(.5)} ${cy+S(.62)}`);
+      P(`M ${cx-S(.98)} ${cy} l ${S(.3)} ${S(.32)} l ${S(.36)} ${-S(.22)}`); break;
+    case 'blueprint': mk(g,'rect',{x:cx-S(.85),y:cy-S(.68),width:S(1.7),height:S(1.36),rx:S(.1)});
+      P(`M ${cx-S(.3)} ${cy-S(.68)} v ${S(1.36)} M ${cx-S(.85)} ${cy+S(.1)} h ${S(1.7)}`); break;
+    case 'coin': mk(g,'ellipse',{cx,cy:cy+S(.5),rx:S(.78),ry:S(.27)});
+      mk(g,'ellipse',{cx,cy,rx:S(.78),ry:S(.27)}); mk(g,'ellipse',{cx,cy:cy-S(.5),rx:S(.78),ry:S(.27)}); break;
+    case 'interest': P(`M ${cx-S(.85)} ${cy+S(.7)} L ${cx-S(.2)} ${cy-S(.08)} L ${cx+S(.22)} ${cy+S(.34)} L ${cx+S(.88)} ${cy-S(.7)}`);
+      P(`M ${cx+S(.42)} ${cy-S(.7)} h ${S(.46)} v ${S(.46)}`); break;
+    case 'shield': P(`M ${cx} ${cy-S(.85)} L ${cx+S(.72)} ${cy-S(.46)} V ${cy+S(.12)}
+      C ${cx+S(.72)} ${cy+S(.56)} ${cx+S(.3)} ${cy+S(.78)} ${cx} ${cy+S(.88)}
+      C ${cx-S(.3)} ${cy+S(.78)} ${cx-S(.72)} ${cy+S(.56)} ${cx-S(.72)} ${cy+S(.12)} V ${cy-S(.46)} Z`); break;
+    case 'bank': P(`M ${cx-S(.88)} ${cy-S(.3)} L ${cx} ${cy-S(.78)} L ${cx+S(.88)} ${cy-S(.3)}`);
+      P(`M ${cx-S(.58)} ${cy-S(.1)} v ${S(.7)} M ${cx} ${cy-S(.1)} v ${S(.7)} M ${cx+S(.58)} ${cy-S(.1)} v ${S(.7)}`);
+      P(`M ${cx-S(.88)} ${cy+S(.74)} h ${S(1.76)}`); break;
+    case 'star': {let d='';for(let i=0;i<10;i++){const a=Math.PI/180*(36*i-90),rr=i%2?S(.36):S(.88);
+      d+=(i?'L':'M')+(cx+Math.cos(a)*rr).toFixed(1)+' '+(cy+Math.sin(a)*rr).toFixed(1)+' ';} P(d+'Z');} break;
+    case 'flag': P(`M ${cx-S(.55)} ${cy+S(.9)} V ${cy-S(.9)} H ${cx+S(.7)} l ${-S(.26)} ${S(.4)} l ${S(.26)} ${S(.4)} H ${cx-S(.55)}`); break;
+    case 'anchor': C(cx,cy-S(.6),S(.22)); P(`M ${cx} ${cy-S(.38)} v ${S(1.1)}`);
+      P(`M ${cx-S(.6)} ${cy+S(.25)} a ${S(.6)} ${S(.6)} 0 0 0 ${S(1.2)} 0`); break;
+  }
+  return g;
+}
+
+/* ============================== MAP ============================== */
+(()=>{
+  const svg=document.getElementById('tree'), defs=mk(svg,'defs');
+  [0,1,2,3].forEach(i=>{const f=mk(defs,'filter',{id:'gl'+i,x:'-90%',y:'-90%',width:'280%',height:'280%'});
+    mk(f,'feGaussianBlur',{stdDeviation:4.5,result:'b'});
+    const m=mk(f,'feMerge'); mk(m,'feMergeNode',{in:'b'}); mk(m,'feMergeNode',{in:'SourceGraphic'});});
+  const rg=mk(defs,'radialGradient',{id:'vig'});
+  mk(rg,'stop',{offset:'0%','stop-color':'#e8c26a','stop-opacity':.10});
+  mk(rg,'stop',{offset:'100%','stop-color':'#e8c26a','stop-opacity':0});
+
+  const HUB={x:800,y:610}, D2R=Math.PI/180;
+  const pol=(a,r)=>({x:HUB.x+Math.cos(a*D2R)*r, y:HUB.y+Math.sin(a*D2R)*r});
+  mk(svg,'circle',{cx:HUB.x,cy:HUB.y,r:560,fill:'url(#vig)'});
+  const bgm=mk(svg,'g',{opacity:.04});
+  for(let r=0;r<19;r++)for(let c=0;c<21;c++)
+    mk(bgm,'path',{d:hexPath(10+c*80+(r%2?40:0),8+r*69,33),fill:'none',stroke:'#efe9df','stroke-width':1});
+
+  const R0=118, STEP=54, GAP=64;
+  const drawNode=(p,n,ink,glf,i,force)=>{
+    const [name,,ranks,ic,gate,,cap]=n;
+    const rr=cap?27:gate?21:17;
+    if(cap) mk(svg,'path',{d:hexPath(p.x,p.y,rr+8),fill:'none',stroke:ink,
+      'stroke-width':2,opacity:.45,filter:`url(#gl${glf})`});
+    mk(svg,'path',{d:hexPath(p.x,p.y,rr+3),fill:'#0e0b09',stroke:ink,
+      'stroke-width':cap?2.8:gate?2.2:1.7,opacity:gate||cap?1:.8});
+    if(cap) mk(svg,'path',{d:hexPath(p.x,p.y,rr-1),fill:ink,opacity:.15,stroke:'none'});
+    glyph(svg,ic,p.x,p.y,rr*0.46,ink);
+    if(ranks>1){ const w=(ranks-1)*7, y=p.y+rr+7;
+      for(let k=0;k<ranks;k++) mk(svg,'circle',{cx:p.x-w/2+k*7,cy:y,r:2,
+        fill:'none',stroke:ink,'stroke-width':1.1,opacity:.6}); }
+    if(gate){ mk(svg,'rect',{x:p.x-17,y:p.y-rr-19,width:34,height:15,rx:7.5,
+        fill:'#25190f',stroke:'#e0864a','stroke-width':1.1});
+      txt(svg,p.x,p.y-rr-8.5,gate,'gate','middle'); }
+    // labels alternate above/below so neighbours on a near-horizontal line
+    // never sit side by side; a gated node's label clears its badge
+    const above=force===undefined?(i%2===1):force;
+    txt(svg,p.x,above?p.y-rr-(gate?34:8):p.y+rr+(ranks>1?18:11),name,'nm','middle',
+      cap?ink:'#d8d1c6');
+  };
+
+  Object.entries(TREE).forEach(([key,b])=>{
+    if(key==='command') return;
+    const rp=pol(b.ctr,R0);
+    mk(svg,'path',{d:`M ${pol(b.ctr,58).x} ${pol(b.ctr,58).y} L ${rp.x} ${rp.y}`,
+      stroke:b.ink,'stroke-width':4,opacity:.4,'stroke-linecap':'round'});
+    b.lines.forEach((ln,li)=>{
+      // alternate lines start half a step further out, so a line's nodes
+      // interleave with its neighbours' instead of sitting shoulder to shoulder
+      const OFF=(li%2)*(STEP/2);
+      let prev=rp;
+      ln.n.forEach((n,i)=>{
+        const p=pol(ln.a, R0+GAP+OFF+i*STEP);
+        mk(svg,'path',{d:`M ${prev.x} ${prev.y} L ${p.x} ${p.y}`,fill:'none',
+          stroke:b.ink,'stroke-width':n[4]?2.2:2.8,opacity:.3,'stroke-linecap':'round',
+          'stroke-dasharray':n[4]?'6 6':''});
+        prev=p;
+      });
+      // the LAST node's label points back toward the hub, so the line label
+      // beyond it always lands on clear ground
+      const down=Math.sin(ln.a*D2R)>0, last=ln.n.length-1;
+      ln.n.forEach((n,i)=>drawNode(pol(ln.a,R0+GAP+OFF+i*STEP),n,b.ink,b.gl,i,
+        i===last?down:undefined));
+      // line label sits on the chain's own outward extension — guaranteed
+      // empty ground — clamped so a long steep line can't push it off-canvas
+      const e=pol(ln.a, R0+GAP+OFF+last*STEP+88);
+      const ex=Math.min(1470,Math.max(130,e.x)), ey=Math.min(1212,Math.max(46,e.y));
+      txt(svg,ex,ey,ln.label,'hb','middle',b.ink);
+      if(ln.sub) txt(svg,ex,ey+14,ln.sub,'tag','middle');
+    });
+    drawNode(rp,b.root,b.ink,b.gl,0);
+  });
+
+  // COMMAND hub + four satellites, parked in the gaps between quadrants
+  TREE.command.lines[0].n.forEach((n,i)=>{
+    const p=pol(i*90, 108);
+    mk(svg,'path',{d:`M ${pol(i*90,56).x} ${pol(i*90,56).y} L ${p.x} ${p.y}`,
+      stroke:'#e8c26a','stroke-width':2.5,opacity:.35,'stroke-linecap':'round'});
+    drawNode(p,n,'#e8c26a',0,0);
+  });
+  mk(svg,'path',{d:hexPath(HUB.x,HUB.y,56),fill:'none',stroke:'#e8c26a',
+    'stroke-width':2,opacity:.35,filter:'url(#gl0)'});
+  mk(svg,'path',{d:hexPath(HUB.x,HUB.y,47),fill:'#0e0b09',stroke:'#e8c26a','stroke-width':3.2});
+  mk(svg,'path',{d:hexPath(HUB.x,HUB.y,38),fill:'#e8c26a',opacity:.12,stroke:'none'});
+  txt(svg,HUB.x,HUB.y-2,'COMMAND','hb','middle','#e8c26a');
+  txt(svg,HUB.x,HUB.y+14,'ALWAYS OWNED','tag','middle');
+
+  // branch banners in the canvas corner each quadrant points at
+  [['garage',34,60,'start'],['rulebook',1566,60,'end'],
+   ['pitwall',34,1230,'start'],['holdings',1566,1230,'end']].forEach(([k,x,y,an])=>{
+    const b=TREE[k];
+    txt(svg,x,y,b.name,'bh',an,b.ink);
+    txt(svg,x,y+19,b.tag,'tag',an);
+    const count=1+b.lines.reduce((s,l)=>s+l.n.length,0);
+    txt(svg,x,y+34,count+' NODES · '+b.lines.length+' LINES','tag',an);
+  });
+
+  // key
+  const kx=34, ky=1066;
+  mk(svg,'rect',{x:kx,y:ky,width:340,height:146,rx:9,fill:'#100d0b',
+    stroke:'rgba(255,255,255,.10)','stroke-width':1});
+  txt(svg,kx+18,ky+24,'READING THE MAP','tag');
+  [[9,0,'Node — buy it once its parent is owned'],
+   [11,1,'Gated — locked until you clear that wave'],
+   [13,2,'Capstone — the end of a line']].forEach(([r,kind,d],i)=>{
+    const cy=ky+50+i*26, cx=kx+34;
+    mk(svg,'path',{d:hexPath(cx,cy,r),fill:'#0e0b09',stroke:kind===1?'#e0864a':'#e8c26a',
+      'stroke-width':kind===2?2.4:1.6,opacity:kind===0?.8:1});
+    if(kind===2) mk(svg,'path',{d:hexPath(cx,cy,r-3),fill:'#e8c26a',opacity:.15,stroke:'none'});
+    txt(svg,kx+60,cy+4,d,'tag');
+  });
+  txt(svg,kx+18,ky+134,'EVERY LINE READS OUTWARD IN ASCENDING COST','tag');
+})();
+
+/* ============================== CATALOG ============================== */
+(()=>{
+  const el=document.getElementById('cat');
+  const order=[['garage'],['rulebook','command'],['pitwall'],['holdings']];
+  const nodeHtml=(n,ink)=>{
+    const [name,eff,ranks,,gate,cost,cap]=n;
+    return `<div class="n"><div><span class="t" style="color:${cap?ink:'#efe9df'}">${name}</span>`
+      + (gate?`<span class="g">${gate}</span>`:'')
+      + `<div class="e">${eff}</div></div><div class="r">×${ranks}<br>${cost}◆</div></div>`;
+  };
+  order.forEach(keys=>{
+    const col=document.createElement('div'); col.className='col';
+    keys.forEach(k=>{
+      const b=TREE[k]; let h='';
+      h += `<h2 style="color:${b.ink}">${b.name}</h2>`;
+      const count=(b.root?1:0)+b.lines.reduce((s,l)=>s+l.n.length,0);
+      h += `<div class="cnt">${b.tag} · ${count} NODES</div>`;
+      if(b.root){ h += `<div class="sec">ROOT</div>` + nodeHtml(b.root,b.ink); }
+      b.lines.forEach(ln=>{
+        h += `<div class="sec">${ln.label}${ln.sub?' · '+ln.sub:''}</div>`;
+        ln.n.forEach(n=>{ h += nodeHtml(n,b.ink); });
+      });
+      if(k==='garage') h += `<div class="note"><b>Meta nodes never grant an in-run upgrade’s effect.</b>
+        They share axes with <i>TOWER_UPGRADES</i> but stay incremental, so picks like Shatter, Piercing
+        Optics and Depleted Rounds remain live decisions. ARMOUR PIERCING covers kinetic towers only —
+        the Lattice is energy.</div>`;
+      if(k==='rulebook') h += `<div class="note"><b>Swarmers get no node on purpose.</b> They are the
+        baseline everything else is measured against — the answer to them is the Garage’s volume line,
+        not a counter. A node that only helps against the most common enemy is a global damage node
+        wearing a costume.</div>`;
+      if(k==='pitwall') h += `<div class="note"><b>Oil Slick is the standout.</b> The ground layer already
+        stamps oil at every kill site and tire marks at every wall scrape, purely as decoration. These
+        nodes turn a shipped visual into a mechanic — your own kill history becomes terrain.</div>`;
+      if(k==='holdings') h += `<div class="note"><b>RISK is the tycoon’s other half.</b> Earning nodes
+        compound quietly; these are bets you place before a wave. They are the only nodes that can
+        make a run worse, which is what makes taking them a decision.</div>`;
+      const g=document.createElement('div'); g.className='grp'; g.innerHTML=h; col.appendChild(g);
+    });
+    el.appendChild(col);
+  });
+  // ordering self-check — surfaces in the console if a line ever goes out of order
+  let bad=[];
+  Object.values(TREE).forEach(b=>b.lines.forEach(ln=>{
+    for(let i=1;i<ln.n.length;i++) if(ln.n[i][5] < ln.n[i-1][5]) bad.push(ln.label+': '+ln.n[i][0]);
+  }));
+  console.log(bad.length?'OUT OF ORDER: '+bad.join(', '):'ordering OK');
+})();
+</script>
+</body></html>

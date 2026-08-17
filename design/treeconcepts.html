@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>SWARM — multi-tree concepts</title>
+<style>
+  :root{ --bg:#141110; --panel:#1b1613; --card:#100d0b; --line:rgba(255,255,255,.09);
+         --ink:#efe9df; --mute:#6f675c; --dim:#a89f92; --gold:#e8c26a;
+         --rust:#e0864a; --teal:#79d6d0; --steel:#cfd8e0; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);
+       font-family:'Bahnschrift','Arial Narrow',system-ui,sans-serif;
+       font-variant-numeric:tabular-nums;padding:22px 0 50px}
+  .board{width:1560px;margin:0 auto 30px;background:var(--panel);
+         border:1px solid var(--line);border-radius:12px;padding:20px 26px 26px}
+  .hdr{display:flex;align-items:baseline;gap:14px;margin-bottom:4px}
+  .kick{font-size:11px;letter-spacing:.28em;color:var(--rust);font-weight:700}
+  h1{font-size:19px;letter-spacing:.22em;font-weight:700}
+  .verdict{margin-left:auto;font-size:10.5px;letter-spacing:.06em;color:var(--dim)}
+  .sub{font-size:11px;color:var(--dim);margin-bottom:16px;line-height:1.5;max-width:1180px}
+  .tag{font-size:8.5px;letter-spacing:.2em;color:var(--mute)}
+  b.ok{color:var(--teal)} b.no{color:var(--rust)}
+
+  /* ---------- concept A : the rack ---------- */
+  .rack{display:grid;grid-template-columns:266px 1fr 262px;gap:16px}
+  .rail{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:11px}
+  .wrow{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:6px;
+        border:1px solid transparent}
+  .wrow.on{background:rgba(224,134,74,.10);border-color:rgba(224,134,74,.5)}
+  .wrow .nm{font-size:12px;font-weight:700;flex:1}
+  .wrow .pg{font-size:10px;color:var(--mute);letter-spacing:.06em}
+  .wrow.lk .nm,.wrow.lk .pg{color:#6b6257}
+  .stage{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:14px 16px}
+  .stitle{display:flex;align-items:baseline;gap:12px;margin-bottom:2px}
+  .stitle h2{font-size:16px;letter-spacing:.2em;color:var(--rust)}
+  .stats{font-size:10px;color:var(--mute);letter-spacing:.1em;margin-bottom:14px}
+  .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .bcol{text-align:center}
+  .bcol h3{font-size:10px;letter-spacing:.22em;color:var(--dim);margin-bottom:3px}
+  .bcol .bs{font-size:9px;color:var(--mute);margin-bottom:12px}
+  .tn{position:relative;padding:9px 6px 11px}
+  .tn:not(:last-child)::after{content:'';position:absolute;left:50%;bottom:-1px;width:2px;
+       height:12px;background:rgba(224,134,74,.35);transform:translateX(-50%)}
+  .tn .t{font-size:11.5px;font-weight:700;margin-top:5px}
+  .tn .d{font-size:10px;color:var(--dim);line-height:1.3;margin-top:1px}
+  .tn .r{font-size:9px;color:var(--mute);letter-spacing:.08em;margin-top:3px}
+  .cap .t{color:var(--gold)}
+  .side{background:var(--card);border:1px solid rgba(232,194,106,.45);border-radius:9px;padding:14px}
+
+  /* ---------- concept C : tech grid ---------- */
+  .grid{background:var(--card);border:1px solid var(--line);border-radius:9px;
+        padding:12px 10px;overflow-x:auto}
+  table{border-collapse:collapse;width:100%}
+  th{font-size:9.5px;letter-spacing:.12em;color:var(--ink);font-weight:700;
+     padding:0 3px 8px;text-align:center;vertical-align:bottom}
+  th .c{display:block;font-size:8.5px;color:var(--mute);font-weight:400;letter-spacing:.06em}
+  td{padding:3px;vertical-align:top}
+  .cell{border:1px solid rgba(255,255,255,.1);border-radius:5px;padding:5px 4px;
+        background:rgba(255,255,255,.018);min-height:40px}
+  .cell .t{font-size:9px;font-weight:700;line-height:1.2;display:block}
+  .cell .r{font-size:8px;color:var(--mute);letter-spacing:.06em}
+  .cell.cp{border-color:rgba(232,194,106,.55);background:rgba(232,194,106,.09)}
+  .cell.cp .t{color:var(--gold)}
+  .tier{font-size:9px;letter-spacing:.2em;color:var(--mute);white-space:nowrap;
+        padding-right:8px;text-align:right;vertical-align:middle}
+  /* only the full-width board diagrams stretch — inline icons keep their size */
+  .board > svg{display:block;width:100%;height:auto;overflow:visible}
+  .wrow svg,.tn svg{display:block;flex:none}
+</style></head><body>
+
+<div class="board">
+  <div class="hdr"><span class="kick">CONCEPT A</span><h1>THE RACK</h1>
+    <span class="verdict">Cheapest to build · most readable · scales to any number of towers</span></div>
+  <div class="sub">Pick a weapon off the rack, its tree fills the stage. Every tower gets the
+    same skeleton — <b>OUTPUT / REACH / IDENTITY</b>, three nodes each, a capstone at every tip —
+    so a new tower is nine lines of data, not a new screen.
+    <b class="ok">Good:</b> each tree is legible on its own; progress per weapon is visible at a glance.
+    <b class="no">Bad:</b> you can never see the whole system at once, and comparing two towers means clicking twice.</div>
+  <div class="rack">
+    <div class="rail" id="rail"></div>
+    <div class="stage" id="stage"></div>
+    <div class="side" id="side"></div>
+  </div>
+</div>
+
+<div class="board">
+  <div class="hdr"><span class="kick">CONCEPT B</span><h1>THE CONSTELLATION</h1>
+    <span class="verdict">Most impressive · one screen · needs zoom to read</span></div>
+  <div class="sub">One map. COMMAND sits at the centre, and every weapon is its own small tree
+    orbiting it — same three-branch skeleton, drawn as a cluster. Zoomed out you see the whole
+    arsenal and how far you've got; zoom in and a cluster becomes a readable tree.
+    <b class="ok">Good:</b> reads as one enormous tree, which is the fantasy; a fully-lit constellation is a trophy.
+    <b class="no">Bad:</b> needs pan/zoom to be usable, and it's the most work to build and to keep legible.</div>
+  <svg id="con" viewBox="0 0 1508 830"></svg>
+</div>
+
+<div class="board">
+  <div class="hdr"><span class="kick">CONCEPT C</span><h1>THE TECH GRID</h1>
+    <span class="verdict">Everything visible at once · reads as a spreadsheet, not a skill tree</span></div>
+  <div class="sub">Columns are weapons, rows are tiers. The whole arsenal is one table you scan
+    left to right to compare towers, top to bottom to see depth. Tier III only unlocks once you
+    own both nodes above it in that column.
+    <b class="ok">Good:</b> total overview, trivially extensible, obvious what to buy next.
+    <b class="no">Bad:</b> it looks like a spreadsheet — the least game-like of the three, and the
+    thing the audience is quickest to read as low-effort.</div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="board">
+  <div class="hdr"><span class="kick">SHARED</span><h1>THE TOWER-TREE SKELETON</h1>
+    <span class="verdict">Same in all three concepts — the concept only changes navigation</span></div>
+  <div class="sub">Whichever shell wins, each of the eleven towers gets the same nine-node shape.
+    That is what keeps eleven trees from becoming eleven design problems: the branches always mean
+    the same thing, and only the third one is bespoke to the weapon.</div>
+  <svg id="skel" viewBox="0 0 1508 250"></svg>
+</div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+const mk=(p,t,a={})=>{const e=document.createElementNS(NS,t);
+  for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e;};
+const txt=(p,x,y,s,cls,an='start',fill)=>{const e=mk(p,'text',{x,y,class:cls,'text-anchor':an});
+  if(fill)e.setAttribute('fill',fill); e.textContent=s; return e;};
+const hex=(cx,cy,r)=>{let d='';for(let i=0;i<6;i++){const a=Math.PI/180*(60*i-90);
+  d+=(i?'L':'M')+(cx+r*Math.cos(a)).toFixed(1)+' '+(cy+r*Math.sin(a)).toFixed(1)+' ';}return d+'Z';};
+
+/* ---- tiny glyph set, enough to tell the weapons apart ---- */
+function glyph(p,name,cx,cy,s,col){
+  const g=mk(p,'g',{stroke:col,fill:'none','stroke-width':1.7,
+    'stroke-linecap':'round','stroke-linejoin':'round'});
+  const S=v=>v*s, P=d=>mk(g,'path',{d}), C=(x,y,r,f)=>mk(g,'circle',{cx:x,cy:y,r,fill:f||'none'});
+  switch(name){
+    case 'autocannon': for(let i=-1;i<2;i++) P(`M ${cx-S(.5)+i*S(.4)} ${cy-S(.6)} L ${cx-S(.1)+i*S(.4)} ${cy} L ${cx-S(.5)+i*S(.4)} ${cy+S(.6)}`); break;
+    case 'flame': P(`M ${cx} ${cy+S(.85)} C ${cx-S(.9)} ${cy+S(.2)} ${cx-S(.22)} ${cy-S(.3)} ${cx-S(.1)} ${cy-S(.9)}
+      C ${cx+S(.52)} ${cy-S(.26)} ${cx+S(.9)} ${cy+S(.2)} ${cx} ${cy+S(.85)} Z`); break;
+    case 'mortar': P(`M ${cx} ${cy-S(.9)} C ${cx+S(.5)} ${cy-S(.45)} ${cx+S(.5)} ${cy+S(.2)} ${cx+S(.42)} ${cy+S(.55)}
+      L ${cx-S(.42)} ${cy+S(.55)} C ${cx-S(.5)} ${cy+S(.2)} ${cx-S(.5)} ${cy-S(.45)} ${cx} ${cy-S(.9)} Z`);
+      P(`M ${cx-S(.42)} ${cy+S(.8)} h ${S(.84)}`); break;
+    case 'cryo': for(let i=0;i<3;i++){const a=Math.PI/3*i;
+      P(`M ${cx-Math.cos(a)*S(.88)} ${cy-Math.sin(a)*S(.88)} L ${cx+Math.cos(a)*S(.88)} ${cy+Math.sin(a)*S(.88)}`);} break;
+    case 'tesla': P(`M ${cx+S(.28)} ${cy-S(.9)} L ${cx-S(.5)} ${cy+S(.1)} L ${cx+S(.05)} ${cy+S(.1)} L ${cx-S(.22)} ${cy+S(.9)} L ${cx+S(.55)} ${cy-S(.15)} L ${cx} ${cy-S(.15)} Z`); break;
+    case 'gatling': C(cx,cy,S(.38)); for(let i=0;i<6;i++){const a=Math.PI/3*i;
+      P(`M ${cx+Math.cos(a)*S(.6)} ${cy+Math.sin(a)*S(.6)} L ${cx+Math.cos(a)*S(.92)} ${cy+Math.sin(a)*S(.92)}`);} break;
+    case 'rocket': P(`M ${cx} ${cy-S(.9)} C ${cx+S(.42)} ${cy-S(.3)} ${cx+S(.42)} ${cy+S(.3)} ${cx} ${cy+S(.7)}
+      C ${cx-S(.42)} ${cy+S(.3)} ${cx-S(.42)} ${cy-S(.3)} ${cx} ${cy-S(.9)} Z`);
+      P(`M ${cx-S(.38)} ${cy+S(.25)} l ${-S(.3)} ${S(.55)} M ${cx+S(.38)} ${cy+S(.25)} l ${S(.3)} ${S(.55)}`); break;
+    case 'railgun': P(`M ${cx-S(.9)} ${cy-S(.3)} h ${S(1.5)} M ${cx-S(.9)} ${cy+S(.3)} h ${S(1.5)}`);
+      P(`M ${cx+S(.6)} ${cy-S(.6)} L ${cx+S(.92)} ${cy} L ${cx+S(.6)} ${cy+S(.6)}`); break;
+    case 'lattice': P(`M ${cx-S(.9)} ${cy} h ${S(1.8)}`); C(cx-S(.5),cy,S(.26)); C(cx+S(.5),cy,S(.16)); break;
+    case 'mine': C(cx,cy,S(.42)); for(let i=0;i<6;i++){const a=Math.PI/3*i+0.5;
+      P(`M ${cx+Math.cos(a)*S(.42)} ${cy+Math.sin(a)*S(.42)} L ${cx+Math.cos(a)*S(.85)} ${cy+Math.sin(a)*S(.85)}`);} break;
+    case 'wall': mk(g,'rect',{x:cx-S(.9),y:cy-S(.6),width:S(1.8),height:S(1.2),rx:S(.08)});
+      P(`M ${cx-S(.9)} ${cy} h ${S(1.8)} M ${cx-S(.3)} ${cy-S(.6)} v ${S(.6)} M ${cx+S(.3)} ${cy} v ${S(.6)}`); break;
+    case 'command': C(cx,cy,S(.42)); P(`M ${cx-S(.9)} ${cy} h ${S(.35)} M ${cx+S(.55)} ${cy} h ${S(.35)}
+      M ${cx} ${cy-S(.9)} v ${S(.35)} M ${cx} ${cy+S(.55)} v ${S(.35)}`); break;
+  }
+}
+const hexEl=(p,cx,cy,r,col,fill,w)=>{
+  mk(p,'path',{d:hex(cx,cy,r),fill:fill||'#0e0b09',stroke:col,'stroke-width':w||1.8});
+};
+
+/* =================== the arsenal, with real stats =================== */
+const TOWERS=[
+  ['autocannon','Autocannon',40,'#9aa5b8','volume fire'],
+  ['flame','Flamethrower',60,'#d9642e','burn cone'],
+  ['mortar','Mortar Pit',85,'#c8825a','indirect AoE'],
+  ['cryo','Cryo Sprayer',70,'#79d6d0','freeze field'],
+  ['tesla','Tesla Coil',100,'#7fd0e8','chain + stun'],
+  ['gatling','Gatling Nest',110,'#b0a08a','spin-up'],
+  ['rocket','Rocket Battery',125,'#d98a8a','homing salvo'],
+  ['railgun','Railgun',130,'#8fb7c9','pierce line'],
+  ['lattice','Laser Lattice',150,'#b9a6d8','lock beam'],
+  ['mine','Minefield',45,'#c9a13b','contact charges'],
+  ['wall','Wall',25,'#8a93a5','blocks the road'],
+];
+
+/* Three worked examples. Every tower follows the same skeleton:
+   OUTPUT (raw power) / REACH (coverage) / IDENTITY (its own mechanic).  */
+const TREES={
+  autocannon:{ owned:4, branches:[
+    ['OUTPUT','raw power',[
+      ['Belt Feed','+8% rate of fire','×5'],
+      ['Heavier Slug','+2 damage per shot','×4'],
+      ['TWIN MOUNT','Two shots per cycle','capstone'],
+    ]],
+    ['REACH','coverage',[
+      ['Long Barrel','+10% range','×4'],
+      ['Overwatch','Keeps firing 1.5s after the target leaves range','×2'],
+      ['ENFILADE','+40% range, hits everything on the line','capstone'],
+    ]],
+    ['IDENTITY','it bounces off armour — fix that',[
+      ['Hardened Core','Ignores 2 armour','×4'],
+      ['Tracer Rounds','Its target takes +10% from every source','×3'],
+      ['SUPPRESSION','Hits also slow by 10%','capstone'],
+    ]],
+  ]},
+  mortar:{ owned:2, branches:[
+    ['OUTPUT','raw power',[
+      ['Shell Capacity','+10% damage','×5'],
+      ['Heavy Charge','+15% blast damage','×3'],
+      ['SATURATION','Three shells per shot','capstone'],
+    ]],
+    ['REACH','coverage',[
+      ['Wide Bore','+8% blast radius','×4'],
+      ['Short Fuse','Minimum range −15px','×3'],
+      ['COUNTER-BATTERY','+50% range','capstone'],
+    ]],
+    ['IDENTITY','shells lead, and can miss',[
+      ['Spotter','Scatter −20%','×3'],
+      ['Airburst','Damage falls off less toward the blast edge','×3'],
+      ['PREDICTIVE FIRE','Never misses a mover','capstone'],
+    ]],
+  ]},
+  cryo:{ owned:0, branches:[
+    ['OUTPUT','raw power',[
+      ['Coolant Volume','Slow +5% stronger','×4'],
+      ['Brittle','Frozen damage bonus +5%','×3'],
+      ['DEEP FREEZE','Frozen cars stop dead for 0.5s','capstone'],
+    ]],
+    ['REACH','coverage',[
+      ['Wide Nozzle','+10% spray radius','×4'],
+      ['Persistence','Freeze lasts +0.4s','×3'],
+      ['COLD FRONT','Freezes a cone twice as wide','capstone'],
+    ]],
+    ['IDENTITY','it barely damages anything',[
+      ['Frost Bite','Frozen cars take 2 dmg/s','×3'],
+      ['Flash Freeze','The first freeze on a car is instant','×2'],
+      ['SHATTER','Frozen kills detonate','capstone'],
+    ]],
+  ]},
+};
+
+/* =================== CONCEPT A — the rack =================== */
+(()=>{
+  const rail=document.getElementById('rail');
+  rail.innerHTML='<div class="tag" style="padding:2px 9px 9px">THE RACK · 11 TREES</div>'
+   + `<div class="wrow" style="border-color:rgba(232,194,106,.45);background:rgba(232,194,106,.08)">
+        <svg width="26" height="26" viewBox="0 0 26 26"><g id="gcommand"></g></svg>
+        <span class="nm" style="color:#e8c26a">COMMAND</span><span class="pg">3 / 4</span></div>`
+   + TOWERS.map((t,i)=>{
+      const on=t[0]==='autocannon', lk=i>6;
+      return `<div class="wrow ${on?'on':''} ${lk?'lk':''}">
+        <svg width="26" height="26" viewBox="0 0 26 26"><g id="g${t[0]}"></g></svg>
+        <span class="nm">${t[1]}</span>
+        <span class="pg">${lk?'locked':(on?'4 / 9':(i%3?'0 / 9':'2 / 9'))}</span></div>`;
+     }).join('');
+  glyph(document.getElementById('gcommand'),'command',13,13,7,'#e8c26a');
+  TOWERS.forEach((t,i)=>glyph(document.getElementById('g'+t[0]),t[0],13,13,7,
+    i>6?'#6b6257':(t[0]==='autocannon'?'#e0864a':t[3])));
+
+  const T=TREES.autocannon;
+  document.getElementById('stage').innerHTML =
+    `<div class="stitle"><h2>AUTOCANNON</h2>
+       <span class="tag">THE OPENER · 40 GOLD · 4 OF 9 NODES OWNED</span></div>
+     <div class="stats">RANGE 100 · 3.33 SHOTS/S · 8 DAMAGE · BOUNCES OFF ARMOUR</div>
+     <div class="cols">` +
+    T.branches.map((b,bi)=>`<div class="bcol"><h3>${b[0]}</h3><div class="bs">${b[1]}</div>` +
+      b[2].map((n,ni)=>{
+        const cap=n[2]==='capstone', own=(bi===0&&ni<2)||(bi===2&&ni===0);
+        const col=cap?'#e8c26a':(own?'#e0864a':'#7a7166');
+        return `<div class="tn ${cap?'cap':''}">
+          <svg width="46" height="46" viewBox="0 0 46 46" style="margin:0 auto;display:block">
+            <path d="${hex(23,23,cap?19:16)}" fill="${own||cap?'rgba(224,134,74,.10)':'#0e0b09'}"
+                  stroke="${col}" stroke-width="${cap?2.4:1.8}"/></svg>
+          <div class="t" style="color:${cap?'#e8c26a':(own?'#efe9df':'#9b9186')}">${n[0]}</div>
+          <div class="d">${n[1]}</div><div class="r">${n[2]}</div></div>`;
+      }).join('') + `</div>`).join('') + `</div>`;
+
+  document.getElementById('side').innerHTML =
+    `<div class="tag">SELECTED</div>
+     <div style="font-size:14px;font-weight:700;letter-spacing:.16em;color:#e8c26a;margin:8px 0 2px">SUPPRESSION</div>
+     <div class="tag">AUTOCANNON · IDENTITY · CAPSTONE</div>
+     <div style="font-size:11.5px;color:#efe9df;line-height:1.5;margin:12px 0 10px">
+       Every autocannon hit also slows by 10%. Turns your cheapest gun into
+       crowd control that scales with how many you own.</div>
+     <div style="font-size:10.5px;color:#a89f92;line-height:1.5;margin-bottom:14px">
+       Needs Hardened Core and Tracer Rounds first.</div>
+     <div class="tag">LOCKED · CLEAR WAVE 12</div>
+     <div style="margin-top:14px;padding:9px;border:1px solid rgba(232,194,106,.5);
+       border-radius:6px;text-align:center;font-size:12px;font-weight:700;
+       letter-spacing:.16em;color:#e8c26a">◆ 180 CHIPS</div>`;
+})();
+
+/* =================== CONCEPT B — the constellation =================== */
+(()=>{
+  const svg=document.getElementById('con');
+  const defs=mk(svg,'defs');
+  const f=mk(defs,'filter',{id:'g',x:'-80%',y:'-80%',width:'260%',height:'260%'});
+  mk(f,'feGaussianBlur',{stdDeviation:5,result:'b'});
+  const m=mk(f,'feMerge'); mk(m,'feMergeNode',{in:'b'}); mk(m,'feMergeNode',{in:'SourceGraphic'});
+  const rg=mk(defs,'radialGradient',{id:'v'});
+  mk(rg,'stop',{offset:'0%','stop-color':'#e8c26a','stop-opacity':.1});
+  mk(rg,'stop',{offset:'100%','stop-color':'#e8c26a','stop-opacity':0});
+
+  const HUB={x:754,y:392}, D2R=Math.PI/180;
+  mk(svg,'circle',{cx:HUB.x,cy:HUB.y,r:370,fill:'url(#v)'});
+
+  // eleven clusters on an ellipse — each is one tower's whole tree
+  TOWERS.forEach((t,i)=>{
+    const a=(-90+i*(360/TOWERS.length))*D2R;
+    const cx=HUB.x+Math.cos(a)*508, cy=HUB.y+Math.sin(a)*268;
+    const lit=i<3, col=lit?t[3]:'#5f574d';
+    mk(svg,'path',{d:`M ${HUB.x+Math.cos(a)*70} ${HUB.y+Math.sin(a)*46} L ${cx} ${cy}`,
+      stroke:col,'stroke-width':lit?2.2:1.4,opacity:lit?.35:.2,
+      'stroke-dasharray':lit?'':'5 5'});
+    // the cluster: a hub + three two-node arms = the nine-node skeleton
+    [0,1,2].forEach(k=>{
+      const ba=a+(k-1)*38*D2R;
+      let px=cx, py=cy;
+      for(let n=1;n<=3;n++){
+        const nx=cx+Math.cos(ba)*(n*18), ny=cy+Math.sin(ba)*(n*18);
+        mk(svg,'path',{d:`M ${px} ${py} L ${nx} ${ny}`,stroke:col,'stroke-width':1.4,opacity:.4});
+        hexEl(svg,nx,ny,n===3?7:5,col,n===3&&lit?'rgba(232,194,106,.2)':'#0e0b09',n===3?1.8:1.3);
+        px=nx; py=ny;
+      }
+    });
+    if(lit) mk(svg,'path',{d:hex(cx,cy,20),fill:'none',stroke:col,'stroke-width':1.6,
+      opacity:.4,filter:'url(#g)'});
+    hexEl(svg,cx,cy,16,col,lit?'rgba(255,255,255,.04)':'#0e0b09',2.2);
+    glyph(svg,t[0],cx,cy,7.5,col);
+    txt(svg,cx,cy+74,t[1].toUpperCase(),'',
+      'middle',lit?'#efe9df':'#8b8177').setAttribute('style','font:700 10px Bahnschrift;letter-spacing:.1em');
+    txt(svg,cx,cy+87,lit?'4 / 9':'LOCKED','','middle','#6f675c')
+      .setAttribute('style','font:8.5px Bahnschrift;letter-spacing:.14em');
+  });
+
+  mk(svg,'path',{d:hex(HUB.x,HUB.y,62),fill:'none',stroke:'#e8c26a','stroke-width':2,
+    opacity:.35,filter:'url(#g)'});
+  hexEl(svg,HUB.x,HUB.y,52,'#e8c26a','#0e0b09',3.2);
+  mk(svg,'path',{d:hex(HUB.x,HUB.y,42),fill:'#e8c26a',opacity:.12,stroke:'none'});
+  txt(svg,HUB.x,HUB.y-2,'COMMAND','','middle','#e8c26a')
+    .setAttribute('style','font:700 13px Bahnschrift;letter-spacing:.2em');
+  txt(svg,HUB.x,HUB.y+15,'4 UNIVERSAL NODES','','middle','#6f675c')
+    .setAttribute('style','font:8.5px Bahnschrift;letter-spacing:.16em');
+
+  txt(svg,14,26,'ZOOMED OUT — THE WHOLE ARSENAL. ZOOM A CLUSTER AND IT BECOMES A READABLE TREE.',
+    '','start','#6f675c').setAttribute('style','font:9px Bahnschrift;letter-spacing:.18em');
+  txt(svg,14,812,'11 TOWER TREES × 9 NODES + 4 COMMAND NODES = 103 NODES',
+    '','start','#6f675c').setAttribute('style','font:9px Bahnschrift;letter-spacing:.18em');
+})();
+
+/* =================== CONCEPT C — the tech grid =================== */
+(()=>{
+  const ROWS=[
+    ['TIER I','OUTPUT',0],['TIER I','REACH',1],['TIER I','IDENTITY',2],
+    ['TIER II','OUTPUT',0],['TIER II','REACH',1],['TIER II','IDENTITY',2],
+    ['TIER III','OUTPUT',0],['TIER III','REACH',1],['TIER III','IDENTITY',2],
+  ];
+  // filled examples where we have them; the rest show the skeleton slot
+  const SLOT=[['Output I','×5'],['Reach I','×4'],['Identity I','×4'],
+              ['Output II','×4'],['Reach II','×3'],['Identity II','×3'],
+              ['Output III','capstone'],['Reach III','capstone'],['Identity III','capstone']];
+  let h='<table><thead><tr><th></th>'+TOWERS.map(t=>
+    `<th style="color:${t[3]}">${t[1].toUpperCase()}<span class="c">${t[2]}g · ${t[4]}</span></th>`).join('')
+    +'</tr></thead><tbody>';
+  ROWS.forEach((r,ri)=>{
+    const tier=Math.floor(ri/3), bi=ri%3;
+    h+=`<tr><td class="tier">${bi===1?r[0]:''}</td>`;
+    TOWERS.forEach(t=>{
+      const tree=TREES[t[0]];
+      const n=tree?tree.branches[bi][2][tier]:null;
+      const name=n?n[0]:SLOT[bi+tier*3][0], rk=n?n[2]:SLOT[bi+tier*3][1];
+      const cap=rk==='capstone';
+      h+=`<td><div class="cell ${cap?'cp':''}">
+            <span class="t" style="${n?'':'color:#6b6257'}">${name}</span>
+            <span class="r">${rk}</span></div></td>`;
+    });
+    h+='</tr>';
+  });
+  document.getElementById('grid').innerHTML=h+'</tbody></table>';
+})();
+
+/* =================== SHARED — the skeleton =================== */
+(()=>{
+  const svg=document.getElementById('skel');
+  const X=210, Y=126, ARM=[['OUTPUT','raw power — damage and rate','#e0864a'],
+    ['REACH','coverage — range, radius, uptime','#79d6d0'],
+    ['IDENTITY','the weapon’s own mechanic — bespoke per tower','#e8c26a']];
+  hexEl(svg,X,Y,30,'#efe9df','#0e0b09',2.6);
+  glyph(svg,'autocannon',X,Y,14,'#efe9df');
+  txt(svg,X,Y+50,'THE TOWER','','middle','#efe9df')
+    .setAttribute('style','font:700 11px Bahnschrift;letter-spacing:.2em');
+  ARM.forEach((a,i)=>{
+    const y=44+i*82;
+    mk(svg,'path',{d:`M ${X+34} ${Y} L ${X+92} ${y}`,stroke:a[2],'stroke-width':2.4,opacity:.35});
+    let px=X+92, py=y;
+    [0,1,2].forEach(k=>{
+      const nx=X+130+k*118;
+      mk(svg,'path',{d:`M ${px} ${py} L ${nx} ${y}`,stroke:a[2],'stroke-width':2.4,opacity:.3});
+      hexEl(svg,nx,y,k===2?24:18,a[2],k===2?'rgba(232,194,106,.10)':'#0e0b09',k===2?2.6:1.9);
+      txt(svg,nx,y+(k===2?42:36),k===2?'CAPSTONE':(k?'RANKED NODE':'RANKED NODE'),'',
+        'middle','#8b8177').setAttribute('style','font:8.5px Bahnschrift;letter-spacing:.14em');
+      px=nx;
+    });
+    txt(svg,X+560,y-4,a[0],'','start',a[2]).setAttribute('style','font:700 14px Bahnschrift;letter-spacing:.2em');
+    txt(svg,X+560,y+13,a[1],'','start','#a89f92').setAttribute('style','font:11px Bahnschrift');
+  });
+  txt(svg,30,240,'NINE NODES PER TOWER × 11 TOWERS = 99 · THE FIRST TWO BRANCHES ARE THE SAME EVERYWHERE, SO ONLY THE THIRD NEEDS DESIGNING PER WEAPON',
+    '','start','#6f675c').setAttribute('style','font:9px Bahnschrift;letter-spacing:.16em');
+})();
+</script>
+</body></html>

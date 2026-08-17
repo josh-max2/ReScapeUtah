@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>SWARM — the constellation</title>
+<style>
+  :root{ --bg:#141110; --panel:#1b1613; --card:#100d0b; --line:rgba(255,255,255,.09);
+         --ink:#efe9df; --mute:#6f675c; --dim:#a89f92; --gold:#e8c26a; --rust:#e0864a; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);
+       font-family:'Bahnschrift','Arial Narrow',system-ui,sans-serif;
+       font-variant-numeric:tabular-nums;padding:22px 0 50px}
+  .board{width:1560px;margin:0 auto 30px;background:var(--panel);
+         border:1px solid var(--line);border-radius:12px;padding:20px 26px 26px}
+  .hdr{display:flex;align-items:baseline;gap:14px;margin-bottom:4px}
+  .kick{font-size:11px;letter-spacing:.28em;color:var(--rust);font-weight:700}
+  h1{font-size:19px;letter-spacing:.22em;font-weight:700}
+  .verdict{margin-left:auto;font-size:10.5px;letter-spacing:.06em;color:var(--dim)}
+  .sub{font-size:11px;color:var(--dim);margin-bottom:14px;line-height:1.5;max-width:1200px}
+  .board > svg{display:block;width:100%;height:auto;overflow:visible}
+  .lv{font:700 10px Bahnschrift;letter-spacing:.2em}
+  .nm{font:700 11px Bahnschrift;letter-spacing:.03em}
+  .sm{font:700 9px Bahnschrift;letter-spacing:.06em}
+  .ds{font:10px Bahnschrift}
+  .tg{font:9px Bahnschrift;letter-spacing:.18em;fill:#6f675c}
+  .bn{font:700 14px Bahnschrift;letter-spacing:.24em}
+  .cat{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .col{display:flex;flex-direction:column;gap:16px}
+  .grp{border:1px solid var(--line);border-radius:9px;padding:12px 14px 14px;background:var(--card)}
+  .grp h2{font-size:13px;letter-spacing:.22em;font-weight:700;margin-bottom:2px}
+  .grp .st{font-size:8.5px;letter-spacing:.1em;color:var(--mute);margin-bottom:8px;line-height:1.4}
+  .sec{font-size:8.5px;letter-spacing:.18em;color:var(--mute);
+       margin:10px 0 5px;padding-bottom:3px;border-bottom:1px solid rgba(255,255,255,.07)}
+  .n{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:3px 0}
+  .n .t{font-size:10.5px;font-weight:700}
+  .n .e{font-size:9.5px;color:var(--dim);grid-column:1;line-height:1.3}
+  .n .r{font-size:9px;color:var(--mute);letter-spacing:.06em;white-space:nowrap;align-self:start}
+</style></head><body>
+
+<div class="board">
+  <div class="hdr"><span class="kick">ZOOM 1</span><h1>THE CONSTELLATION</h1>
+    <span class="verdict">Four levels · 11 towers + the manual gun · 238 nodes</span></div>
+  <div class="sub">COMMAND at the centre. Every weapon is its own tree orbiting it, and every
+    <b>branch</b> of that tree is itself a cluster — the branch node in the middle with its own
+    upgrades ringed around it. Four levels deep, and the shape repeats at every level, so learning
+    one tower teaches you all eleven.</div>
+  <svg id="wide" viewBox="0 0 1508 930"></svg>
+</div>
+
+<div class="board">
+  <div class="hdr"><span class="kick">ZOOM 2</span><h1>AUTOCANNON</h1>
+    <span class="verdict">One tower, all 19 nodes · this is what a cluster looks like up close</span></div>
+  <div class="sub">The tower core, three branch nodes, and five upgrades ringed around each branch.
+    Every ring is about its own branch: OUTPUT rings are power, REACH rings are coverage, IDENTITY
+    rings all attack the same weakness — the Autocannon bounces off armour, so its identity ring is
+    the answer to that.</div>
+  <svg id="t1" viewBox="0 0 1508 830"></svg>
+</div>
+
+<div class="board">
+  <div class="hdr"><span class="kick">ZOOM 2</span><h1>CRYO SPRAYER</h1>
+    <span class="verdict">Same skeleton, completely different identity ring</span></div>
+  <div class="sub">Identical shape, and that is the point — but the Cryo's problem is that it barely
+    damages anything, so its OUTPUT ring turns the freeze itself into damage and its IDENTITY ring
+    is about the field it leaves behind rather than the car it hit.</div>
+  <svg id="t2" viewBox="0 0 1508 830"></svg>
+</div>
+
+<div class="board">
+  <div class="hdr"><span class="kick">ZOOM 2</span><h1>MANUAL GUN</h1>
+    <span class="verdict">The weapon you aim · four fire modes · one shared heat bar</span></div>
+  <div class="sub">Not a tower — this is the gun the player holds, and the only cluster with four
+    branches instead of three. It is a machine gun by default; the other three are fire modes you
+    unlock and switch between. <b>Heat is shared across all four</b>, so switching modes is a real
+    decision and holding any of them down has a cost.
+    <b style="color:#e0864a">This mechanic does not exist in the sim yet</b> — today the only active
+    ability is the Q-strike, so this is new work, not an upgrade to something shipped.</div>
+  <svg id="t3" viewBox="0 0 1508 830"></svg>
+</div>
+
+<div class="board">
+  <div class="hdr"><span class="kick">EVERY NODE</span><h1>EVERY TREE</h1>
+    <span class="verdict">11 towers + the manual gun · 185 upgrades · gold = capstone</span></div>
+  <div class="sub">Each tower's three rings, filled in. The first two rings mean the same thing on
+    every weapon; the third is bespoke — it always attacks that weapon's own stated weakness, which
+    is why the Autocannon's ring is about armour and the Rocket's is about wasted shots.</div>
+  <div class="cat" id="cat"></div>
+</div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+const mk=(p,t,a={})=>{const e=document.createElementNS(NS,t);
+  for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e;};
+const T=(p,x,y,s,cls,an='start',fill)=>{const e=mk(p,'text',{x,y,class:cls,'text-anchor':an});
+  if(fill)e.setAttribute('fill',fill); e.textContent=s; return e;};
+const hex=(cx,cy,r)=>{let d='';for(let i=0;i<6;i++){const a=Math.PI/180*(60*i-90);
+  d+=(i?'L':'M')+(cx+r*Math.cos(a)).toFixed(1)+' '+(cy+r*Math.sin(a)).toFixed(1)+' ';}return d+'Z';};
+const D2R=Math.PI/180;
+const pol=(cx,cy,a,r)=>({x:cx+Math.cos(a*D2R)*r, y:cy+Math.sin(a*D2R)*r});
+const link=(p,a,b,col,w,op,dash)=>mk(p,'path',{d:`M ${a.x} ${a.y} L ${b.x} ${b.y}`,fill:'none',
+  stroke:col,'stroke-width':w,opacity:op,'stroke-linecap':'round','stroke-dasharray':dash||''});
+
+function glyph(p,name,cx,cy,s,col){
+  const g=mk(p,'g',{stroke:col,fill:'none','stroke-width':Math.max(1,s*0.19),
+    'stroke-linecap':'round','stroke-linejoin':'round'});
+  const S=v=>v*s, P=d=>mk(g,'path',{d}), C=(x,y,r,f)=>mk(g,'circle',{cx:x,cy:y,r,fill:f||'none'});
+  switch(name){
+    case 'autocannon': for(let i=-1;i<2;i++) P(`M ${cx-S(.5)+i*S(.4)} ${cy-S(.6)} L ${cx-S(.1)+i*S(.4)} ${cy} L ${cx-S(.5)+i*S(.4)} ${cy+S(.6)}`); break;
+    case 'flame': P(`M ${cx} ${cy+S(.85)} C ${cx-S(.9)} ${cy+S(.2)} ${cx-S(.22)} ${cy-S(.3)} ${cx-S(.1)} ${cy-S(.9)}
+      C ${cx+S(.52)} ${cy-S(.26)} ${cx+S(.9)} ${cy+S(.2)} ${cx} ${cy+S(.85)} Z`); break;
+    case 'mortar': P(`M ${cx} ${cy-S(.9)} C ${cx+S(.5)} ${cy-S(.45)} ${cx+S(.5)} ${cy+S(.2)} ${cx+S(.42)} ${cy+S(.55)}
+      L ${cx-S(.42)} ${cy+S(.55)} C ${cx-S(.5)} ${cy+S(.2)} ${cx-S(.5)} ${cy-S(.45)} ${cx} ${cy-S(.9)} Z`);
+      P(`M ${cx-S(.42)} ${cy+S(.8)} h ${S(.84)}`); break;
+    case 'cryo': for(let i=0;i<3;i++){const a=Math.PI/3*i;
+      P(`M ${cx-Math.cos(a)*S(.88)} ${cy-Math.sin(a)*S(.88)} L ${cx+Math.cos(a)*S(.88)} ${cy+Math.sin(a)*S(.88)}`);} break;
+    case 'tesla': P(`M ${cx+S(.28)} ${cy-S(.9)} L ${cx-S(.5)} ${cy+S(.1)} L ${cx+S(.05)} ${cy+S(.1)} L ${cx-S(.22)} ${cy+S(.9)} L ${cx+S(.55)} ${cy-S(.15)} L ${cx} ${cy-S(.15)} Z`); break;
+    case 'gatling': C(cx,cy,S(.38)); for(let i=0;i<6;i++){const a=Math.PI/3*i;
+      P(`M ${cx+Math.cos(a)*S(.6)} ${cy+Math.sin(a)*S(.6)} L ${cx+Math.cos(a)*S(.92)} ${cy+Math.sin(a)*S(.92)}`);} break;
+    case 'rocket': P(`M ${cx} ${cy-S(.9)} C ${cx+S(.42)} ${cy-S(.3)} ${cx+S(.42)} ${cy+S(.3)} ${cx} ${cy+S(.7)}
+      C ${cx-S(.42)} ${cy+S(.3)} ${cx-S(.42)} ${cy-S(.3)} ${cx} ${cy-S(.9)} Z`);
+      P(`M ${cx-S(.38)} ${cy+S(.25)} l ${-S(.3)} ${S(.55)} M ${cx+S(.38)} ${cy+S(.25)} l ${S(.3)} ${S(.55)}`); break;
+    case 'railgun': P(`M ${cx-S(.9)} ${cy-S(.3)} h ${S(1.5)} M ${cx-S(.9)} ${cy+S(.3)} h ${S(1.5)}`);
+      P(`M ${cx+S(.6)} ${cy-S(.6)} L ${cx+S(.92)} ${cy} L ${cx+S(.6)} ${cy+S(.6)}`); break;
+    case 'lattice': P(`M ${cx-S(.9)} ${cy} h ${S(1.8)}`); C(cx-S(.5),cy,S(.26)); C(cx+S(.5),cy,S(.16)); break;
+    case 'mine': C(cx,cy,S(.42)); for(let i=0;i<6;i++){const a=Math.PI/3*i+0.5;
+      P(`M ${cx+Math.cos(a)*S(.42)} ${cy+Math.sin(a)*S(.42)} L ${cx+Math.cos(a)*S(.85)} ${cy+Math.sin(a)*S(.85)}`);} break;
+    case 'wall': mk(g,'rect',{x:cx-S(.9),y:cy-S(.6),width:S(1.8),height:S(1.2),rx:S(.08)});
+      P(`M ${cx-S(.9)} ${cy} h ${S(1.8)} M ${cx-S(.3)} ${cy-S(.6)} v ${S(.6)} M ${cx+S(.3)} ${cy} v ${S(.6)}`); break;
+    case 'command': C(cx,cy,S(.42)); P(`M ${cx-S(.9)} ${cy} h ${S(.35)} M ${cx+S(.55)} ${cy} h ${S(.35)}
+      M ${cx} ${cy-S(.9)} v ${S(.35)} M ${cx} ${cy+S(.55)} v ${S(.35)}`); break;
+    case 'manual': P(`M ${cx-S(.9)} ${cy+S(.5)} h ${S(1.1)} l ${S(.3)} ${-S(.5)} h ${S(.4)}`);
+      P(`M ${cx-S(.55)} ${cy+S(.5)} v ${S(.4)} h ${S(.4)}`); C(cx+S(.55),cy-S(.5),S(.16)); break;
+    case 'mg': for(let i=-1;i<2;i++) P(`M ${cx-S(.85)} ${cy+i*S(.42)} h ${S(1.7)}`); break;
+    case 'frz': for(let i=0;i<3;i++){const a=Math.PI/3*i;
+      P(`M ${cx-Math.cos(a)*S(.88)} ${cy-Math.sin(a)*S(.88)} L ${cx+Math.cos(a)*S(.88)} ${cy+Math.sin(a)*S(.88)}`);} break;
+    case 'bmb': C(cx,cy+S(.2),S(.55)); P(`M ${cx+S(.35)} ${cy-S(.3)} l ${S(.3)} ${-S(.35)}`);
+      for(let i=0;i<3;i++){const a=-Math.PI/2+(i-1)*0.9;
+        C(cx+Math.cos(a)*S(.95),cy+Math.sin(a)*S(.95),S(.13),col);} break;
+    case 'bem': P(`M ${cx-S(.9)} ${cy-S(.55)} L ${cx+S(.85)} ${cy} L ${cx-S(.9)} ${cy+S(.55)} Z`);
+      C(cx+S(.85),cy,S(.15),col); break;
+    case 'out': for(let i=-1;i<2;i++) P(`M ${cx-S(.5)+i*S(.4)} ${cy-S(.6)} L ${cx-S(.1)+i*S(.4)} ${cy} L ${cx-S(.5)+i*S(.4)} ${cy+S(.6)}`); break;
+    case 'rch': {const e=C(cx,cy,S(.85)); e.setAttribute('stroke-dasharray','3 3'); C(cx,cy,S(.3));} break;
+    case 'idt': {let d='';for(let i=0;i<10;i++){const a=Math.PI/180*(36*i-90),rr=i%2?S(.36):S(.88);
+      d+=(i?'L':'M')+(cx+Math.cos(a)*rr).toFixed(1)+' '+(cy+Math.sin(a)*rr).toFixed(1)+' ';} P(d+'Z');} break;
+  }
+}
+const node=(p,x,y,r,col,fill,w)=>mk(p,'path',{d:hex(x,y,r),fill:fill||'#0e0b09',stroke:col,'stroke-width':w||1.8});
+
+/* ===================== the arsenal ===================== */
+const TOWERS=[
+  ['manual','Manual Gun','#e8c26a',1],
+  ['autocannon','Autocannon','#e0864a',1],['flame','Flamethrower','#d9642e',1],
+  ['mortar','Mortar Pit','#c8825a',1],  ['cryo','Cryo Sprayer','#79d6d0',1],
+  ['tesla','Tesla Coil','#7fd0e8',1],   ['gatling','Gatling Nest','#b0a08a',1],
+  ['rocket','Rocket Battery','#d98a8a',1],['railgun','Railgun','#8fb7c9',1],
+  ['lattice','Laser Lattice','#b9a6d8',1],['mine','Minefield','#c9a13b',1],
+  ['wall','Wall','#8a93a5',1],
+];
+
+/* Every tower: core -> 3 branch nodes -> 5 upgrades ringed around each branch.
+   ring entry = [name, effect, ranks, owned?]  — last entry of each ring is the capstone. */
+/* Every tower: core -> 3 branch nodes -> 5 upgrades ringed around each branch.
+   ring entry = [name, effect, ranks, owned?]  — the LAST entry is the capstone.
+   Branch keys are usually OUTPUT / REACH / IDENTITY; the Wall gets its own,
+   because a tower that deals no damage has no OUTPUT to speak of.        */
+const DETAIL={
+  /* THE MANUAL GUN — the weapon the player aims, not a placeable. It is a
+     machine gun by default; the other three branches are alternate fire modes
+     you unlock and switch between. HEAT is the shared limiter across all four,
+     which is what stops a held-down weapon from trivialising the horde.
+     NOTE: none of this exists in the sim yet — today the only active ability
+     is the Q-strike. This is a new mechanic, not an upgrade to an old one.   */
+  manual:{ name:'MANUAL GUN', ink:'#e8c26a', icon:'manual',
+    stats:'ALWAYS OWNED · AIMED AT THE CURSOR · HOLD TO FIRE · SHARED HEAT BAR · FOUR FIRE MODES',
+    branches:[
+      { key:'MACHINE GUN', sub:'the base mode — sustained chip fire', icon:'mg', ring:[
+        ['Higher Calibre','+2 damage per shot','×5',1],
+        ['Cyclic Rate','+10% fire rate','×4',1],
+        ['Vented Barrel','Heat builds 20% slower','×3',0],
+        ['Extended Burst','Fires 25% longer before it overheats','×4',0],
+        ['MINIGUN','The longer you hold, the faster it fires — up to 2×','capstone',0]]},
+      { key:'FREEZE RAY', sub:'control — no damage, all setup', icon:'frz', ring:[
+        ['Cryo Charge','Freeze builds 20% faster','×4',0],
+        ['Wide Sweep','+25% cone width','×3',0],
+        ['Lingering Chill','Freeze lasts +0.5s','×4',0],
+        ['Cold Bore','Costs no heat while sweeping already-frozen cars','×2',0],
+        ['WHITEOUT','A full-heat discharge freezes everything on screen for 1s','capstone',0]]},
+      { key:'CLUSTER BOMB', sub:'lobbed — clears the low-HP chaff', icon:'bmb', ring:[
+        ['Bomblet Count','+2 bomblets per bomb','×4',0],
+        ['Execute','+50% damage to cars under 25% HP','×4',0],
+        ['Wider Scatter','+20% spread','×3',0],
+        ['Fast Cook','+25% throw rate','×3',0],
+        ['CARPET BOMB','A car killed by a bomblet drops another bomblet','capstone',0]]},
+      { key:'BEAM', sub:'must be held — ramps while you hold it', icon:'bem', ring:[
+        ['Focus','Ramps 15% faster','×4',0],
+        ['Power Cell','+10% peak damage','×4',0],
+        ['Steady Hand','The ramp survives crossing a gap under 0.4s','×3',0],
+        ['Heat Exchanger','The beam costs 20% less heat','×3',0],
+        ['LANCE','At peak it pierces every car in a line','capstone',0]]},
+    ]},
+
+  autocannon:{ name:'AUTOCANNON', ink:'#e0864a', icon:'autocannon',
+    stats:'40 GOLD · RANGE 100 · 3.33 SHOTS/S · 8 DAMAGE · BOUNCES OFF ARMOUR',
+    branches:[
+      { key:'OUTPUT', sub:'raw power', icon:'out', ring:[
+        ['Belt Feed','+8% rate of fire','×5',1],
+        ['Heavier Slug','+2 damage per shot','×4',1],
+        ['Battery Fire','+3% rate per other Autocannon in range','×3',0],
+        ['Hot Barrels','+10% damage after 3s of continuous fire','×3',0],
+        ['TWIN MOUNT','Two shots per cycle','capstone',0]]},
+      { key:'REACH', sub:'coverage', icon:'rch', ring:[
+        ['Long Barrel','+10% range','×4',1],
+        ['Overwatch','Keeps firing 1.5s after the target leaves range','×2',0],
+        ['Elevation','+15% range when mounted on a rim tile','×3',0],
+        ['Traverse','Turns instantly — no shots lost switching target','×1',0],
+        ['ENFILADE','+40% range, hits everything on the line','capstone',0]]},
+      { key:'IDENTITY', sub:'it bounces off armour — fix that', icon:'idt', ring:[
+        ['Hardened Core','Ignores 2 armour','×4',1],
+        ['Tracer Rounds','Its target takes +10% from every source','×3',0],
+        ['Ricochet','Shots that hit armour bounce to a second car for 40%','×2',0],
+        ['Chain Feed','Every 5th shot is a heavy round at 3× damage','×3',0],
+        ['SUPPRESSION','Hits also slow by 10%','capstone',0]]},
+    ]},
+
+  flame:{ name:'FLAMETHROWER', ink:'#d9642e', icon:'flame',
+    stats:'60 GOLD · RANGE 60 · 90° CONE · 4S BURN · BURN IGNORES ARMOUR',
+    branches:[
+      { key:'OUTPUT', sub:'the burn is the damage', icon:'out', ring:[
+        ['Fuel Mix','Burn damage +10%','×5',0],
+        ['Rich Mixture','+2 direct cone damage','×4',0],
+        ['Afterburn','Burn ticks 25% faster','×3',0],
+        ['Accelerant','Burn lasts +0.6s','×4',0],
+        ['FIRESTORM','Burning cars set light to anything they touch','capstone',0]]},
+      { key:'REACH', sub:'coverage', icon:'rch', ring:[
+        ['Pressure Feed','+12% cone reach','×4',0],
+        ['Wide Jet','Cone +12°','×3',0],
+        ['Fuel Drum','+15% reach while three or more cars are burning','×3',0],
+        ['Pilot Light','No wind-up — fires the instant a car enters','×1',0],
+        ['BACKDRAFT','The cone also sprays 90° behind the tower','capstone',0]]},
+      { key:'IDENTITY', sub:'burn ignores armour — lean on it', icon:'idt', ring:[
+        ['Stoked','Each burn stack adds +15% burn damage','×3',0],
+        ['Slag','Burning cars lose 3 armour','×3',0],
+        ['Deep Burn','Burn ignores Shielder bubbles too','×2',0],
+        ['Cauterise','Menders cannot heal a burning car','×1',0],
+        ['IMMOLATION','A car that dies burning explodes for its remaining burn','capstone',0]]},
+    ]},
+
+  mortar:{ name:'MORTAR PIT', ink:'#c8825a', icon:'mortar',
+    stats:'85 GOLD · RANGE 280 · MIN RANGE 80 · 60 DAMAGE · SPLASH 50 · SHELLS CAN MISS',
+    branches:[
+      { key:'OUTPUT', sub:'raw power', icon:'out', ring:[
+        ['Shell Capacity','+10% damage','×5',0],
+        ['Rapid Loader','+8% fire rate','×4',0],
+        ['Heavy Charge','+12% blast damage','×3',0],
+        ['Delayed Fuse','Shells detonate 0.2s late, catching cars driving in','×2',0],
+        ['SATURATION','Three shells per shot','capstone',0]]},
+      { key:'REACH', sub:'coverage', icon:'rch', ring:[
+        ['Wide Bore','+8% blast radius','×4',0],
+        ['Extended Rifling','+10% range','×4',0],
+        ['Short Fuse','Minimum range −15px','×3',0],
+        ['High Angle','Fires over walls without losing accuracy','×1',0],
+        ['COUNTER-BATTERY','+50% range','capstone',0]]},
+      { key:'IDENTITY', sub:'indirect fire that can miss', icon:'idt', ring:[
+        ['Spotter','Scatter −20%','×3',0],
+        ['Airburst','Damage falls off less toward the blast edge','×3',0],
+        ['Ranging Shot','Each shell at the same area is 10% more accurate','×2',0],
+        ['Shrapnel','The blast leaves debris that slows for 1.5s','×2',0],
+        ['PREDICTIVE FIRE','Never misses a mover','capstone',0]]},
+    ]},
+
+  cryo:{ name:'CRYO SPRAYER', ink:'#79d6d0', icon:'cryo',
+    stats:'70 GOLD · RANGE 100 · SPLASH 100 · −40% SPEED · +30% DAMAGE TAKEN · 3S',
+    branches:[
+      { key:'OUTPUT', sub:'it barely damages anything — make the freeze hurt', icon:'out', ring:[
+        ['Coolant Volume','Slow +5% stronger','×4',1],
+        ['Brittle','Frozen damage bonus +5%','×3',1],
+        ['Frost Bite','Frozen cars take 2 dmg/s','×3',0],
+        ['Thermal Shock','A car takes 15 damage the moment it freezes','×3',0],
+        ['DEEP FREEZE','Frozen cars stop dead for 0.5s','capstone',0]]},
+      { key:'REACH', sub:'coverage', icon:'rch', ring:[
+        ['Wide Nozzle','+10% spray radius','×4',0],
+        ['Persistence','Freeze lasts +0.4s','×3',0],
+        ['Recirculation','+12% fire rate','×3',0],
+        ['Overspray','Half-strength freeze just outside the radius','×2',0],
+        ['COLD FRONT','Freezes a cone twice as wide','capstone',0]]},
+      { key:'IDENTITY', sub:'the field it leaves, not the car it hit', icon:'idt', ring:[
+        ['Black Ice','The ground it sprays stays slick for 3s','×3',0],
+        ['Flash Freeze','The first freeze on a car is instant','×2',0],
+        ['Cryo Bond','Frozen cars drag their neighbours to their speed','×2',0],
+        ['Supercool','Freeze a car twice in 3s and the bonus doubles','×2',0],
+        ['SHATTER','Frozen kills detonate','capstone',0]]},
+    ]},
+
+  tesla:{ name:'TESLA COIL', ink:'#7fd0e8', icon:'tesla',
+    stats:'100 GOLD · RANGE 120 · 45 DAMAGE · CHAINS 4 · 0.5S STUN · CANNOT MISS',
+    branches:[
+      { key:'OUTPUT', sub:'raw power', icon:'out', ring:[
+        ['Capacitor Density','+8% damage','×5',0],
+        ['Fast Discharge','+10% fire rate','×4',0],
+        ['Low Resistance','Chain falloff 0.7 → +0.04','×4',0],
+        ['Overcharge','+20% damage to the primary target','×3',0],
+        ['OVERLOAD','The first chain hits for full damage','capstone',0]]},
+      { key:'REACH', sub:'coverage', icon:'rch', ring:[
+        ['Grounding Rods','+1 chain target','×3',0],
+        ['Conductor Mast','+12% range','×4',0],
+        ['Arc Reach','Chains jump 30% further','×3',0],
+        ['Static Field','Chains may jump back to a car already hit once','×1',0],
+        ['STORM','Chains until it runs out of targets in range','capstone',0]]},
+      { key:'IDENTITY', sub:'it is the stutter tower', icon:'idt', ring:[
+        ['Stutter Field','Stun +0.15s','×3',0],
+        ['Feedback','Stunned cars take +12% damage','×3',0],
+        ['Wet Circuit','+40% damage to frozen cars','×3',0],
+        ['Cascade','Every chained car is stunned too','×1',0],
+        ['LOCKDOWN','A car stunned three times stays stunned for 2s','capstone',0]]},
+    ]},
+
+  gatling:{ name:'GATLING NEST', ink:'#b0a08a', icon:'gatling',
+    stats:'110 GOLD · RANGE 120 · 5 → 22 DAMAGE OVER 4S · RAMP RESETS ON TARGET LOSS',
+    branches:[
+      { key:'OUTPUT', sub:'raw power', icon:'out', ring:[
+        ['Barrel Cooling','Damage ceiling +8%','×4',0],
+        ['Heavy Belt','+1 minimum damage','×4',0],
+        ['Sustained Feed','+6% fire rate','×4',0],
+        ['Spin-Up Motors','Reaches the ceiling 15% sooner','×3',0],
+        ['REDLINE','Three seconds past full ramp it exceeds the ceiling by 40%','capstone',0]]},
+      { key:'REACH', sub:'coverage', icon:'rch', ring:[
+        ['Long Mount','+10% range','×4',0],
+        ['Spotting Scope','+15% range while at full ramp','×3',0],
+        ['Wide Traverse','No ramp lost switching to a car within 30px','×3',0],
+        ['Bipod','+8% range and it cannot be pushed off target','×2',0],
+        ['SWEEP','At full ramp it hits every car in a narrow arc','capstone',0]]},
+      { key:'IDENTITY', sub:'the ramp is the whole weapon', icon:'idt', ring:[
+        ['Flywheel','Keeps 25% of its ramp when it loses a target','×3',0],
+        ['Heat Sink','Ramp decays 50% slower','×3',0],
+        ['Depleted Rounds','At full ramp it ignores 6 armour','×3',0],
+        ['Tracer Belt','At full ramp its target takes +10% from everything','×2',0],
+        ['NEVER COOLS','The ramp never resets while the wave is running','capstone',0]]},
+    ]},
+
+  rocket:{ name:'ROCKET BATTERY', ink:'#d98a8a', icon:'rocket',
+    stats:'125 GOLD · RANGE 200 · 55 DAMAGE × 4 SALVO · HOMES ON THE BEEFIEST · OVERKILLS SMALL FRY',
+    branches:[
+      { key:'OUTPUT', sub:'raw power', icon:'out', ring:[
+        ['Warhead Density','+10% damage','×4',0],
+        ['Faster Cycle','+10% fire rate','×4',0],
+        ['Bigger Blast','+10% blast radius','×3',0],
+        ['Tandem Charge','+25% damage to the single beefiest target','×3',0],
+        ['MULTI-STAGE','Each rocket splits into three on impact','capstone',0]]},
+      { key:'REACH', sub:'coverage', icon:'rch', ring:[
+        ['Extended Range','+12% range','×4',0],
+        ['Sensor Mast','+20% range for picking targets only','×3',0],
+        ['Launch Rails','+1 rocket per salvo','×2',0],
+        ['Loiter','Rockets that lose their target circle for 2s','×2',0],
+        ['SATURATION SALVO','Fires at every valid target in range','capstone',0]]},
+      { key:'IDENTITY', sub:'it wastes shots on small fry', icon:'idt', ring:[
+        ['Rocket Guidance','Rockets re-acquire instead of overkilling','×2',0],
+        ['Target Sort','Never fires at a car under 30 HP','×2',0],
+        ['Bunker Buster','Double damage to armoured cars','×3',0],
+        ['Proximity Fuse','Rockets detonate near the target and never whiff','×1',0],
+        ['OVERKILL RELAY','Damage past a kill carries to the next car','capstone',0]]},
+    ]},
+
+  railgun:{ name:'RAILGUN', ink:'#8fb7c9', icon:'railgun',
+    stats:'130 GOLD · RANGE 240 · 200 DAMAGE · PIERCES A LINE · THE ARMOUR ANSWER',
+    branches:[
+      { key:'OUTPUT', sub:'raw power', icon:'out', ring:[
+        ['Overcharge','+12% damage','×4',0],
+        ['Capacitor Bank','+10% fire rate','×4',0],
+        ['Muzzle Velocity','+15% damage to the first car hit','×3',0],
+        ['Compound Coils','+8% damage per car already pierced','×3',0],
+        ['SIEGE MODE','Five seconds without firing doubles the next shot','capstone',0]]},
+      { key:'REACH', sub:'coverage', icon:'rch', ring:[
+        ['Extended Rails','+12% range','×4',0],
+        ['Full Bore','The pierce line is twice as wide','×3',0],
+        ['Rangefinder','No damage falloff along the line','×2',0],
+        ['Long Sight','+20% range, +1s cycle','×2',0],
+        ['HORIZON SHOT','The line crosses the whole map','capstone',0]]},
+      { key:'IDENTITY', sub:'it exists to break armour', icon:'idt', ring:[
+        ['Sabot Rounds','Ignores 6 armour','×4',0],
+        ['Penetrator','Leaves −10 armour on everything it hits for 3s','×3',0],
+        ['Spall','Cars behind the target take 25% splash','×3',0],
+        ['Anchor Shot','The first car hit is stopped for 0.4s','×2',0],
+        ['BREACH','Ignores armour entirely','capstone',0]]},
+    ]},
+
+  lattice:{ name:'LASER LATTICE', ink:'#b9a6d8', icon:'lattice',
+    stats:'150 GOLD · RANGE 180 · 25 → 120 DAMAGE OVER 6S · LOCKED BEAM · IGNORES 15 ARMOUR',
+    branches:[
+      { key:'OUTPUT', sub:'raw power', icon:'out', ring:[
+        ['Focusing Optics','Ramps 12% faster','×4',0],
+        ['Power Draw','Damage ceiling +8%','×4',0],
+        ['Cold Start','Starts at 25% power','×3',0],
+        ['Resonance','+15% damage once locked for over 4s','×3',0],
+        ['CRITICAL MASS','Past full power it keeps climbing, 10% a second','capstone',0]]},
+      { key:'REACH', sub:'coverage', icon:'rch', ring:[
+        ['Longer Lens','+12% range','×4',0],
+        ['Lock Assist','Holds its charge 2s after the target dies','×3',0],
+        ['Wide Aperture','Can lock a car 40px outside range','×2',0],
+        ['Relay Mirror','A second Lattice in range shares its charge','×2',0],
+        ['PRISM','Hits a second target at 40% output','capstone',0]]},
+      { key:'IDENTITY', sub:'the single-target executioner — the boss answer', icon:'idt', ring:[
+        ['Piercing Optics','Ignores 15 more armour','×3',0],
+        ['Executioner','+25% damage to cars under 40% HP','×3',0],
+        ['Boss Lock','+30% damage to Titans and bosses','×3',0],
+        ['Burn Through','A kill re-locks instantly with no ramp lost','×2',0],
+        ['DISINTEGRATE','At full power it ignores armour entirely','capstone',0]]},
+    ]},
+
+  mine:{ name:'MINEFIELD', ink:'#c9a13b', icon:'mine',
+    stats:'45 GOLD · PLACED ON THE ROAD · 6 CHARGES · 90 DAMAGE · 8S RECHARGE',
+    branches:[
+      { key:'OUTPUT', sub:'raw power', icon:'out', ring:[
+        ['Shaped Charge','+12% damage','×4',0],
+        ['Mine Density','+1 charge','×4',0],
+        ['Bigger Blast','+10% blast radius','×3',0],
+        ['Fast Fuse','Recharge −0.8s','×3',0],
+        ['DAISY CHAIN','A mine sets off adjacent mines','capstone',0]]},
+      { key:'REACH', sub:'coverage', icon:'rch', ring:[
+        ['Wide Pattern','The field covers 30% more road','×3',0],
+        ['Tripwire','Triggers on cars passing within 20px','×2',0],
+        ['Extra Field','One more free minefield per wave','×2',0],
+        ['Deep Bury','The field survives being driven over without triggering','×1',0],
+        ['CARPET','The field re-lays itself at each wave start','capstone',0]]},
+      { key:'IDENTITY', sub:'the horde drives onto it', icon:'idt', ring:[
+        ['Caltrops','Cars crossing the field lose 15% speed','×3',0],
+        ['Oil Charge','Detonations leave a slick patch','×3',0],
+        ['Sticky Charge','A car that survives carries the blast into the pack','×2',0],
+        ['Pressure Plate','Heavier cars set off two charges at once','×2',0],
+        ['NEVER EMPTY','Charges never fully deplete — they only recharge','capstone',0]]},
+    ]},
+
+  wall:{ name:'WALL', ink:'#8a93a5', icon:'wall',
+    stats:'25 GOLD · 1200 HP · BLOCKS THE ROAD · INVULNERABLE UNLESS THE ROUTE IS SEALED',
+    branches:[
+      { key:'STRUCTURE', sub:'it has to survive being chewed', icon:'out', ring:[
+        ['Rebar','+600 HP','×3',0],
+        ['Cheap Concrete','Cost −4','×3',0],
+        ['Self-Repair','Recovers 200 HP per wave clear','×3',0],
+        ['Fast Set','Walls finish building instantly','×1',0],
+        ['BUNKER','Walls take half damage while any route is still open','capstone',0]]},
+      { key:'SHAPE', sub:'what it does to the track', icon:'rch', ring:[
+        ['Kerb','The blocking edge extends 6px','×3',0],
+        ['Roadworks','Two walls for the price of one, once per wave','×2',0],
+        ['Chicane','Cars scraping a wall lose 25% speed for 1s','×2',0],
+        ['Guard Rail','Cars can no longer cut the corner around a wall','×2',0],
+        ['PIT LANE','Forces the horde into a single-file gap','capstone',0]]},
+      { key:'TRAFFIC', sub:'the wall as a weapon', icon:'idt', ring:[
+        ['Scrape Damage','Cars grazing a wall take 4 damage','×3',0],
+        ['Rumble Strip','Cars near a wall lose traction','×3',0],
+        ['Spikes','Cars that ram a wall take 20 damage','×3',0],
+        ['Tow Hook','A car stopped by a wall stays stopped 0.5s longer','×2',0],
+        ['BOTTLENECK','The horde bunches at walls and takes +20% splash','capstone',0]]},
+    ]},
+};
+
+/* ===================== ZOOM 1 — the whole constellation ===================== */
+(()=>{
+  const svg=document.getElementById('wide'), defs=mk(svg,'defs');
+  const f=mk(defs,'filter',{id:'wg',x:'-80%',y:'-80%',width:'260%',height:'260%'});
+  mk(f,'feGaussianBlur',{stdDeviation:4.5,result:'b'});
+  const m=mk(f,'feMerge'); mk(m,'feMergeNode',{in:'b'}); mk(m,'feMergeNode',{in:'SourceGraphic'});
+  const rg=mk(defs,'radialGradient',{id:'wv'});
+  mk(rg,'stop',{offset:'0%','stop-color':'#e8c26a','stop-opacity':.1});
+  mk(rg,'stop',{offset:'100%','stop-color':'#e8c26a','stop-opacity':0});
+
+  const HUB={x:754,y:456};
+  mk(svg,'circle',{cx:HUB.x,cy:HUB.y,r:400,fill:'url(#wv)'});
+
+  TOWERS.forEach((t,i)=>{
+    const a=-90+i*(360/TOWERS.length);
+    const c=pol(HUB.x,HUB.y,a,1);      // direction only
+    const cx=HUB.x+(c.x-HUB.x)*0+Math.cos(a*D2R)*584,
+          cy=HUB.y+Math.sin(a*D2R)*306;
+    const lit=t[3], col=lit?t[2]:'#5b544b';
+    link(svg,pol(HUB.x,HUB.y,a,74),{x:cx,y:cy},col,lit?2:1.3,lit?.32:.18,lit?'':'5 5');
+
+    // three branch clusters per tower — each a branch node ringed with 5 upgrades
+    const NB=DETAIL[t[0]]?DETAIL[t[0]].branches.length:3;
+    const SPR=NB===4?86:118;
+    for(let k=0;k<NB;k++){
+      const ba=a+(k-(NB-1)/2)*SPR;
+      const b=pol(cx,cy,ba,46);
+      link(svg,{x:cx,y:cy},b,col,1.5,lit?.42:.22);
+      for(let s=0;s<5;s++){
+        const sa=ba+(s-2)*50;
+        const p=pol(b.x,b.y,sa,22);
+        link(svg,b,p,col,1,lit?.34:.16);
+        const capstone=(s===2);
+        node(svg,p.x,p.y,capstone?5.5:3.6,col,
+          lit&&capstone?'rgba(232,194,106,.22)':'#0e0b09',capstone?1.4:1);
+      }
+      node(svg,b.x,b.y,8,col,lit?'rgba(255,255,255,.05)':'#0e0b09',1.6);
+    }
+    if(lit) mk(svg,'path',{d:hex(cx,cy,20),fill:'none',stroke:col,'stroke-width':1.6,
+      opacity:.4,filter:'url(#wg)'});
+    node(svg,cx,cy,16,col,lit?'rgba(255,255,255,.05)':'#0e0b09',2.2);
+    glyph(svg,t[0],cx,cy,7.5,col);
+    // name sits radially OUTSIDE the ring of clusters — the one direction that
+    // is always empty, so a label never lands on the next tower along
+    // clear the cluster's own radius (46 branch + 22 ring + 5 node) plus margin
+    const dx=cx-HUB.x, dy=cy-HUB.y, len=Math.hypot(dx,dy), out=(len+108)/len;
+    const lx=HUB.x+dx*out, ly=HUB.y+dy*out;
+    T(svg,lx,ly,t[1].toUpperCase(),'sm','middle',lit?'#efe9df':'#877e73');
+    T(svg,lx,ly+13,lit?('5 / '+(1+NB*6)):'LOCKED','tg','middle');
+  });
+
+  mk(svg,'path',{d:hex(HUB.x,HUB.y,64),fill:'none',stroke:'#e8c26a','stroke-width':2,
+    opacity:.35,filter:'url(#wg)'});
+  node(svg,HUB.x,HUB.y,54,'#e8c26a','#0e0b09',3.2);
+  mk(svg,'path',{d:hex(HUB.x,HUB.y,43),fill:'#e8c26a',opacity:.12,stroke:'none'});
+  T(svg,HUB.x,HUB.y-2,'COMMAND','bn','middle','#e8c26a');
+  T(svg,HUB.x,HUB.y+16,'4 UNIVERSAL','tg','middle');
+
+  // the four levels, spelled out
+  const kx=20, ky=806;
+  mk(svg,'rect',{x:kx,y:ky,width:392,height:150,rx:9,fill:'#100d0b',
+    stroke:'rgba(255,255,255,.10)','stroke-width':1});
+  T(svg,kx+18,ky+24,'FOUR LEVELS','tg');
+  [[15,'#e8c26a','COMMAND','the universal hub — always owned'],
+   [11,'#e0864a','TOWER CORE','one per weapon · unlocks its tree'],
+   [8,'#e0864a','BRANCH','output · reach · identity'],
+   [5,'#e0864a','UPGRADE','five ringed around each branch']].forEach(([r,c,n,d],i)=>{
+    const y=ky+50+i*26;
+    node(svg,kx+34,y-4,r,c,'#0e0b09',1.6);
+    T(svg,kx+58,y,n,'sm','start',c);
+    T(svg,kx+142,y,d,'tg');
+  });
+  T(svg,1488,856,'11 TOWERS × 19 + MANUAL GUN × 25 + 4 COMMAND = 238 NODES','tg','end');
+})();
+
+/* ===================== ZOOM 2 — one tower, named ===================== */
+function drawTower(svgId, key){
+  const svg=document.getElementById(svgId), D=DETAIL[key], defs=mk(svg,'defs');
+  const f=mk(defs,'filter',{id:key+'g',x:'-80%',y:'-80%',width:'260%',height:'260%'});
+  mk(f,'feGaussianBlur',{stdDeviation:5,result:'b'});
+  const m=mk(f,'feMerge'); mk(m,'feMergeNode',{in:'b'}); mk(m,'feMergeNode',{in:'SourceGraphic'});
+  const rg=mk(defs,'radialGradient',{id:key+'v'});
+  mk(rg,'stop',{offset:'0%','stop-color':D.ink,'stop-opacity':.09});
+  mk(rg,'stop',{offset:'100%','stop-color':D.ink,'stop-opacity':0});
+
+  const C={x:560,y:470}, ink=D.ink;
+  mk(svg,'circle',{cx:C.x,cy:C.y,r:430,fill:`url(#${key}v)`});
+  const N=D.branches.length;
+  const BA=N===4?[-135,-45,45,135]:[-90,30,150];   // 4 -> diagonals, 3 -> triangle
+  // the capstone is the LAST ring entry and sits straight outward; the four
+  // ranked upgrades flank it
+  const OFF=N===4?[-70,-35,35,70,0]:[-105,-55,55,105,0];
+  const LR=N===4?132:138;
+
+  BA.forEach((ba,bi)=>{
+    const B=D.branches[bi], b=pol(C.x,C.y,ba,244);
+    link(svg,pol(C.x,C.y,ba,46),b,ink,4,.35);
+
+    B.ring.forEach((u,s)=>{
+      const sa=ba+OFF[s], cap=(s===B.ring.length-1);
+      const p=pol(b.x,b.y,sa,92);
+      link(svg,b,p,ink,cap?2.8:2,u[3]?.45:.24,u[3]?'':'5 5');
+      if(cap) mk(svg,'path',{d:hex(p.x,p.y,32),fill:'none',stroke:'#e8c26a',
+        'stroke-width':1.8,opacity:.4,filter:`url(#${key}g)`});
+      const col=cap?'#e8c26a':(u[3]?ink:'#8b8177');
+      node(svg,p.x,p.y,cap?26:19,col,
+        u[3]?'rgba(255,255,255,.05)':(cap?'rgba(232,194,106,.10)':'#0e0b09'),cap?2.6:1.9);
+      glyph(svg,B.icon,p.x,p.y,cap?12:9,col);
+      // label radiates outward from the branch centre so rings never collide
+      const l=pol(b.x,b.y,sa,cap?LR+14:LR);
+      const an=Math.cos(sa*D2R)>0.25?'start':(Math.cos(sa*D2R)<-0.25?'end':'middle');
+      const dy=Math.sin(sa*D2R)>0?6:-4;
+      // NAME ONLY on the map — descriptions live in the detail panel, which is
+      // what stops eleven clusters of prose from colliding
+      T(svg,l.x,l.y+dy,u[0],'nm',an,cap?'#e8c26a':(u[3]?'#efe9df':'#b8b0a4'));
+      T(svg,l.x,l.y+dy+13,u[2],'tg',an);
+    });
+
+    node(svg,b.x,b.y,30,ink,'rgba(255,255,255,.06)',2.6);
+    glyph(svg,B.icon,b.x,b.y,14,ink);
+    const lb=pol(C.x,C.y,ba,244-74);
+    T(svg,lb.x,lb.y+4,B.key,'bn','middle',ink);
+  });
+
+  mk(svg,'path',{d:hex(C.x,C.y,54),fill:'none',stroke:ink,'stroke-width':2,
+    opacity:.4,filter:`url(#${key}g)`});
+  node(svg,C.x,C.y,44,ink,'#0e0b09',3.2);
+  mk(svg,'path',{d:hex(C.x,C.y,35),fill:ink,opacity:.12,stroke:'none'});
+  glyph(svg,D.icon,C.x,C.y,17,ink);
+
+  // side panel: what each branch is FOR
+  const SX=1150, RH=62+N*74, Y2=120+RH+20, Y3=Y2+120;
+  mk(svg,'rect',{x:SX,y:120,width:368,height:RH,rx:10,fill:'#100d0b',
+    stroke:'rgba(255,255,255,.10)','stroke-width':1});
+  T(svg,SX+20,148,'WHAT EACH RING IS FOR','tg');
+  D.branches.forEach((B,i)=>{
+    const y=182+i*74;
+    node(svg,SX+36,y+4,15,ink,'rgba(255,255,255,.05)',1.8);
+    glyph(svg,B.icon,SX+36,y+4,7,ink);
+    T(svg,SX+64,y,B.key,'nm','start',ink);
+    T(svg,SX+64,y+17,B.sub,'ds','start','#a89f92');
+    T(svg,SX+64,y+34,'5 nodes · 4 ranked + 1 capstone','tg');
+  });
+  mk(svg,'rect',{x:SX,y:Y2,width:368,height:100,rx:10,fill:'#100d0b',
+    stroke:'rgba(255,255,255,.10)','stroke-width':1});
+  T(svg,SX+20,Y2+28,'THIS CLUSTER','tg');
+  T(svg,SX+20,Y2+52,D.name,'bn','start',ink);
+  T(svg,SX+20,Y2+74,D.stats.split(' · ').slice(0,3).join(' · '),'tg');
+  T(svg,SX+20,Y2+90,D.stats.split(' · ').slice(3).join(' · '),'tg');
+  T(svg,SX+348,Y2+28,(1+N*6)+' NODES','sm','end','#e8c26a');
+
+  // focused node — where the description the map no longer prints actually goes
+  const F=D.branches[N-1].ring[4];
+  mk(svg,'rect',{x:SX,y:Y3,width:368,height:186,rx:10,fill:'#100d0b',
+    stroke:'rgba(232,194,106,.5)','stroke-width':1.5});
+  T(svg,SX+20,Y3+28,'HOVERED NODE','tg');
+  mk(svg,'path',{d:hex(SX+48,Y3+72,26),fill:'rgba(232,194,106,.12)',stroke:'#e8c26a','stroke-width':2.4});
+  glyph(svg,D.branches[N-1].icon,SX+48,Y3+72,12,'#e8c26a');
+  T(svg,SX+88,Y3+64,F[0],'bn','start','#e8c26a');
+  T(svg,SX+88,Y3+82,D.name+' · '+D.branches[N-1].key+' · CAPSTONE','tg');
+  T(svg,SX+20,Y3+122,F[1],'ds','start','#efe9df');
+  T(svg,SX+20,Y3+142,'Needs all four nodes in its ring first.','ds','start','#a89f92');
+  mk(svg,'rect',{x:SX+236,y:Y3+146,width:112,height:28,rx:6,fill:'#e8c26a',opacity:.13});
+  mk(svg,'rect',{x:SX+236,y:Y3+146,width:112,height:28,rx:6,fill:'none',stroke:'#e8c26a','stroke-width':1.3});
+  T(svg,SX+292,Y3+165,'◆ 180 CHIPS','sm','middle','#e8c26a');
+  T(svg,SX+20,Y3+170,'LOCKED · CLEAR W12','tg');
+}
+drawTower('t1','autocannon');
+drawTower('t2','cryo');
+drawTower('t3','manual');
+
+/* ===================== EVERY NODE — the catalog ===================== */
+(()=>{
+  const el=document.getElementById('cat');
+  const keys=TOWERS.map(t=>t[0]);
+  const cols=[keys.slice(0,4),keys.slice(4,8),keys.slice(8)];  // 12 clusters, 4 per column
+  cols.forEach(group=>{
+    const col=document.createElement('div'); col.className='col';
+    group.forEach(k=>{
+      const D=DETAIL[k]; let h=`<h2 style="color:${D.ink}">${D.name}</h2>`
+        + `<div class="st">${D.stats}</div>`;
+      D.branches.forEach(B=>{
+        h+=`<div class="sec">${B.key} · ${B.sub}</div>`;
+        B.ring.forEach(u=>{
+          const cap=u[2]==='capstone';
+          h+=`<div class="n"><div><span class="t" style="color:${cap?'#e8c26a':'#efe9df'}">${u[0]}</span>`
+           + `<div class="e">${u[1]}</div></div><div class="r">${u[2]}</div></div>`;
+        });
+      });
+      const g=document.createElement('div'); g.className='grp'; g.innerHTML=h; col.appendChild(g);
+    });
+    el.appendChild(col);
+  });
+  // every tower must carry the same shape — shout if one drifts
+  const bad=Object.entries(DETAIL).filter(([,D])=>
+    (D.branches.length!==3 && D.branches.length!==4) || D.branches.some(b=>b.ring.length!==5
+      || b.ring[4][2]!=='capstone' || b.ring.slice(0,4).some(u=>u[2]==='capstone')));
+  console.log(bad.length?'SHAPE DRIFT: '+bad.map(b=>b[0]).join(', ')
+    :`shape OK — ${Object.keys(DETAIL).length} clusters, `+`4 command + `+`${Object.values(DETAIL).reduce((n,D)=>n+1+D.branches.length*6,0)} nodes`);
+})();
+</script>
+</body></html>

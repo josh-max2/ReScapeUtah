@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>SWARM — art style boards</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#111; font-family:'Bahnschrift','Arial Narrow',sans-serif; padding:24px 0 60px; }
+  .board { position:relative; width:1180px; height:640px; margin:0 auto 34px; overflow:hidden; border-radius:6px; }
+  canvas.scene { position:absolute; inset:0; width:100%; height:100%; }
+  .plate { position:absolute; top:14px; left:14px; padding:8px 16px; font-weight:700; letter-spacing:.24em; font-size:13px; border-radius:6px; }
+  .sub { display:block; font-size:9px; letter-spacing:.14em; opacity:.75; font-weight:400; margin-top:3px; }
+  .hud { position:absolute; bottom:14px; left:14px; display:flex; gap:8px; align-items:flex-end; }
+  .chip { padding:8px 12px; border-radius:8px; font-size:10px; letter-spacing:.12em; }
+  .chip b { display:block; font-size:13px; margin-top:2px; }
+  .hp { position:absolute; top:14px; right:14px; width:220px; padding:8px 12px; border-radius:8px; font-size:9px; letter-spacing:.2em; text-align:center; }
+  .hp i { display:block; height:8px; margin-top:5px; border-radius:3px; }
+</style></head><body>
+
+<div class="board" id="b1"><canvas class="scene" width="1180" height="640"></canvas>
+  <div class="plate" style="background:#fff;color:#3a3a3a;box-shadow:0 4px 14px rgba(0,0,0,.15)">01 · CLEAN LINE<span class="sub">MINI-MOTORWAYS FLAT · PLAYFUL PREMIUM</span></div>
+  <div class="hp" style="background:#fff;color:#9a9a9a;box-shadow:0 4px 14px rgba(0,0,0,.12)">HEALTH<i style="background:linear-gradient(90deg,#e8604c 82%,#eee 82%)"></i></div>
+  <div class="hud">
+    <div class="chip" style="background:#fff;color:#3a3a3a;box-shadow:0 4px 14px rgba(0,0,0,.12)">AUTOCANNON<b style="color:#e8a13c">40</b></div>
+    <div class="chip" style="background:#3ec6b8;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.15)">CRYO CARD<b>PLAY</b></div>
+  </div>
+</div>
+
+<div class="board" id="b2"><canvas class="scene" width="1180" height="640"></canvas>
+  <div class="plate" style="background:rgba(24,19,14,.88);color:#efe6d8;border:1px solid rgba(255,255,255,.12)">02 · GOUACHE FIELD<span class="sub">HAND-PAINTED WARFRONT · DORFROMANTIK WARMTH</span></div>
+  <div class="hp" style="background:rgba(24,19,14,.88);color:#a89c8c;border:1px solid rgba(255,255,255,.1)">HEALTH<i style="background:linear-gradient(90deg,#c94f38 82%,#39302a 82%)"></i></div>
+  <div class="hud">
+    <div class="chip" style="background:rgba(24,19,14,.88);color:#efe6d8;border:1px solid rgba(255,255,255,.12)">AUTOCANNON<b style="color:#dfb15e">40</b></div>
+    <div class="chip" style="background:rgba(24,19,14,.88);color:#8fd0ca;border:1px solid rgba(143,208,202,.4)">CRYO CARD<b>PLAY</b></div>
+  </div>
+</div>
+
+<div class="board" id="b3"><canvas class="scene" width="295" height="160" style="image-rendering:pixelated"></canvas>
+  <div class="plate" style="background:#1a1626;color:#f4e9c9;border:2px solid #5a4a6e;border-radius:0">03 · EMBER PIXEL<span class="sub">KINGDOM-GRADE PIXEL ART · TORCHLIT DUSK</span></div>
+  <div class="hp" style="background:#1a1626;color:#8a7a9e;border:2px solid #5a4a6e;border-radius:0">HEALTH<i style="background:linear-gradient(90deg,#d94f38 82%,#2a2338 82%);border-radius:0"></i></div>
+  <div class="hud">
+    <div class="chip" style="background:#1a1626;color:#f4e9c9;border:2px solid #5a4a6e;border-radius:0">AUTOCANNON<b style="color:#e8a13c">40</b></div>
+    <div class="chip" style="background:#1a1626;color:#7fd0e8;border:2px solid #3d6e7e;border-radius:0">CRYO CARD<b>PLAY</b></div>
+  </div>
+</div>
+
+<div class="board" id="b4"><canvas class="scene" width="1180" height="640"></canvas>
+  <div class="plate" style="background:rgba(10,8,18,.85);color:#e8e6f2;border:1px solid rgba(255,79,216,.5);box-shadow:0 0 18px rgba(255,79,216,.25)">04 · MIDNIGHT CIRCUIT<span class="sub">NEON NIGHT RACING · PAKO x ABSOLUTE DRIFT</span></div>
+  <div class="hp" style="background:rgba(10,8,18,.85);color:#8a86a8;border:1px solid rgba(94,234,255,.4)">HEALTH<i style="background:linear-gradient(90deg,#ff4fd8 82%,#241f38 82%);box-shadow:0 0 10px rgba(255,79,216,.6)"></i></div>
+  <div class="hud">
+    <div class="chip" style="background:rgba(10,8,18,.85);color:#e8e6f2;border:1px solid rgba(94,234,255,.45)">AUTOCANNON<b style="color:#5eeaff">40</b></div>
+    <div class="chip" style="background:rgba(10,8,18,.85);color:#ff4fd8;border:1px solid rgba(255,79,216,.5)">CRYO CARD<b>PLAY</b></div>
+  </div>
+</div>
+
+<div class="board" id="b5"><canvas class="scene" width="1180" height="640"></canvas>
+  <div class="plate" style="background:#0d1f33;color:#dce8f2;border:1.5px solid #7fb0d0;border-radius:0">05 · WAR ROOM<span class="sub">TACTICAL BLUEPRINT · COMMAND-TABLE AUSTERE</span></div>
+  <div class="hp" style="background:#0d1f33;color:#7fa8c8;border:1.5px solid #47708f;border-radius:0">INTEGRITY<i style="background:linear-gradient(90deg,#e0d060 82%,#1a3049 82%);border-radius:0"></i></div>
+  <div class="hud">
+    <div class="chip" style="background:#0d1f33;color:#dce8f2;border:1.5px solid #47708f;border-radius:0">AC-01 EMPLACEMENT<b style="color:#e0d060">40</b></div>
+    <div class="chip" style="background:#0d1f33;color:#7fd0e8;border:1.5px dashed #7fd0e8;border-radius:0">DIRECTIVE: CRYO<b>ISSUE</b></div>
+  </div>
+</div>
+
+<script>
+// Shared scene: road sweeps left->right, forks around an island, rejoins.
+// 14 cars along it, two rim towers, one kill zone. Each painter restyles it.
+const ROAD = [[0,340],[180,330],[380,300],[560,260],[700,240],[840,260],[1000,300],[1180,320]];
+const FORK = [[560,260],[660,330],[780,370],[920,340],[1000,300]];
+const ISLE = [790,300,52];
+const CARS = [
+  [90,340,0],[150,332,-.05],[215,325,-.1],[290,314,-.12],[350,306,-.1],
+  [420,292,-.15],[490,278,-.2],[560,262,-.15],[640,330,.45],[700,352,.25],
+  [760,368,.1],[830,362,-.1],[625,248,.05],[690,240,-.02],
+];
+const T1 = [520,180], T2 = [860,440];
+const BOOM = [950,305];
+
+function road(ctx, pts, w) {
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.lineWidth = w;
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  ctx.stroke();
+}
+function car(ctx, x, y, a, len, wid, fill, nose) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(a);
+  ctx.fillStyle = fill; ctx.beginPath();
+  ctx.roundRect(-len/2, -wid/2, len, wid, wid*.35); ctx.fill();
+  if (nose) { ctx.fillStyle = nose; ctx.fillRect(len*.12, -wid/2+1.5, len*.26, wid-3); }
+  ctx.restore();
+}
+
+// ---- 01 CLEAN LINE ----------------------------------------------------------
+(() => {
+  const ctx = document.querySelector('#b1 canvas').getContext('2d');
+  ctx.fillStyle = '#f2ede2'; ctx.fillRect(0,0,1180,640);
+  ctx.fillStyle = '#e7e0d2';
+  for (const [bx,by,br] of [[180,120,70],[1020,520,90],[340,540,50],[950,110,60]]) {
+    ctx.beginPath(); ctx.arc(bx,by,br,0,7); ctx.fill();
+  }
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.14)'; ctx.shadowBlur = 14; ctx.shadowOffsetY = 5;
+  ctx.strokeStyle = '#ffffff'; road(ctx, ROAD, 64); road(ctx, FORK, 52); ctx.restore();
+  ctx.strokeStyle = '#e0d9c8'; ctx.setLineDash([14,18]); road(ctx, ROAD, 2); road(ctx, FORK, 2); ctx.setLineDash([]);
+  ctx.fillStyle = '#8fc6a5'; ctx.beginPath(); ctx.arc(ISLE[0], ISLE[1], ISLE[2], 0, 7); ctx.fill();
+  const cols = ['#e8604c','#3ec6b8','#e8a13c','#7f8cd9','#e8604c'];
+  CARS.forEach(([x,y,a],i) => car(ctx, x, y, a, 26, 14, cols[i%5], 'rgba(255,255,255,.55)'));
+  for (const [tx,ty] of [T1,T2]) {
+    ctx.save(); ctx.shadowColor='rgba(0,0,0,.18)'; ctx.shadowBlur=10; ctx.shadowOffsetY=4;
+    ctx.fillStyle = '#454545'; ctx.beginPath(); ctx.roundRect(tx-20,ty-20,40,40,12); ctx.fill(); ctx.restore();
+    ctx.fillStyle = '#e8a13c'; ctx.beginPath(); ctx.arc(tx,ty,9,0,7); ctx.fill();
+  }
+  ctx.strokeStyle = '#e8604c'; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.arc(BOOM[0], BOOM[1], 26, 0, 7); ctx.stroke();
+  ctx.beginPath(); ctx.arc(BOOM[0], BOOM[1], 12, 0, 7); ctx.stroke();
+})();
+
+// ---- 02 GOUACHE FIELD -------------------------------------------------------
+(() => {
+  const ctx = document.querySelector('#b2 canvas').getContext('2d');
+  const g = ctx.createLinearGradient(0,0,0,640);
+  g.addColorStop(0,'#6d7a44'); g.addColorStop(1,'#55643a');
+  ctx.fillStyle = g; ctx.fillRect(0,0,1180,640);
+  for (let i = 0; i < 900; i++) { // brush mottling
+    ctx.fillStyle = Math.random()<.5 ? 'rgba(255,244,210,.05)' : 'rgba(30,40,18,.07)';
+    ctx.beginPath(); ctx.ellipse(Math.random()*1180, Math.random()*640, 8+Math.random()*26, 3+Math.random()*9, Math.random()*3, 0, 7); ctx.fill();
+  }
+  ctx.strokeStyle = '#4a3b2c'; road(ctx, ROAD, 74); road(ctx, FORK, 62);
+  ctx.strokeStyle = '#8a6f4d'; road(ctx, ROAD, 64); road(ctx, FORK, 52);
+  ctx.strokeStyle = '#a08059'; road(ctx, ROAD, 34); road(ctx, FORK, 26);
+  for (let i = 0; i < 260; i++) {
+    ctx.fillStyle = Math.random()<.5?'rgba(60,44,28,.12)':'rgba(255,232,190,.08)';
+    const t = Math.random(); const px = t*1180; const py = 335 - Math.sin(t*2.6)*70 + (Math.random()-.5)*46;
+    ctx.fillRect(px, py, 3+Math.random()*7, 2+Math.random()*4);
+  }
+  ctx.fillStyle = '#3c4a22'; ctx.beginPath(); ctx.arc(ISLE[0], ISLE[1], ISLE[2]+6, 0, 7); ctx.fill();
+  ctx.fillStyle = '#526030';
+  for (let k=0;k<9;k++){ const a=k/9*6.3; ctx.beginPath(); ctx.arc(ISLE[0]+Math.cos(a)*30, ISLE[1]+Math.sin(a)*24, 14, 0, 7); ctx.fill(); }
+  CARS.forEach(([x,y,a],i) => {
+    ctx.save(); ctx.shadowColor='rgba(20,16,8,.4)'; ctx.shadowBlur=5; ctx.shadowOffsetY=3;
+    car(ctx, x, y, a, 24, 13, i%4===3 ? '#2f5a1d' : '#3f7328', '#9fc26a'); ctx.restore();
+  });
+  for (const [tx,ty] of [T1,T2]) {
+    ctx.save(); ctx.shadowColor='rgba(20,16,8,.5)'; ctx.shadowBlur=8; ctx.shadowOffsetY=4;
+    ctx.fillStyle='#39322a'; ctx.beginPath(); ctx.roundRect(tx-18,ty-18,36,36,8); ctx.fill(); ctx.restore();
+    ctx.strokeStyle='#dfb15e'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(tx,ty,8,0,7); ctx.stroke();
+    ctx.strokeStyle='#c9b393'; ctx.lineWidth=4; ctx.beginPath();
+    ctx.moveTo(tx,ty); ctx.lineTo(tx+26,ty+16); ctx.stroke();
+  }
+  const bg = ctx.createRadialGradient(BOOM[0],BOOM[1],2,BOOM[0],BOOM[1],40);
+  bg.addColorStop(0,'rgba(255,236,180,.95)'); bg.addColorStop(1,'rgba(217,100,46,0)');
+  ctx.fillStyle = bg; ctx.fillRect(BOOM[0]-40,BOOM[1]-40,80,80);
+  ctx.fillStyle = 'rgba(20,23,30,.5)';
+  for (let k=0;k<8;k++){ ctx.beginPath(); ctx.ellipse(430+k*10, 300+(k%3)*8, 7,4, .4, 0, 7); ctx.fill(); }
+})();
+
+// ---- 03 EMBER PIXEL (draw at 295x160, CSS upscales 4x) ---------------------
+(() => {
+  const ctx = document.querySelector('#b3 canvas').getContext('2d');
+  const S = 0.25;
+  ctx.fillStyle = '#241d33'; ctx.fillRect(0,0,295,160);
+  for (let i=0;i<600;i++){ ctx.fillStyle = Math.random()<.5?'#2a2338':'#1f1a2c'; ctx.fillRect((Math.random()*295)|0,(Math.random()*160)|0,2,1); }
+  ctx.strokeStyle = '#141020'; road(ctx, ROAD.map(p=>[p[0]*S,p[1]*S]), 20);
+  ctx.strokeStyle = '#4a3b52'; road(ctx, ROAD.map(p=>[p[0]*S,p[1]*S]), 16);
+  ctx.strokeStyle = '#4a3b52'; road(ctx, FORK.map(p=>[p[0]*S,p[1]*S]), 13);
+  ctx.strokeStyle = '#5d4a66'; road(ctx, ROAD.map(p=>[p[0]*S,p[1]*S]), 7);
+  for (let i=0;i<120;i++){ const t=Math.random(); ctx.fillStyle=Math.random()<.5?'#3d3048':'#6b5878';
+    ctx.fillRect((t*295)|0, (84 - Math.sin(t*2.6)*17 + (Math.random()-.5)*12)|0, 1, 1); }
+  ctx.fillStyle = '#141020'; ctx.beginPath(); ctx.arc(ISLE[0]*S, ISLE[1]*S, 14, 0, 7); ctx.fill();
+  ctx.fillStyle = '#2e4a26';
+  for (let k=0;k<7;k++){ const a=k/7*6.3; ctx.fillRect((ISLE[0]*S+Math.cos(a)*8-2)|0,(ISLE[1]*S+Math.sin(a)*7-2)|0,5,4); }
+  CARS.forEach(([x,y],i) => {
+    const px=(x*S)|0, py=(y*S)|0;
+    ctx.fillStyle='#0e0b16'; ctx.fillRect(px-4,py-3,8,5);
+    ctx.fillStyle=i%4===3?'#3f7328':'#57a038'; ctx.fillRect(px-3,py-2,6,3);
+    ctx.fillStyle='#c9e88a'; ctx.fillRect(px+1,py-2,2,3);
+  });
+  for (const [tx,ty] of [T1,T2]) {
+    const px=(tx*S)|0, py=(ty*S)|0;
+    ctx.fillStyle='#0e0b16'; ctx.fillRect(px-6,py-6,12,12);
+    ctx.fillStyle='#3d3048'; ctx.fillRect(px-5,py-5,10,10);
+    ctx.fillStyle='#e8a13c'; ctx.fillRect(px-1,py-6,3,3);
+    ctx.fillStyle='#f4d99a'; ctx.fillRect(px-1,py-7,3,1);
+  }
+  const bx=(BOOM[0]*S)|0, by=(BOOM[1]*S)|0;
+  ctx.fillStyle='#f4d99a'; ctx.fillRect(bx-2,by-2,5,5);
+  ctx.fillStyle='#e8763c'; ctx.fillRect(bx-4,by-1,2,2); ctx.fillRect(bx+3,by-3,2,2); ctx.fillRect(bx,by+3,2,2);
+  ctx.fillStyle='#d94f38'; ctx.fillRect(bx-5,by+2,1,1); ctx.fillRect(bx+5,by-1,1,1);
+})();
+
+// ---- 04 MIDNIGHT CIRCUIT ----------------------------------------------------
+(() => {
+  const ctx = document.querySelector('#b4 canvas').getContext('2d');
+  const g = ctx.createLinearGradient(0,0,0,640);
+  g.addColorStop(0,'#171226'); g.addColorStop(1,'#0b0816');
+  ctx.fillStyle = g; ctx.fillRect(0,0,1180,640);
+  ctx.strokeStyle = '#221c36'; road(ctx, ROAD, 70); road(ctx, FORK, 58);
+  ctx.strokeStyle = '#2e2645'; road(ctx, ROAD, 60); road(ctx, FORK, 48);
+  ctx.strokeStyle = 'rgba(94,234,255,.5)'; ctx.setLineDash([2,26]); road(ctx, ROAD, 3); ctx.setLineDash([]);
+  ctx.fillStyle = '#141021'; ctx.beginPath(); ctx.arc(ISLE[0], ISLE[1], ISLE[2], 0, 7); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,79,216,.55)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(ISLE[0], ISLE[1], ISLE[2], 0, 7); ctx.stroke();
+  ctx.globalCompositeOperation = 'lighter';
+  CARS.forEach(([x,y,a],i) => { // neon trails
+    const hue = i%3===0 ? 'rgba(94,234,255,' : i%3===1 ? 'rgba(255,79,216,' : 'rgba(160,255,130,';
+    ctx.strokeStyle = hue + '.22)'; ctx.lineWidth = 7; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(x - Math.cos(a)*46, y - Math.sin(a)*46); ctx.lineTo(x, y); ctx.stroke();
+    ctx.strokeStyle = hue + '.85)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x - Math.cos(a)*46, y - Math.sin(a)*46); ctx.lineTo(x, y); ctx.stroke();
+  });
+  ctx.globalCompositeOperation = 'source-over';
+  CARS.forEach(([x,y,a],i) => car(ctx, x, y, a, 24, 12, '#0a0814',
+    i%3===0 ? '#5eeaff' : i%3===1 ? '#ff4fd8' : '#a0ff82'));
+  for (const [tx,ty] of [T1,T2]) {
+    ctx.fillStyle = '#151126'; ctx.beginPath(); ctx.roundRect(tx-18,ty-18,36,36,7); ctx.fill();
+    ctx.strokeStyle = '#5eeaff'; ctx.lineWidth = 1.6; ctx.strokeRect(tx-18,ty-18,36,36);
+    ctx.globalCompositeOperation = 'lighter';
+    const tg = ctx.createRadialGradient(tx,ty,2,tx,ty,26);
+    tg.addColorStop(0,'rgba(94,234,255,.7)'); tg.addColorStop(1,'rgba(94,234,255,0)');
+    ctx.fillStyle = tg; ctx.fillRect(tx-26,ty-26,52,52);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  ctx.globalCompositeOperation = 'lighter';
+  const bg2 = ctx.createRadialGradient(BOOM[0],BOOM[1],2,BOOM[0],BOOM[1],56);
+  bg2.addColorStop(0,'rgba(255,79,216,.9)'); bg2.addColorStop(.5,'rgba(255,79,216,.3)'); bg2.addColorStop(1,'rgba(255,79,216,0)');
+  ctx.fillStyle = bg2; ctx.fillRect(BOOM[0]-56,BOOM[1]-56,112,112);
+  ctx.globalCompositeOperation = 'source-over';
+})();
+
+// ---- 05 WAR ROOM ------------------------------------------------------------
+(() => {
+  const ctx = document.querySelector('#b5 canvas').getContext('2d');
+  ctx.fillStyle = '#0d1f33'; ctx.fillRect(0,0,1180,640);
+  ctx.strokeStyle = 'rgba(127,176,208,.12)'; ctx.lineWidth = 1;
+  for (let x=0;x<=1180;x+=40){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,640); ctx.stroke(); }
+  for (let y=0;y<=640;y+=40){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(1180,y); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(220,232,242,.9)'; road(ctx, ROAD, 2.5); road(ctx, FORK, 2);
+  ctx.strokeStyle = 'rgba(127,176,208,.4)'; ctx.setLineDash([6,6]); road(ctx, ROAD, 58); road(ctx, FORK, 46); ctx.setLineDash([]);
+  ctx.setLineDash([4,4]); ctx.strokeStyle = '#e0d060'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(ISLE[0], ISLE[1], ISLE[2], 0, 7); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(127,176,208,.1)'; ctx.beginPath(); ctx.arc(ISLE[0], ISLE[1], ISLE[2], 0, 7); ctx.fill();
+  ctx.font = '11px Bahnschrift'; ctx.fillStyle = '#7fa8c8';
+  ctx.fillText('OBSTRUCTION K-7', ISLE[0]-46, ISLE[1]-ISLE[2]-8);
+  CARS.forEach(([x,y,a],i) => { // chevrons with vector arrows
+    ctx.save(); ctx.translate(x,y); ctx.rotate(a);
+    ctx.strokeStyle = i%4===3 ? '#e07a5f' : '#dce8f2'; ctx.lineWidth = 2; ctx.lineJoin='miter';
+    ctx.beginPath(); ctx.moveTo(-8,-6); ctx.lineTo(8,0); ctx.lineTo(-8,6); ctx.closePath(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(224,208,96,.5)';
+    ctx.beginPath(); ctx.moveTo(10,0); ctx.lineTo(22,0); ctx.lineTo(18,-3); ctx.moveTo(22,0); ctx.lineTo(18,3); ctx.stroke();
+    ctx.restore();
+  });
+  for (const [tx,ty] of [T1,T2]) {
+    ctx.strokeStyle = '#7fd0e8'; ctx.lineWidth = 1.8;
+    ctx.strokeRect(tx-12,ty-12,24,24);
+    ctx.beginPath(); ctx.arc(tx,ty,6,0,7); ctx.stroke();
+    ctx.setLineDash([3,7]); ctx.strokeStyle = 'rgba(127,208,232,.45)';
+    ctx.beginPath(); ctx.arc(tx,ty,90,-0.6,1.4); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = '10px Bahnschrift'; ctx.fillStyle = '#7fd0e8';
+    ctx.fillText('AC-01 · ARC 110', tx-34, ty+34);
+  }
+  ctx.strokeStyle = '#e0d060'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(BOOM[0],BOOM[1],24,0,7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(BOOM[0]-32,BOOM[1]); ctx.lineTo(BOOM[0]+32,BOOM[1]);
+  ctx.moveTo(BOOM[0],BOOM[1]-32); ctx.lineTo(BOOM[0],BOOM[1]+32); ctx.stroke();
+  ctx.font = '11px Bahnschrift'; ctx.fillStyle = '#e0d060';
+  ctx.fillText('IMPACT 0451', BOOM[0]+30, BOOM[1]-26);
+})();
+</script>
+</body></html>

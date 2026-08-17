@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>SWARM — 3-month launch roadmap</title>
+<style>
+  :root{ --bg:#141110; --panel:#1b1613; --card:#100d0b; --line:rgba(255,255,255,.09);
+         --ink:#efe9df; --mute:#6f675c; --dim:#a89f92; --gold:#e8c26a; --rust:#e0864a;
+         --red:#d9563f; --teal:#79d6d0; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);
+       font-family:'Bahnschrift','Arial Narrow',system-ui,sans-serif;
+       font-variant-numeric:tabular-nums;padding:22px 0 50px}
+  .board{width:1560px;margin:0 auto 30px;background:var(--panel);
+         border:1px solid var(--line);border-radius:12px;padding:20px 26px 26px}
+  .hdr{display:flex;align-items:baseline;gap:14px;margin-bottom:4px}
+  .kick{font-size:11px;letter-spacing:.28em;color:var(--rust);font-weight:700}
+  h1{font-size:19px;letter-spacing:.22em;font-weight:700}
+  .verdict{margin-left:auto;font-size:10.5px;letter-spacing:.06em;color:var(--dim)}
+  .sub{font-size:11.5px;color:var(--dim);margin-bottom:16px;line-height:1.55;max-width:1240px}
+  .board > svg{display:block;width:100%;height:auto;overflow:visible}
+  b.hot{color:var(--red)} b.ok{color:var(--teal)}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:15px 17px}
+  .card.hot{border-color:rgba(217,86,63,.55)}
+  .card h2{font-size:12px;letter-spacing:.22em;font-weight:700;margin-bottom:3px}
+  .card .cs{font-size:9.5px;letter-spacing:.14em;color:var(--mute);margin-bottom:12px}
+  .task{display:grid;grid-template-columns:20px 1fr auto;gap:9px;padding:7px 0;
+        border-bottom:1px solid rgba(255,255,255,.045);align-items:start}
+  .task:last-child{border-bottom:0}
+  .task .b{width:12px;height:12px;border:1.5px solid #6f675c;border-radius:3px;margin-top:2px}
+  .task .b.n{border-color:var(--red)}
+  .task .t{font-size:12px;font-weight:700}
+  .task .d{font-size:10.5px;color:var(--dim);line-height:1.35;margin-top:1px}
+  .task .w{font-size:9.5px;color:var(--mute);letter-spacing:.08em;white-space:nowrap}
+  table{border-collapse:collapse;width:100%;margin-top:4px}
+  th{font-size:9px;letter-spacing:.16em;color:var(--mute);text-align:left;
+     padding:0 8px 6px 0;font-weight:400}
+  td{font-size:11.5px;padding:6px 8px 6px 0;border-top:1px solid rgba(255,255,255,.05)}
+  td.n{font-weight:700;color:var(--gold);text-align:right;white-space:nowrap}
+  .note{font-size:10.5px;color:var(--dim);line-height:1.5;margin-top:12px;
+        border-top:1px solid rgba(255,255,255,.07);padding-top:10px}
+</style></head><body>
+
+<div class="board">
+  <div class="hdr"><span class="kick">SWARM</span><h1>THREE-MONTH LAUNCH ROADMAP</h1>
+    <span class="verdict">16 Aug → 12 Nov 2026 · built backwards from Steam's deadlines</span></div>
+  <div class="sub">Every date below is a real Steam deadline, not a guess. The whole calendar hangs
+    off one of them: <b class="hot">Next Fest registration closes 31 August</b>, and registering
+    requires a store page that is already live and approved. That is 15 days from today, and page
+    review alone takes 1–5 business days. A game gets <b>exactly one Next Fest, ever</b>.</div>
+  <svg id="gantt" viewBox="0 0 1508 596"></svg>
+</div>
+
+<div class="board">
+  <div class="hdr"><span class="kick">WEEK 1</span><h1>THE BLOCKING FIFTEEN DAYS</h1>
+    <span class="verdict">Nothing else matters until the page is live</span></div>
+  <div class="sub">These are ordered by lead time, not importance. Steamworks onboarding is the long
+    pole — the tax interview and bank verification are out of your hands and routinely take several
+    days, so it goes first even though it feels like paperwork.</div>
+  <div class="two">
+    <div class="card hot" id="now"></div>
+    <div class="card" id="expect"></div>
+  </div>
+</div>
+
+<div class="board">
+  <div class="hdr"><span class="kick">ONGOING</span><h1>THE WEEKLY ENGINE</h1>
+    <span class="verdict">The part that actually generates wishlists</span></div>
+  <div class="sub">The reference game's marketing was one thing repeated: near-daily clips from
+    before the game existed. Their prototype posts hit 100k+ views and <i>then</i> they decided what
+    to build. You already have the hook they had — a horde of cars flowing down a track is a
+    watchable three-second loop. This is the cadence that turns it into wishlists.</div>
+  <div class="two">
+    <div class="card" id="cadence"></div>
+    <div class="card" id="risks"></div>
+  </div>
+</div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+const mk=(p,t,a={})=>{const e=document.createElementNS(NS,t);
+  for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e;};
+const T=(p,x,y,s,st,an='start',fill)=>{const e=mk(p,'text',{x,y,'text-anchor':an});
+  e.setAttribute('style',st); if(fill)e.setAttribute('fill',fill); e.textContent=s; return e;};
+
+/* ---------------- the calendar ---------------- */
+(()=>{
+  const svg=document.getElementById('gantt');
+  const L=54, R=1454, T0=64, day0=new Date(2026,7,16), day1=new Date(2026,10,20);
+  const span=(day1-day0)/86400000;
+  const X=d=>L+((d-day0)/86400000/span)*(R-L);
+  const D=(m,d)=>new Date(2026,m-1,d);
+
+  // month bands
+  [[8,'AUGUST'],[9,'SEPTEMBER'],[10,'OCTOBER'],[11,'NOVEMBER']].forEach(([m,nm],i)=>{
+    const a=Math.max(X(D(m,1)),L), b=Math.min(X(D(m===12?1:m+1,1)),R);
+    if(i%2) mk(svg,'rect',{x:a,y:T0-26,width:b-a,height:404,fill:'#ffffff',opacity:.016});
+    T(svg,(a+b)/2,T0-34,nm,'font:700 10px Bahnschrift;letter-spacing:.24em','middle','#8b8177');
+  });
+  // week ticks
+  for(let d=new Date(day0); d<=day1; d.setDate(d.getDate()+7)){
+    mk(svg,'line',{x1:X(new Date(d)),y1:T0-24,x2:X(new Date(d)),y2:T0+374,
+      stroke:'rgba(255,255,255,.05)','stroke-width':1});
+  }
+
+  // phase bars
+  const PH=[
+    ['PAGE',       D(8,16), D(8,31), '#d9563f', 'Name it · Steamworks · capsule · trailer v1 · PAGE LIVE'],
+    ['PLAYTEST',   D(9,1),  D(9,21), '#e0864a', 'Public Steam Playtest · cut the demo · demo build due'],
+    ['POLISH',     D(9,22), D(10,18),'#e8c26a', 'Act on playtest data · trailer v2 · press outreach'],
+    ['NEXT FEST',  D(10,19),D(10,26),'#79d6d0', 'Livestream daily · answer everything · measure'],
+    ['LAUNCH RUN', D(10,27),D(11,12),'#cfd8e0', 'Demo feedback · price · launch trailer · ship'],
+  ];
+  PH.forEach((p,i)=>{
+    const y=T0+i*54, a=X(p[1]), b=X(p[2]);
+    mk(svg,'rect',{x:a,y,width:b-a,height:30,rx:5,fill:p[3],opacity:.16});
+    mk(svg,'rect',{x:a,y,width:b-a,height:30,rx:5,fill:'none',stroke:p[3],'stroke-width':1.6});
+    T(svg,a+11,y+20,p[0],'font:700 11px Bahnschrift;letter-spacing:.18em','start',p[3]);
+    T(svg,a+11,y+44,p[4],'font:10.5px Bahnschrift','start','#a89f92');
+  });
+
+  // hard deadlines
+  const DL=[
+    [D(8,31),'31 AUG','NEXT FEST REGISTRATION CLOSES',1],
+    [D(9,21),'21 SEP','DEMO BUILD DUE',0],
+    [D(10,5),'5 OCT','ALL FEST ITEMS DUE',0],
+    [D(10,8),'8 OCT','PRESS PREVIEW OPENS',0],
+    [D(10,19),'19 OCT','NEXT FEST OPENS',0],
+    [D(11,12),'12 NOV','LAUNCH',1],
+  ];
+  DL.forEach(([d,lab,desc,hot],i)=>{
+    const x=X(d), col=hot?'#d9563f':'#8b8177';
+    mk(svg,'line',{x1:x,y1:T0-24,x2:x,y2:T0+374,stroke:col,
+      'stroke-width':hot?2:1.2,'stroke-dasharray':'5 5',opacity:hot?.85:.45});
+    const y=T0+352-(i%2)*24;
+    mk(svg,'circle',{cx:x,cy:T0+374,r:4,fill:col});
+    T(svg,x,T0+402+(i%2)*26,lab,'font:700 10px Bahnschrift;letter-spacing:.12em','middle',col);
+    T(svg,x,T0+414+(i%2)*26,desc,'font:8.5px Bahnschrift;letter-spacing:.1em','middle','#6f675c');
+  });
+
+  // the two Valve gates that run in the background
+  const feeDay=D(8,18), earliest=D(9,17);
+  mk(svg,'rect',{x:X(feeDay),y:T0+300,width:X(earliest)-X(feeDay),height:22,rx:4,
+    fill:'#d9563f',opacity:.12});
+  mk(svg,'rect',{x:X(feeDay),y:T0+300,width:X(earliest)-X(feeDay),height:22,rx:4,
+    fill:'none',stroke:'#d9563f','stroke-width':1.2,'stroke-dasharray':'4 4'});
+  T(svg,X(feeDay)+9,T0+315,'30-DAY STEAM DIRECT GATE — CANNOT RELEASE BEFORE 17 SEP',
+    'font:700 9px Bahnschrift;letter-spacing:.12em','start','#e08a72');
+  mk(svg,'rect',{x:X(D(10,29)),y:T0+300,width:X(D(11,12))-X(D(10,29)),height:22,rx:4,
+    fill:'#79d6d0',opacity:.10});
+  mk(svg,'rect',{x:X(D(10,29)),y:T0+300,width:X(D(11,12))-X(D(10,29)),height:22,rx:4,
+    fill:'none',stroke:'#79d6d0','stroke-width':1.2,'stroke-dasharray':'4 4'});
+  T(svg,X(D(10,29))+8,T0+315,'2-WEEK COMING-SOON MINIMUM',
+    'font:700 9px Bahnschrift;letter-spacing:.12em','start','#79d6d0');
+
+  // today
+  const tx=X(day0);
+  mk(svg,'line',{x1:tx,y1:T0-40,x2:tx,y2:T0+374,stroke:'#e8c26a','stroke-width':2});
+  T(svg,tx,T0-46,'TODAY','font:700 10px Bahnschrift;letter-spacing:.2em','middle','#e8c26a');
+
+  T(svg,L,T0+474,'VALVE GATES · 30 DAYS MINIMUM BETWEEN PAYING THE DIRECT FEE AND RELEASING · COMING-SOON PAGE LIVE 2 WEEKS BEFORE RELEASE',
+    'font:9px Bahnschrift;letter-spacing:.16em','start','#6f675c');
+  T(svg,L,T0+492,'NEXT FEST · ONE PER GAME, EVER · LAUNCH MUST FALL AFTER 26 OCT TO STAY ELIGIBLE',
+    'font:9px Bahnschrift;letter-spacing:.16em','start','#6f675c');
+  T(svg,L,T0+510,'BOTH GATES CLEAR COMFORTABLY ON THIS CALENDAR — THEY ONLY BITE IF THE FEE IS PAID LATE',
+    'font:9px Bahnschrift;letter-spacing:.16em','start','#8b8177');
+})();
+
+/* ---------------- cards ---------------- */
+const card=(id,title,sub,rows,note,hot)=>{
+  const el=document.getElementById(id);
+  let h=`<h2 style="color:${hot?'#d9563f':'#e8c26a'}">${title}</h2><div class="cs">${sub}</div>`;
+  rows.forEach(([t,d,w])=>{
+    h+=`<div class="task"><div class="b${hot?' n':''}"></div>`
+     + `<div><div class="t">${t}</div><div class="d">${d}</div></div>`
+     + `<div class="w">${w}</div></div>`;
+  });
+  if(note) h+=`<div class="note">${note}</div>`;
+  el.innerHTML=h;
+};
+
+card('now','START TODAY','ORDERED BY LEAD TIME, NOT IMPORTANCE',[
+  ['Name the game','You cannot open a Steam page without a final name. SWARM is a working title and is heavily used. This is now the blocking creative decision.','DAY 1'],
+  ['Steamworks onboarding','Sign up, pay the $100 app fee, complete the tax interview and bank verification. Paying the fee also starts Valve’s <b>30-day release gate</b> — pay it on day 1 and the clock is long finished by November.','DAY 1–5'],
+  ['Capsule art + header','Main capsule, small capsule, header, library art. Typographic and geometric per the art law — no generated objects.','DAY 2–6'],
+  ['Trailer v1','45–60s cut from the build you already have. The horde flowing down the track is the shot. No voiceover, no story.','DAY 3–7'],
+  ['Screenshots + copy','Five or more screenshots, short description, tags: tower defense, incremental, roguelite, automation.','DAY 5–8'],
+  ['Submit for review','Steam takes 1–5 business days. Submit by 24 Aug to leave room for one rejection.','BY 24 AUG'],
+  ['Register for Next Fest','Requires the page to be live and approved. Closes 23:59 PDT.','BY 31 AUG'],
+],'<b class="hot">If the page is not live by 31 August</b>, do not panic-ship a bad demo — you would burn your one Next Fest slot. Fall back to the February 2027 fest and use the extra runway. The page going up early is a no-regrets move either way; the fest is the part with a hard gate.',1);
+
+card('expect','WHAT TO ACTUALLY EXPECT','WISHLIST AND SALES TARGETS FOR A FIRST-TIME SOLO LAUNCH',[],'');
+document.getElementById('expect').innerHTML=
+ `<h2 style="color:#e8c26a">WHAT TO ACTUALLY EXPECT</h2>
+  <div class="cs">REALISTIC TARGETS — NOT THE ORC GAME'S NUMBERS</div>
+  <table>
+    <tr><th>MILESTONE</th><th style="text-align:right">WISHLISTS</th></tr>
+    <tr><td>Page live, first week</td><td class="n">500 – 1,500</td></tr>
+    <tr><td>Entering Next Fest (19 Oct)</td><td class="n">3,000 – 8,000</td></tr>
+    <tr><td>Leaving Next Fest (26 Oct)</td><td class="n">10,000 – 25,000</td></tr>
+    <tr><td>Launch day (12 Nov)</td><td class="n">15,000 – 30,000</td></tr>
+  </table>
+  <table style="margin-top:14px">
+    <tr><th>LAUNCH WEEK AT $9.99</th><th style="text-align:right">RESULT</th></tr>
+    <tr><td>Copies (10–20% of wishlists)</td><td class="n">2,000 – 6,000</td></tr>
+    <tr><td>Gross revenue</td><td class="n">$16k – $50k</td></tr>
+    <tr><td>Your share after Steam, VAT, refunds</td><td class="n">$9k – $29k</td></tr>
+  </table>
+  <div class="note"><b>Calibrate on this, not on the orc game.</b> It made $1M in week one off
+  150,000 wishlists driven by a prototype clip that went genuinely viral. That is a top-decile
+  outcome and it was their second release after a first that made under €30k. Treat anything above
+  this table as upside, and price at <b>$9.99</b> — they planned €6.99, raised it on advice, and it
+  cost them nothing.</div>`;
+
+card('cadence','THE POSTING CADENCE','FOUR PLATFORMS, ONE CLIP, EVERY WEEKDAY',[
+  ['Daily — one clip','15–30s, vertical, no narration. A wave breaking, a tower line melting a horde, a route re-forming when you drop a wall. TikTok + Reels + Shorts, same file.','MON–FRI'],
+  ['Weekly — one build note','A GIF plus two sentences on what changed. X and Bluesky. This is what makes the account look alive to a returning viewer.','FRIDAYS'],
+  ['At each milestone — the ask','Page live, playtest open, demo live, launch. These are the only four times you explicitly ask for a wishlist. Everything else is just showing the game.','×4'],
+  ['Reddit — sparingly','r/incremental_games and r/tower_defense at playtest and at demo. Both expect honest AI disclosure; lead with it rather than being asked.','×2'],
+  ['Creators — after playtest','The orc devs got 100k-view YouTube videos off their playtest, unpaid. Send keys to small TD and incremental channels once the playtest is stable.','SEPT'],
+],'The single highest-leverage habit is posting <b>before the game is ready</b>. Their prototype clips are what proved demand existed — the game was chosen to fit the audience, not the other way round.');
+
+card('risks','THE THINGS THAT WILL BITE','KNOWN RISKS, ORDERED BY LIKELIHOOD',[
+  ['Steamworks paperwork slips','Tax and banking verification is the one step you cannot speed up. If it slides past 26 Aug, October is gone. Start it today and nothing else here is at risk.','HIGH'],
+  ['No name, no page','Every asset — capsule, trailer, page — is blocked on the name. Deciding it late cascades into everything.','HIGH'],
+  ['Anonymity vs reach','Your standing preference is anonymous projects. A faceless studio account works, but it converts worse than a person. Decide deliberately rather than by default.','MEDIUM'],
+  ['AI disclosure, handled late','r/incremental_games and galaxy.click require it. Frame it yourself, on your own page, before anyone asks. Being found out is the reputation risk; saying it first is not.','MEDIUM'],
+  ['Bahnschrift is Windows-only','The HUD font does not exist for most players. Bundle an open DIN-style face before any public build.','MEDIUM'],
+  ['The map is F1-derived','It needs mutating into an inspired-by layout and leaving unnamed before anything ships publicly.','LOW'],
+],'None of these are new — they are the pre-launch obligations already recorded in the project notes, now with dates attached.');
+</script>
+</body></html>
