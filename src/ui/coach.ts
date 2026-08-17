@@ -38,7 +38,12 @@ export const STEPS: CoachStep[] = [
     id: 'aim',
     text: 'Now aim it',
     hint: 'Move the mouse. That line is the lane it fires down — it will never turn to follow anything.',
-    done: (g, ui) => ui.aiming >= 0 && (g.towers[ui.aiming]?.aimMoved ?? false),
+    // Also satisfied by having ALREADY committed. A player who places and hits
+    // Escape without moving the mouse never sets aimMoved and never re-enters
+    // aiming, so keying this on aimMoved alone stranded the coach on screen for
+    // the rest of the run — covering a third of the map. Found by playing.
+    done: (g, ui) => (ui.aiming >= 0 && (g.towers[ui.aiming]?.aimMoved ?? false))
+      || (ui.aiming < 0 && g.towers.some((t) => t.armed)),
   },
   {
     id: 'commit',
@@ -58,12 +63,22 @@ export interface CoachState {
   step: number;
   /** Seconds the final card has been on screen. */
   restT: number;
+  /** Total seconds coaching has been up, for the give-up timer. */
+  liveT: number;
   dismissed: boolean;
 }
 
 export function newCoach(): CoachState {
-  return { step: 0, restT: 0, dismissed: false };
+  return { step: 0, restT: 0, liveT: 0, dismissed: false };
 }
+
+/**
+ * Hard stop. Whatever the player is doing, coaching is not still useful two
+ * minutes in — and a stuck step covering the battlefield is worse than no
+ * teaching at all. This is a backstop for stalls nobody predicted, not a
+ * replacement for each step's own completion.
+ */
+const COACH_GIVE_UP = 120;
 
 /**
  * Advance the coach. Returns the step to draw, or null when it is finished.
@@ -74,6 +89,8 @@ export function updateCoach(
   c: CoachState, g: Game, ui: UiState, dt: number,
 ): CoachStep | null {
   if (c.dismissed) return null;
+  c.liveT += dt;
+  if (c.liveT > COACH_GIVE_UP) { c.dismissed = true; return null; }
   const step = STEPS[c.step];
   if (!step) return null;
   if (step.id === 'done') {
