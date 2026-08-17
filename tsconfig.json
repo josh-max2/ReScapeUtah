@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    /* vite/client supplies import.meta.env, which asset() reads to resolve
+       public/ paths against whatever subpath the build is served from. */
+    "types": ["vite/client"],
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",

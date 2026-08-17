@@ -2,11 +2,14 @@
    WINDOWS ONLY — everywhere else the HUD silently fell back to Arial Narrow
    and the letter-spaced caps stopped looking deliberate. Archivo Narrow (OFL,
    see public/fonts/OFL.txt) is the DIN-flavoured grotesque that replaces it.
+   The file lives in src/, NOT public/: vite then treats it as a real module
+   asset and rewrites the URL for whatever base the build is served from. A
+   public/ font referenced by absolute path 404s on any subpath deploy.
    One variable file, latin subset, 18KB. Bahnschrift stays in the stack after
    it purely as a same-metrics fallback if the font request ever fails. */
 @font-face {
   font-family: 'Archivo Narrow';
-  src: url('/fonts/archivo-narrow.woff2') format('woff2');
+  src: url('./fonts/archivo-narrow.woff2') format('woff2');
   font-weight: 400 700;
   font-style: normal;
   /* swap, not block: a tower-defence game must never hold the first frame

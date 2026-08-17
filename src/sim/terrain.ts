@@ -4,7 +4,7 @@
 // chamfer distance field for wall repulsion/collision, and extracts spawn and
 // goal from the colored marks. Draw a new PNG -> get a new map.
 
-import { CELL, COLS, ROWS, W, H } from '../defs';
+import { CELL, COLS, ROWS, W, H, asset} from '../defs';
 
 /**
  * THE LEVELS. One map is one level (owner-directed 2026-08-17), and the list
@@ -45,7 +45,7 @@ function pickLevel(): string {
   return 'map2';
 }
 
-export const MAP_IMAGE = `/maps/${pickLevel()}.png`;
+export const MAP_IMAGE = asset(`maps/${pickLevel()}.png`);
 
 export const PATH_RADIUS = 40; // clearance cap: this far from a wall = fully clear
 

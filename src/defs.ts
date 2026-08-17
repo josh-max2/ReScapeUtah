@@ -10,6 +10,18 @@ export const BASE_COLS = 2;        // base occupies the right band
 export const BASE_LINE_X = (COLS - BASE_COLS) * CELL;
 export const DT = 1 / 60;          // fixed sim timestep (s)
 export const MAX_ENEMIES = 20000;
+
+/**
+ * Resolve a path in `public/` for wherever the build is actually served from.
+ *
+ * Vite rewrites the URLs it bundles, but map, texture and font paths are built
+ * as STRINGS at runtime, so nothing rewrites those. Hardcoding a leading slash
+ * works locally and 404s on any host that serves the game from a subpath —
+ * GitHub project pages being the obvious one.
+ */
+export function asset(path: string): string {
+  return import.meta.env.BASE_URL + (path.startsWith('/') ? path.slice(1) : path);
+}
 export const WAVES_PER_RUN = 20;
 
 export const clamp = (v: number, a: number, b: number): number =>

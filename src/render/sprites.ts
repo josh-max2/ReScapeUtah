@@ -2,7 +2,7 @@
 // the per-frame renderer only composites. The terrain is painted from the SAME
 // polyline that drives walkability (sim/terrain.ts), so art and sim agree.
 
-import { W, H, PAL, ENEMY_TYPES } from '../defs';
+import { W, H, PAL, ENEMY_TYPES, asset} from '../defs';
 import {
   SPAWN_X, SPAWN_Y1, SPAWN_Y2, GOAL_X, GOAL_Y, mapPixels, sampleDist, isOpen,
   PATH_RADIUS,
@@ -18,9 +18,9 @@ function mk(w: number, h: number): [HTMLCanvasElement, CanvasRenderingContext2D]
 // ---- Generated terrain textures (art/gen_sprites.py -> public/textures) ----
 // Loaded once at boot; buildTerrain tiles them per material.
 const TEX_FILES = {
-  dirt: '/textures/terrain_dirt.png',
-  grass: '/textures/terrain_grass.png',
-  rock: '/textures/terrain_rock.png',
+  dirt: asset('textures/terrain_dirt.png'),
+  grass: asset('textures/terrain_grass.png'),
+  rock: asset('textures/terrain_rock.png'),
 } as const;
 
 export const TEX: Record<keyof typeof TEX_FILES, HTMLImageElement | null> = {

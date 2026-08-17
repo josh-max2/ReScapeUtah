@@ -4,6 +4,7 @@
 
 import {
   TOWER_DEFS, TOWER_KINDS, TOWER_UPGRADES, ENEMY_TYPES, TowerKind, WAVES_PER_RUN,
+  asset,
 } from '../defs';
 import { towerStats } from '../sim/towers';
 import type { Game } from '../state';
@@ -418,7 +419,7 @@ function renderLevels(save: SaveData): string {
       : '';
     cards += `
       <button class="trackcard${on ? ' on' : ''}" data-level="${l.id}">
-        <img src="/maps/${l.id}.png" alt="" />
+        <img src="${asset(`maps/${l.id}.png`)}" alt="" />
         ${badge}
         <div class="tknum">LEVEL ${i + 1}</div>
         <div class="tkname">${l.name}</div>
