@@ -254,21 +254,35 @@ fixed lanes made aiming the dominant skill. Bots buy mid-fight (there is no
 build phase). `SWARM_SPREAD=N` forces one spacing across brackets — spacing is
 a real confound now and must be controlled before blaming a result on cost.
 
-Measured, 2 runs per bracket, all at 150px spacing:
+Current numbers — 2 runs per bracket at 150px spacing, re-measured 2026-08-17
+after the flame fix (flame sits in the median plan, so the earlier table was
+measured against a broken weapon):
 
-    poor    (default aim)   held 2:40   surge 7
-    median  (road aim)      held 2:24   surge 6
-    strong  (downflow aim)  held 7:00   surge 18
+    poor    (default aim)   held 2:39   surge 7
+    median  (road aim)      held 2:30   surge 7
+    strong  (downflow aim)  held 3:38   surge 10
 
-Three things this establishes:
-1. **Aiming is worth ~2.6x survival.** Same plan quality, same spacing — only
-   the committed angle differs. The mechanic pays off, which is what it was
-   for.
-2. **Spacing matters enormously.** Strong went 4:40 -> 7:00 purely by widening
-   from 70px to 150px. With fixed lanes, clustered towers overlap coverage and
-   waste it. This is a NEW strategic truth the aiming change created.
-3. ~~The cost-curve inversion is REAL~~ — **WITHDRAWN 2026-08-17, it was a
-   measurement artifact.** See below.
+1. **Aiming pays, but this harness cannot yet say by how much.** Across three
+   measurements this session strong came in at 7:00, 4:57 and 3:38 — a ±50%
+   swing — while poor (2:40/2:35/2:39) and median (2:24/2:22/2:30) barely
+   moved. Only strong's plan is long enough for spot choice and upgrade timing
+   to compound, so it is the unstable one. The old "aiming is worth ~2.6x"
+   line came from a single high sample and is WITHDRAWN at that precision.
+   Directionally aiming is clearly the dominant skill; quote no multiplier
+   until strong is run at 5+ reps.
+2. **Spacing matters.** Clustered fixed lanes overlap and waste coverage, so
+   spacing is a genuine confound — control it (`SWARM_SPREAD`) before blaming
+   any result on cost or on a weapon.
+3. **Poor and median are a tie, not an inversion** (2:39 vs 2:30, inside the
+   noise). ~~The cost-curve inversion is REAL~~ — **WITHDRAWN 2026-08-17, it
+   was a measurement artifact.** See below.
+4. Strong fields FEWER towers than poor throughout (11 vs 19 at 130s) and
+   still holds longer — independent corroboration that expensive towers earn
+   their price.
+
+**Do not quote a bracket comparison as evidence about tower cost.** The
+brackets differ in aim style AND weapon mix simultaneously; `shootout.py` is
+the instrument that separates them.
 
 ## Two bugs the cost investigation actually found (2026-08-17)
 
