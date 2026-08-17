@@ -355,6 +355,7 @@ if (demoParam !== null) {
 (window as unknown as Record<string, unknown>).__swarm = {
   game,
   save,
+  ui,
   cardsEnabled: CARDS_ENABLED,
   // The skill tree, so a harness can assert every node moves a real modifier.
   // A node wired to nothing is the specific failure this project has hit

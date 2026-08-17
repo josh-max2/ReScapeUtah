@@ -410,10 +410,12 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, ui: UiState): voi
     const def = TILE_DEFS[ui.placingTile];
     const ok = tileAllowed(g, ui.placingTile, ui.mouseX, ui.mouseY);
     ctx.save();
-    ctx.globalAlpha = 0.5;
+    // Stronger than a tower ghost on purpose: a tile edits the map for the
+    // rest of the run and cannot be sold back.
+    ctx.globalAlpha = 0.85;
     ctx.strokeStyle = ok ? PAL.cyan : '#e06052';
-    ctx.fillStyle = ok ? 'rgba(121,214,208,0.16)' : 'rgba(224,96,82,0.16)';
-    ctx.lineWidth = 2;
+    ctx.fillStyle = ok ? 'rgba(121,214,208,0.22)' : 'rgba(224,96,82,0.22)';
+    ctx.lineWidth = 2.5;
     ctx.setLineDash([7, 6]);
     if (ui.placingTile === 'narrows') {
       // Draw what it actually stamps: two nubs, not one disc.
