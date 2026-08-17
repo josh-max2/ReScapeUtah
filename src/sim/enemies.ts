@@ -37,6 +37,14 @@ export class EnemyPool {
   seed = new Float32Array(MAX_ENEMIES);
   leaked = new Uint8Array(MAX_ENEMIES);
   burn = new Float32Array(MAX_ENEMIES); // incendiary DoT time left (s)
+  /**
+   * Which shared route field this car follows. Assigned once at spawn from
+   * live route ETAs and then STICKY — re-deciding every tick is what makes a
+   * horde flap between two lines in lockstep instead of splitting across them.
+   * This is one byte of preference, not per-agent pathfinding: the routes
+   * themselves are still shared fields computed once for everyone.
+   */
+  route = new Uint8Array(MAX_ENEMIES);
   slow = new Float32Array(MAX_ENEMIES); // cryo slow time left (s)
   stuckT = new Float32Array(MAX_ENEMIES); // seconds without meaningful movement
   size = new Uint8Array(MAX_ENEMIES);   // size bucket (index into SIZE_MULS)
@@ -80,6 +88,7 @@ export class EnemyPool {
     this.seed[i] = Math.random() * 100;
     this.leaked[i] = 0;
     this.burn[i] = 0;
+    this.route[i] = 0;
     this.slow[i] = 0;
     this.stuckT[i] = 0;
     this.impX[i] = 0;
@@ -115,6 +124,7 @@ export class EnemyPool {
     this.seed[i] = this.seed[l];
     this.leaked[i] = this.leaked[l];
     this.burn[i] = this.burn[l];
+    this.route[i] = this.route[l];
     this.slow[i] = this.slow[l];
     this.stuckT[i] = this.stuckT[l];
     this.size[i] = this.size[l];
@@ -214,7 +224,13 @@ function collectDiverters(g: Game): void {
 export function updateEnemies(g: Game, dt: number): void {
   collectDiverters(g);
   const e = g.enemies;
+  // `f` stays the CANONICAL field for everything that asks about the map —
+  // obstruction tests, the stuck-rescue search, cost ordering. Only the
+  // steering direction below is read from the car's own chosen route, so which
+  // line a car happens to be on can never make the game believe a wall is
+  // breachable or a cell unroutable.
   const f = g.field;
+  const routes = g.routes;
   const hash = g.hash;
   applyAuras(g, dt);
   const hcs = hash.cs, hcols = hash.cols, hrows = hash.rows;
@@ -325,7 +341,14 @@ export function updateEnemies(g: Game, dt: number): void {
     // Traffic model (IDM-flavored): braking responds to pressure from ahead,
     // steering follows the flow plus this car's own preferred LANE — every
     // driver takes their own line, not one shared optimal line.
-    const fdx = f.dirX[c], fdy = f.dirY[c];
+    // The one per-car read: steer down the route this car committed to.
+    // An alternate route is pushed away from the main corridor, so it can end
+    // up crossing ground its own field never reached — a car there would have
+    // no steering at all and sit until the rescue net fired. Fall back to the
+    // canonical route whenever this car's own route has nothing to say.
+    let rf = routes[e.route[i]] ?? f;
+    if (rf.dirX[c] === 0 && rf.dirY[c] === 0) rf = f;
+    const fdx = rf.dirX[c], fdy = rf.dirY[c];
     const along = sx * fdx + sy * fdy;
     const latX = sx - (along < 0 ? along : 0) * fdx;
     const latY = sy - (along < 0 ? along : 0) * fdy;

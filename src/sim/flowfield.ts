@@ -14,6 +14,35 @@ const N = COLS * ROWS;
 const SQRT2 = Math.SQRT2;
 const TOWER_COST = 60; // traversal multiplier for a tower cell
 
+/**
+ * Ceiling on how much a jam can inflate one cell's traversal cost.
+ *
+ * Uncapped, a long queue makes the cost of going THROUGH it exceed the cost of
+ * backtracking and going around, and the gradient then U-turns cars in the
+ * middle of the route. A horde that periodically about-faces reads as broken,
+ * not as clever, so congestion is allowed to make a cell expensive but never
+ * worse than a detour.
+ */
+const CONGESTION_CAP = 4;
+
+/**
+ * Two fields, one obstruction state. `dist` is canonical: everything that asks
+ * a question about the MAP — is the route sealed, where does the racing line
+ * go, is this cell routable, which way does a fresh tower face — reads it. Only
+ * the enemies' own steering reads `time`, so a jam can never make the game
+ * think a wall is breachable or a tower unplaceable.
+ *
+ * They share `walk`, `blocked` and `wallCell` by aliasing rather than copying,
+ * so their picture of the obstacles cannot drift apart.
+ */
+export function linkFields(dist: FlowField, ...others: FlowField[]): void {
+  for (const f of others) {
+    f.walk = dist.walk;
+    f.blocked = dist.blocked;
+    f.wallCell = dist.wallCell;
+  }
+}
+
 export class FlowField {
   cost = new Float64Array(N);
   dirX = new Float32Array(N);
@@ -26,12 +55,48 @@ export class FlowField {
   version = 0;                  // bumps on every compute (racing-line cache key)
 
   /**
+   * Smoothed enemies-per-cell. Only the congestion-aware field uses it; the
+   * canonical distance field leaves it at zero. Smoothing is deliberate — the
+   * density trail lagging the horde is hysteresis, and it is what stops the
+   * whole field flipping between two routes every recompute.
+   */
+  density = new Float32Array(N);
+
+  /**
+   * Cells an ALTERNATE route should steer clear of, stamped from the corridors
+   * of the routes ranked above it. This is what makes route 2 a genuinely
+   * different line rather than a slightly noisy copy of route 1 — without it,
+   * every field converges on the same shortest path and "three routes" is a
+   * lie the harness would have to catch.
+   */
+  avoid = new Float32Array(N);
+
+  /** This route's OWN corridor, used to measure the traffic sitting on it. */
+  avoidOwn = new Float32Array(N);
+
+  // Scratch, hoisted off the call. This used to allocate a heap and two
+  // Float32Arrays per compute, which was harmless when compute ran only on
+  // tower changes — the congestion field recomputes several times a second
+  // forever, and that would be allocation in the hot path by the back door.
+  private hi: number[] = [];
+  private hc: number[] = [];
+  private rawX = new Float32Array(N);
+  private rawY = new Float32Array(N);
+
+  /**
    * Two-pass: walls are fully impassable while any open route exists (they take
    * zero damage). Only when the track is sealed does the field route through
    * them — and then the horde chews.
    */
-  compute(): void {
+  /**
+   * @param congK how strongly queued traffic inflates traversal cost. 0 gives
+   * the pure shortest-DISTANCE field; above zero the cost being minimised is
+   * closer to travel TIME, so the gradient routes the horde around its own
+   * jams instead of everyone queueing down one line.
+   */
+  compute(congK = 0): void {
     this.version++;
+    this.congK = congK;
     this.runPass(true);
     if (this.spawnReachable()) {
       this.sealed = false;
@@ -40,6 +105,8 @@ export class FlowField {
       this.runPass(false);
     }
   }
+
+  private congK = 0;
 
   /**
    * Can the horde get out of the rift at all? Cost is distance-to-goal, so a
@@ -74,8 +141,10 @@ export class FlowField {
     cost.fill(Infinity);
 
     // Binary min-heap of (cell, cost) pairs in parallel arrays.
-    const hi: number[] = [];
-    const hc: number[] = [];
+    const hi = this.hi;
+    const hc = this.hc;
+    hi.length = 0;
+    hc.length = 0;
     const push = (i: number, c: number): void => {
       let k = hi.length;
       hi.push(i); hc.push(c);
@@ -146,7 +215,15 @@ export class FlowField {
             if (this.walk[o2] === 0 || blocked[o2] === 1) continue;
           }
           const step = (dx !== 0 && dy !== 0) ? SQRT2 : 1;
-          const w = step * (this.wallCell[n] ? 900 : blocked[n] ? TOWER_COST : 1);
+          let w = step * (this.wallCell[n] ? 900 : blocked[n] ? TOWER_COST : 1);
+          if (this.avoid[n] > 0) w *= 1 + this.avoid[n];
+          if (this.congK > 0) {
+            // Traffic already on (or queued for) this cell makes crossing it
+            // slower. This is the whole "route ETA" idea: a shared field whose
+            // minimised quantity is time, not distance.
+            const jam = this.congK * this.density[n];
+            w *= 1 + (jam > CONGESTION_CAP ? CONGESTION_CAP : jam);
+          }
           const nc = c0 + w;
           if (nc < cost[n]) {
             cost[n] = nc;
@@ -157,8 +234,10 @@ export class FlowField {
     }
 
     // Direction: toward the cheapest neighbor, then one smoothing pass.
-    const rawX = new Float32Array(N);
-    const rawY = new Float32Array(N);
+    const rawX = this.rawX;
+    const rawY = this.rawY;
+    rawX.fill(0);
+    rawY.fill(0);
     for (let cy = 0; cy < ROWS; cy++) {
       for (let cx = 0; cx < COLS; cx++) {
         const i = cy * COLS + cx;

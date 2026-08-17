@@ -20,6 +20,7 @@ import { CARDS, playModCard, playStrikeCard, playInstantCard } from './sim/cards
 import { initHand, updateHand } from './ui/hand';
 import { initHud, updateHud, markMetaDirty, setCoachStep, HudCallbacks } from './ui/hud';
 import { newCoach, updateCoach, CoachState } from './ui/coach';
+import { routeEta } from './sim/routing';
 import { render, UiState } from './render/draw';
 import './style.css';
 
@@ -347,6 +348,8 @@ if (demoParam !== null) {
   // Harnesses mutate `save` directly to stage a state; without this the meta
   // screen keeps showing the stale render and the test reads the old DOM.
   refreshMeta: () => markMetaDirty(),
+  // Live route ETAs, so the pathing harness can see WHY cars chose a route.
+  routeEta,
   tick: (dt: number) => tick(game, save, dt),
   render: () => render(ctx, game, ui),
   // Placement through the real code path, so harnesses can build a barrier

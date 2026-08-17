@@ -11,8 +11,13 @@ abstract shapes until mechanics are proven; treat all colors/shapes as placehold
   Never introduce per-enemy objects or allocation inside the tick loop.
 - **Enemy indices are only valid within one tick.** Damage sets `hp <= 0`;
   only `sweepDeaths` removes. Never remove enemies mid-tick.
-- **Pathfinding is the shared flow field** (`FlowField.compute()`), recomputed only
-  when towers change. No per-agent pathfinding, ever.
+- **Pathfinding is SHARED ROUTE FIELDS** (`sim/routing.ts`), rebuilt only when
+  the obstacles change. No per-agent pathfinding, ever. A car carries ONE BYTE
+  (`enemies.route`) naming which shared field it follows — that is a
+  preference, not a search. `routes[0]` IS `g.field` and stays canonical:
+  route preview, the sealed/chew rule, placement, the stuck-rescue search and
+  `defaultAim` all read it, so which line a car happens to be on can never
+  make the game think a wall is breachable or a cell unroutable.
 - **Fixed timestep** (`DT`, accumulator in `main.ts`). Sim logic never reads
   wall-clock time; rendering never mutates sim state.
 - **Save format is versioned** (`meta/save.ts`). Any shape change bumps `version`
@@ -358,6 +363,47 @@ already caught four real failures that no unit test would:
 Curve as of this pass: poor dies ~w8, strong ~w10, with an EMPTY meta tree.
 That is the intended roguelite starting point — the skill tree is meant to
 carry the rest. Re-measure rather than reasoning about balance from the code.
+
+## ROUTE CHOICE — the horde splits instead of queueing (2026-08-17)
+
+Owner's complaint: every car took the same line, bunched up, crawled, and only
+spilled onto a parallel branch once crowd pressure shoved it there. He asked
+for routes with an ETA each, and cars picking the shorter one.
+
+- `ROUTES` (3) shared fields. Route 0 is the plain shortest path. Each
+  alternate is computed AVOIDING the traced corridors of the routes above it
+  (`FlowField.avoid`), which is what makes it a genuinely different line rather
+  than a noisy copy of the same one.
+- `routeEta[r] = trueLength * (1 + K * meanDensityOnItsCentreline)`. Cars pick
+  the lowest on spawn and the pick is STICKY for life.
+- **Sticky is the whole trick.** Route 0 fills, its ETA rises, the next
+  arrivals take route 1, and the shares settle where the ETAs equalise
+  (measured: 6214 / 6307 / 6482 on DELTA).
+
+**A dead end worth not repeating: a single congestion-weighted field.** It is
+the obvious implementation and it made spreading WORSE — busiest branch went
+0.82 -> 0.98 on DELTA. One shared gradient can only move the whole horde at
+once, so it cannot split it; it herds everyone onto whatever is momentarily
+cheapest and even drags pressure-displaced cars back onto the main line,
+because a lone car on a side branch is the only density on it.
+
+**Two traps that cost real time, both invisible without a probe:**
+1. ETA must use the route's TRUE traced length, never `field.cost`. Cost
+   includes the avoidance penalty used to SHAPE an alternate, so comparing
+   costs made alternates look 60-200% longer and route 0 always won.
+2. Density must be sampled on the route's CENTRELINE, not its fattened
+   corridor — the corridor averages a real jam with the empty verge beside it.
+
+Also: `FlowField`'s constructor calls `buildWalkMask()`, so fields MUST be
+built inside `createGame` (after `await initTerrain()`). Hoisting them to
+module scope runs them at import time, before terrain exists, and every route
+gets an empty walk mask — the symptom is a silent pile-up in the rift, not an
+error. `scripts/pathing.py` measures branch share, the ETA spread, the
+against-flow fraction (the U-turn failure mode) and `g.rescues`.
+
+Deferred by the owner, and the reason the byte exists: per-archetype
+preference — some units always take the shortest DISTANCE and refuse a longer
+line whatever the ETA, bigger ones route more cleverly. Not built.
 
 ## CONTINUOUS FLOW — there are no waves (owner-directed 2026-08-17)
 

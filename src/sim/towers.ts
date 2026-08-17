@@ -7,6 +7,7 @@ import {
 } from '../defs';
 import { SPAWN_X, SPAWN_Y, GOAL_X, GOAL_Y } from './terrain';
 import type { Game } from '../state';
+import { recomputeFields } from './routing';
 import type { MetaMods } from '../meta/upgrades';
 
 export interface Tower {
@@ -180,7 +181,7 @@ export function placeTower(g: Game, kind: TowerKind, cx: number, cy: number): nu
   if (kind === 'wall') {
     g.field.blocked[c] = 1;
     g.field.wallCell[c] = 1;
-    g.field.compute();
+    recomputeFields(g);
   } else if (!def.ground) {
     g.field.blocked[c] = 1; // occupancy only; cell was never routable
   }
@@ -234,5 +235,5 @@ export function destroyTower(g: Game, ti: number): void {
     g.towerGrid[moved.cy * COLS + moved.cx] = ti;
   }
   g.towers.pop();
-  if (wasWall) g.field.compute(); // only walls affect routing
+  if (wasWall) recomputeFields(g); // only walls affect routing
 }

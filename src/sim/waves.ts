@@ -7,6 +7,7 @@ import {
 } from '../defs';
 import { SPAWN_X, SPAWN_Y1, SPAWN_Y2, isOpen } from './terrain';
 import type { Game } from '../state';
+import { pickRoute } from './routing';
 
 /**
  * Wave character. Each wave leans on ONE pressure so the player can read what
@@ -278,6 +279,11 @@ export class FlowSpawner {
       sy = SPAWN_Y1 + Math.random() * (SPAWN_Y2 - SPAWN_Y1);
     }
     g.enemies.spawn(type, sx, sy);
+    // Pick a route on arrival, from the live ETAs. Sticky for life: this is
+    // what makes the horde SPLIT in a stable ratio instead of switching in
+    // lockstep. As route 0 fills, its ETA rises and the next arrivals take
+    // another one.
+    g.enemies.route[g.enemies.n - 1] = pickRoute();
     // Cold Start holds new arrivals at reduced speed as they leave the rift.
     if (g.mods.riftSlow > 0) {
       const i = g.enemies.n - 1;

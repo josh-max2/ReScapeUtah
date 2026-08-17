@@ -60,6 +60,14 @@ export interface Game {
   towerGrid: Int32Array;
   enemies: EnemyPool;
   field: FlowField;
+  /**
+   * The route set. `routes[0]` IS `field` — the canonical shortest path that
+   * everything except enemy steering reads. The alternates exist only so cars
+   * have somewhere else to go when route 0 is busy.
+   */
+  routes: FlowField[];
+  /** Sim-seconds since the congestion field was last rebuilt. */
+  flowAcc: number;
   hash: SpatialHash;
   spawner: FlowSpawner | null;
   effects: Effect[];

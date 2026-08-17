@@ -9,6 +9,7 @@ import type { Game } from '../state';
 import { EnemyPool, updateEnemies, separate } from './enemies';
 import { isOpen } from './terrain';
 import { FlowField } from './flowfield';
+import { ROUTES, recomputeFields, tickRouting } from './routing';
 import { SpatialHash } from './spatial';
 import { updateTowers, shove } from './combat';
 import { dealHit } from './damage';
@@ -22,7 +23,17 @@ import {
   defaultTypeMods, defaultRunFx, STARTER_DECK, shuffle, draw, rollCardChoices,
 } from './cards';
 
+/**
+ * FlowField's constructor calls buildWalkMask(), which reads the terrain — so
+ * these MUST be built inside createGame, after `await initTerrain()`. Hoisting
+ * them to module scope runs them at import time, before terrain exists, and
+ * every route gets an empty walk mask: nothing is routable, the horde never
+ * leaves the rift, and the symptom is a silent pile-up rather than an error.
+ */
 export function createGame(mods: MetaMods): Game {
+  const primary = new FlowField();
+  const routes: FlowField[] = [primary];
+  for (let r = 1; r < ROUTES; r++) routes.push(new FlowField());
   const g: Game = {
     phase: 'meta',
     wave: 0,
@@ -35,7 +46,9 @@ export function createGame(mods: MetaMods): Game {
     towers: [],
     towerGrid: new Int32Array(COLS * ROWS).fill(-1),
     enemies: new EnemyPool(),
-    field: new FlowField(),
+    field: primary,
+    routes,
+    flowAcc: 0,
     hash: new SpatialHash(W, H, 16, MAX_ENEMIES),
     spawner: null,
     effects: [],
@@ -60,7 +73,7 @@ export function createGame(mods: MetaMods): Game {
     marks: [],
     runId: 0,
   };
-  g.field.compute();
+  recomputeFields(g);
   return g;
 }
 
@@ -83,7 +96,7 @@ export function startRun(g: Game, mods: MetaMods, bankedGold = 0): void {
   g.towerGrid.fill(-1);
   g.enemies.clear();
   g.field.blocked.fill(0);
-  g.field.compute();
+  recomputeFields(g);
   g.spawner = new FlowSpawner();
   g.enemies.hpMul = waveHpMul(1);
   g.effects.length = 0;
@@ -288,6 +301,8 @@ export function tick(g: Game, save: SaveData, dt: number): void {
   // the stream still had the clock advancing under it, so stage, HP scaling
   // and the stage bounty all kept moving and staged enemies spawned tougher
   // than the test expected.
+  tickRouting(g, dt);
+
   if (g.flowPaused) return;
   const prevStage = g.wave;
   g.runT += dt;
