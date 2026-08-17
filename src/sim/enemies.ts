@@ -6,7 +6,7 @@
 // serpentine. Indices are only valid within a tick; a sweep reaps hp<=0.
 
 import {
-  MAX_ENEMIES, ENEMY_TYPES, SIZE_MULS, CELL, COLS, ROWS, W, H, clamp,
+  MAX_ENEMIES, ENEMY_TYPES, SIZE_MULS, CELL, COLS, ROWS, W, H, clamp, TOWER_DEFS,
 } from '../defs';
 import { GOAL_X, GOAL_Y, GOAL_R2, PATH_RADIUS, sampleDist, wallNormal } from './terrain';
 import type { Game } from '../state';
@@ -185,7 +185,34 @@ function applyAuras(g: Game, dt: number): void {
   }
 }
 
+/**
+ * Diverter footprints, collected once per tick. Flat arrays because this is
+ * read inside the movement loop for every living car — an array of objects
+ * here would allocate and chase pointers in the hottest loop in the game.
+ */
+const DIV_X: number[] = [];
+const DIV_Y: number[] = [];
+const DIV_DX: number[] = [];
+const DIV_DY: number[] = [];
+const DIV_R2: number[] = [];
+let divN = 0;
+
+function collectDiverters(g: Game): void {
+  divN = 0;
+  for (const t of g.towers) {
+    if (t.kind !== 'diverter' || !t.armed) continue;
+    DIV_X[divN] = t.x;
+    DIV_Y[divN] = t.y;
+    DIV_DX[divN] = Math.cos(t.aim);
+    DIV_DY[divN] = Math.sin(t.aim);
+    const r = TOWER_DEFS.diverter.range;
+    DIV_R2[divN] = r * r;
+    divN++;
+  }
+}
+
 export function updateEnemies(g: Game, dt: number): void {
+  collectDiverters(g);
   const e = g.enemies;
   const f = g.field;
   const hash = g.hash;
@@ -340,6 +367,24 @@ export function updateEnemies(g: Game, dt: number): void {
     const ji = (e.seed[i] * 41 + timeIdx) | 0;
     let desX = ffx + latX * 0.5 + laneX + SIN_TABLE[(ji * 3) & 255];
     let desY = ffy + latY * 0.5 + laneY + SIN_TABLE[(ji * 2 + 85) & 255];
+
+    // ---- Diverters: bend the intent, not the position ----
+    // This blends the DESIRED direction rather than writing velocity or
+    // position, so wall repel, projection and separation all still run
+    // afterwards exactly as they would have. A diverter therefore cannot punch
+    // a car through a wall or strand one off-track, which is the failure mode
+    // every direct-write shortcut in this file has caused before.
+    for (let d = 0; d < divN; d++) {
+      const ddx = px - DIV_X[d], ddy = py - DIV_Y[d];
+      const dd2 = ddx * ddx + ddy * ddy;
+      if (dd2 > DIV_R2[d]) continue;
+      // Full authority at the centre, tapering to nothing at the rim, so cars
+      // curve through it instead of snapping onto a new heading at the edge.
+      const k = (1 - Math.sqrt(dd2 / DIV_R2[d])) * 0.85;
+      desX += (DIV_DX[d] - desX) * k;
+      desY += (DIV_DY[d] - desY) * k;
+    }
+
     const dl = Math.hypot(desX, desY);
     if (dl > 1e-4) { desX /= dl; desY /= dl; } else { desX = 0; desY = 0; }
 

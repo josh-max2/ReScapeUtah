@@ -177,7 +177,7 @@ export const SIZE_MULS = [0.85, 1, 1.2] as const;
 
 export type TowerKind =
   | 'autocannon' | 'flame' | 'mortar' | 'cryo' | 'tesla' | 'gatling'
-  | 'rocket' | 'railgun' | 'lattice' | 'mine' | 'wall';
+  | 'rocket' | 'railgun' | 'lattice' | 'mine' | 'wall' | 'diverter';
 
 export interface TowerDef {
   name: string;
@@ -220,6 +220,11 @@ export const TOWER_DEFS: Record<TowerKind, TowerDef> = {
   mine:       { name: 'Minefield',   cost: 45,  hp: 60,  range: 30,  rate: 0,    hit: 90,  splash: 30, charges: 6, rechargeS: 8, ground: true, color: '#c9a13b', hotkey: '0', desc: 'Placed ON the road; 6 contact charges, slow recharge' },
   // Effectively indestructible while any open route to the fort exists —
   // sealing the track makes the horde chew through (see flowfield wall cost).
+  // The horde-redirect piece. It deals NO damage and blocks nothing — it bends
+  // the traffic crossing it toward its committed facing. With fixed firing
+  // lanes, steering cars INTO your lanes is the strategic complement to aiming
+  // them, so this is the one tower whose output is other towers' output.
+  diverter:   { name: 'Diverter',   cost: 55,  hp: 300, range: 70, rate: 0,   hit: 0,   ground: true, color: '#7fb3d9', hotkey: 'E', desc: 'Bends the horde toward its facing — no damage, it just steers' },
   wall:       { name: 'Wall',        cost: 25,  hp: 1200, range: 0,  rate: 0,    hit: 0,   ground: true, color: '#8a93a5', hotkey: 'W', desc: 'Blocks the road; horde breaks it only if fully sealed' },
 };
 
@@ -236,6 +241,9 @@ export const TOWER_DEFS: Record<TowerKind, TowerDef> = {
 export type AimMode = 'dir' | 'point' | 'none';
 
 export const AIM_MODE: Record<TowerKind, AimMode> = {
+  // The Diverter aims like a lane weapon — its facing IS the direction it
+  // pushes traffic, so the player commits it exactly as they commit a gun.
+  diverter: 'dir',
   autocannon: 'dir',
   flame: 'dir',
   gatling: 'dir',
@@ -254,7 +262,7 @@ export const LANE_HALF = 26;
 
 export const TOWER_KINDS: TowerKind[] = [
   'autocannon', 'flame', 'mortar', 'cryo', 'tesla', 'gatling',
-  'rocket', 'railgun', 'lattice', 'mine', 'wall',
+  'rocket', 'railgun', 'lattice', 'mine', 'diverter', 'wall',
 ];
 
 /**

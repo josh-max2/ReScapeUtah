@@ -38,6 +38,42 @@ export function drawTowerBody(
     return;
   }
 
+  if (kind === 'diverter') {
+    // Flush with the road, like the mine — but directional, so the player can
+    // read which way it pushes without selecting it. Three chevrons along the
+    // facing, widest at the mouth.
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 12, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#2b3a44';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 10.5, 7.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = def.color;
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+    ctx.strokeStyle = def.color;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 3; i++) {
+      const ox = -5 + i * 5;
+      const h = 3 + i * 1.1;
+      ctx.globalAlpha = 0.45 + i * 0.22;
+      ctx.beginPath();
+      ctx.moveTo(ox - 2, -h);
+      ctx.lineTo(ox + 2.5, 0);
+      ctx.lineTo(ox - 2, h);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+    return;
+  }
+
   if (kind === 'mine') {
     // flat plate flush with the road + charge pips
     ctx.fillStyle = 'rgba(0,0,0,0.28)';

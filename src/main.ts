@@ -273,6 +273,7 @@ window.addEventListener('keydown', (ev) => {
   const digit = '1234567890'.indexOf(ev.key);
   if (digit >= 0 && digit < TOWER_KINDS.length) cb.selectTower(TOWER_KINDS[digit]);
   else if (ev.key === 'w' || ev.key === 'W') cb.selectTower('wall');
+  else if (ev.key === 'e' || ev.key === 'E') cb.selectTower('diverter');
   else if (ev.key === 'q' || ev.key === 'Q') cb.armStrike();
   else if (ev.key === ' ') {
     ev.preventDefault();

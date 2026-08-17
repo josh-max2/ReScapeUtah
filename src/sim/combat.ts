@@ -181,6 +181,9 @@ export function updateTowers(g: Game, dt: number): void {
     if (t.kind === 'wall') continue;
     // Still being aimed by the player: placed, but not yet a weapon.
     if (!t.armed) continue;
+    // The Diverter steers; it has no weapon. Its work happens in the movement
+    // integrator, not here.
+    if (t.kind === 'diverter') continue;
     const def = TOWER_DEFS[t.kind];
     // Upgrade branch AND the meta tree resolve here. Note hitMul/rateMul no
     // longer carry g.mods — towerStats owns that now, and applying it in both
